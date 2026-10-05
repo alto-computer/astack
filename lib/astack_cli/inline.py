@@ -73,6 +73,9 @@ def _code(m) -> str:
 def inline_html(html: str, base_dir: Path, kit_dir: Path | None = None) -> str:
     kit = kit_dir or _kit_dir()
     css = (kit / "alto.css").read_text(encoding="utf-8")
+    ext = kit / "alto-ext.css"
+    if ext.exists():
+        css += "\n" + ext.read_text(encoding="utf-8")
     js = (kit / "reader.js").read_text(encoding="utf-8")
     html = html.replace("<!--astack:css-->", f"<style>{css}</style>")
     html = html.replace("<!--astack:js-->", f"<script>{js}</script>")

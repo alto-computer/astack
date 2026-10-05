@@ -70,7 +70,7 @@ def check_html(html: str) -> list[Issue]:
                 issues.append(Issue("error", "meta", f'<meta name="{name}">가 없습니다'))
         elif not v:
             issues.append(Issue("error", "meta", f"{name} 값이 비었습니다"))
-        elif re.fullmatch(r"\[.*\]", v, re.S):
+        elif re.fullmatch(r"\[[^\]]*\]", v):
             issues.append(Issue("error", "meta", f"{name}: 자리표시가 채워지지 않았습니다: {v}"))
         elif name == "rooms:created" and not RFC3339.match(v):
             issues.append(Issue("error", "meta", f"rooms:created가 RFC3339가 아닙니다: {v}"))

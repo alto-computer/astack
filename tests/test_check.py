@@ -27,6 +27,10 @@ class CheckTest(unittest.TestCase):
             self.assertNotEqual(html, GOOD, name)
             self.assertIn("meta", codes(html), name)
 
+    def test_bracketed_words_in_description_are_not_placeholders(self):
+        html = re.sub(r'(<meta name="description" content=")[^"]*', r"\g<1>[번역] 문서 [초안]", GOOD)
+        self.assertNotIn("meta", codes(html))
+
     def test_created_must_be_rfc3339(self):
         html = GOOD.replace("2026-10-05T14:12:09+09:00", "yesterday")
         msgs = [i.message for i in check.check_html(html) if i.code == "meta"]

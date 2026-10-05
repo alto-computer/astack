@@ -1,0 +1,12 @@
+/* hand-maintained additions to alto.css (alto.css is re-extracted by tools/extract_kit.py; this file is not) */
+/* p.why: design rationale callout, neutral (no colored body text) */
+p.why{margin:12px 0;padding:10px 14px;background:var(--surface);border-left:3px solid var(--ink);border-radius:0 8px 8px 0}
+p.why b{font-weight:600}
+/* narrow screens: one column that never grows past the viewport */
+.scenes,.scene,.d2,.codes,.cx{min-width:0}
+@media (max-width:900px){
+  .reader,body[data-depth="3"] .reader{grid-template-columns:minmax(0,1fr)!important}
+  code{overflow-wrap:anywhere}
+  .hl pre code{overflow-wrap:normal}
+  table.rv,table.ustab{display:block;max-width:100%;min-width:0!important;overflow-x:auto}
+}

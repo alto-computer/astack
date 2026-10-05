@@ -12,9 +12,15 @@ class KitTest(unittest.TestCase):
         self.assertIn("#e31c5f", css)
 
     def test_css_has_no_external_urls(self):
-        css = (KIT / "alto.css").read_text(encoding="utf-8")
-        self.assertNotIn("http://", css)
-        self.assertNotIn("https://", css)
+        for name in ("alto.css", "alto-ext.css"):
+            css = (KIT / name).read_text(encoding="utf-8")
+            self.assertNotIn("http://", css, name)
+            self.assertNotIn("https://", css, name)
+
+    def test_ext_css_keeps_one_column_inside_narrow_viewports(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        self.assertIn("grid-template-columns:minmax(0,1fr)", css)
+        self.assertIn("p.why{", css)
 
     def test_js_drives_scroll_sync_toc_and_review_filter(self):
         js = (KIT / "reader.js").read_text(encoding="utf-8")

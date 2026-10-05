@@ -26,6 +26,12 @@ class InlineTest(unittest.TestCase):
         self.assertIn(".reader", out)
         self.assertIn("addEventListener('scroll'", out)
 
+    def test_ext_css_follows_kit_css(self):
+        html = GOOD.replace("<style>body{margin:0}</style>", "<!--astack:css-->")
+        out = inline.inline_html(html, self.dir)
+        self.assertIn("p.why{", out)
+        self.assertLess(out.index(".reader{"), out.index("p.why{"))
+
     def test_relative_image_becomes_data_uri(self):
         (self.dir / "a.png").write_bytes(PNG)
         out = inline.inline_html(GOOD.replace("</body>", '<img src="a.png" alt=""></body>'), self.dir)
