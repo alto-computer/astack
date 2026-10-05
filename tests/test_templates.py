@@ -14,7 +14,7 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper", "repo", "quest", "map"} <= names, names)
+        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper", "repo", "quest", "map", "dream"} <= names, names)
 
     def test_atom_skills_respond_only_on_request(self):
         for name in ("interview", "seminar", "paper", "repo"):
@@ -105,6 +105,11 @@ class TemplateTest(unittest.TestCase):
     def test_map_template_has_converge_sections(self):
         html = (ROOT / "skills/map/assets/template.html").read_text(encoding="utf-8")
         for s in ('id="known"', 'id="agree"', 'id="conflict"', 'id="open"', 'id="decided"'):
+            self.assertIn(s, html)
+
+    def test_dream_template_sections(self):
+        html = (ROOT / "skills/dream/assets/template.html").read_text(encoding="utf-8")
+        for s in ('id="themes"', 'id="clash"', 'id="questions"', 'id="review"', 'id="mywords"', 'id="weekly"', 'class="quiz"'):
             self.assertIn(s, html)
 
 
