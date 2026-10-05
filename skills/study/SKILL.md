@@ -18,11 +18,11 @@ description: Use when 사용자가 집중 공부 시간에 이미 있는 이해�
 2. 답한다: 결론 먼저, 근거 등급(확인 / 추론 / 모름), 원문 위치.
 3. 덧붙이기: 원래 파일의 해당 장면 아래 또는 끝의 `<section class="study">`에
    ```html
-   <section class="study" id="q-[날짜]-[n]">
-     <h3 class="st"><span class="no">질문</span><span>[사용자 질문 그대로]</span></h3>
-     <div class="lead"><p>[답 한 줄]</p></div>
-     <div class="d2"><p>[설명]</p></div>
-     <details class="quiz" data-kind="short"><summary>점검 · [질문]</summary><p class="q">[질문]</p><p class="ans">[정답]</p></details>
+   <section class="study" id="q-{{날짜}}-{{n}}">
+     <h3 class="st"><span class="no">질문</span><span>{{사용자 질문 그대로}}</span></h3>
+     <div class="lead"><p>{{답 한 줄}}</p></div>
+     <div class="d2"><p>{{설명}}</p></div>
+     <details class="quiz" data-kind="short"><summary>점검 · {{질문}}</summary><p class="q">{{질문}}</p><p class="ans">{{정답}}</p></details>
    </section>
    ```
 4. 하위 교본이 필요하면 `astack:quest`의 장 템플릿으로 한 장을 만들고 원래 파일에서 링크.

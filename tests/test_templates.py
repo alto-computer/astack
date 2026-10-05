@@ -75,9 +75,10 @@ class TemplateTest(unittest.TestCase):
         self.assertIn('<details class="postit">', html)
         self.assertIn('class="vis" data-v="1"', html)
 
-    def test_paper_and_repo_body_placeholders_are_braces(self):
-        for name in ("paper", "repo"):
-            html = (ROOT / f"skills/{name}/assets/template.html").read_text(encoding="utf-8")
+    def test_body_placeholders_are_braces(self):
+        for name in ("paper/assets/template.html", "repo/assets/template.html", "quest/assets/chapter-template.html",
+                     "quest/assets/map-template.html", "map/assets/template.html"):
+            html = (ROOT / f"skills/{name}").read_text(encoding="utf-8")
             with self.subTest(name=name):
                 body = re.sub(r'<meta name="[^"]+" content="[^"]*">', "", html)
                 self.assertEqual(re.findall(r"\[[^\[\]\n]{1,80}\]", body), [])
