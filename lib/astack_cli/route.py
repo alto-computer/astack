@@ -28,12 +28,15 @@ def route(text: str, cwd: Path | None = None) -> Route:
         if host == "github.com" and len([p for p in u.path.split("/") if p]) >= 2:
             return Route("repo", "GitHub 레포")
         return Route("quest", "일반 링크. 소스 종류를 읽고 판단", True)
-    p = Path(t).expanduser()
-    if not p.is_absolute() and cwd is not None:
-        p = Path(cwd) / p
-    if p.is_file():
-        if p.suffix.lower() == ".pdf":
-            return Route("paper", "PDF 파일")
-        if p.suffix.lower() == ".md" and "specs" in p.parts:
-            return Route("spec", "스펙 문서")
+    try:
+        p = Path(t).expanduser()
+        if not p.is_absolute() and cwd is not None:
+            p = Path(cwd) / p
+        if p.is_file():
+            if p.suffix.lower() == ".pdf":
+                return Route("paper", "PDF 파일")
+            if p.suffix.lower() == ".md" and "specs" in p.parts:
+                return Route("spec", "스펙 문서")
+    except OSError:
+        pass
     return Route("quest", "질문")

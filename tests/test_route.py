@@ -49,6 +49,10 @@ class RouteTest(unittest.TestCase):
     def test_cli_prints_json(self):
         self.assertEqual(cli.main(["route", "https://youtu.be/abc"]), 0)
 
+    def test_long_question_is_quest(self):
+        self.assertEqual(route.route("왜 " * 200).skill, "quest")
+        self.assertEqual(route.route("a" * 300).skill, "quest")
+
 
 if __name__ == "__main__":
     unittest.main()
