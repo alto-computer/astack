@@ -46,18 +46,21 @@ def _consolidate(args) -> int:
 
 
 def _cmd_check(args) -> int:
-    worst = 0
+    worst = errors = warns = 0
     for f in args.files:
         try:
             issues = _check.check_file(f)
         except (OSError, UnicodeDecodeError) as e:
             print(f"{f}: error io: {e}")
-            worst = 2
+            worst, errors = 2, errors + 1
             continue
         for i in issues:
             print(f"{f}: {i.level} {i.code}: {i.message}")
             if i.level == "error":
-                worst = max(worst, 1)
+                worst, errors = max(worst, 1), errors + 1
+            else:
+                warns += 1
+    print(f"check: 파일 {len(args.files)} · 에러 {errors} · 경고 {warns}", file=sys.stderr)
     return worst
 
 
@@ -148,12 +151,17 @@ def _cmd_route(args) -> int:
 
 
 def _cmd_course(args) -> int:
-    worst = 0
-    for name, i in _course.check_course(Path(args.folder)):
+    folder = Path(args.folder)
+    if not folder.is_dir():
+        print(f"astack course: 폴더가 없습니다: {folder}", file=sys.stderr)
+        return 2
+    issues = _course.check_course(folder)
+    for name, i in issues:
         print(f"{name}: {i.level} {i.code}: {i.message}")
-        if i.level == "error":
-            worst = 1
-    return worst
+    e = sum(i.level == "error" for _, i in issues)
+    has_map = int((folder / _course.MAP).is_file())
+    print(f"course: 지도 {has_map} · 장 {len(_course.chapters(folder))} · 에러 {e} · 경고 {len(issues) - e}")
+    return 1 if e else 0
 
 
 def _cmd_dream(args) -> int:
@@ -236,9 +244,10 @@ def build_parser() -> argparse.ArgumentParser:
     ro.add_argument("text")
     ro.set_defaults(fn=_cmd_route)
     co = sub.add_parser("course", help="quest 코스 폴더 검사")
-    co.add_argument("action", choices=["check"])
-    co.add_argument("folder")
-    co.set_defaults(fn=_cmd_course)
+    cs = co.add_subparsers(dest="action", required=True)
+    ck = cs.add_parser("check", help="지도·장·퀴즈·링크 검사", description="지도·장·퀴즈·링크 검사")
+    ck.add_argument("folder")
+    ck.set_defaults(fn=_cmd_course)
     dr = sub.add_parser("dream", help="dream 재료 모으기")
     dr.add_argument("action", choices=["collect"])
     dr.add_argument("--date")
