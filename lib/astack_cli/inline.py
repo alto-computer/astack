@@ -23,9 +23,22 @@ def _kit_dir() -> Path:
 
 def _image(m, base_dir: Path) -> str:
     src = m.group(2)
-    if src.startswith(("data:", "#", "http://", "https://")):
+    # Skip fragment identifiers and common URL schemes
+    if src.startswith(("#",)):
         return m.group(0)
+    # Skip URLs with schemes (data:, http://, https://, file:, etc.)
+    # Check for pattern: [a-zA-Z][a-zA-Z0-9+.-]*:
+    if ":" in src and re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", src):
+        return m.group(0)
+    # Skip absolute paths
+    src_path = Path(src)
+    if src_path.is_absolute():
+        return m.group(0)
+    # Check if path is inside base_dir
+    base_resolved = base_dir.resolve()
     f = (base_dir / src).resolve()
+    if not f.is_relative_to(base_resolved):
+        return m.group(0)  # Outside base_dir, check will flag as external
     if not f.is_file():
         return m.group(0)  # check가 external로 잡는다
     mime = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
@@ -36,7 +49,11 @@ def _image(m, base_dir: Path) -> str:
 def _code(m) -> str:
     attrs, body = m.group(1), m.group(2)
     get = lambda k, d="": (re.search(rf'data-{k}="([^"]*)"', attrs) or [None, d])[1]
-    lang, start, path, who = get("lang", "text"), int(get("start", "1") or 1), get("path"), get("who")
+    lang, path, who = get("lang", "text"), get("path"), get("who")
+    try:
+        start = int(get("start", "1") or 1)
+    except ValueError:
+        start = 1
     code = unescape(body)
     if HAS_PYGMENTS:
         try:

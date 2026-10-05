@@ -47,6 +47,43 @@ class InlineTest(unittest.TestCase):
             self.assertIn('class="linenos"', out)
             self.assertIn(">271<", out)
 
+    def test_parent_directory_image_not_inlined(self):
+        # Create file outside base_dir
+        (self.dir.parent / "secret.png").write_bytes(PNG)
+        html = GOOD.replace("</body>", '<img src="../secret.png" alt=""></body>')
+        out = inline.inline_html(html, self.dir)
+        # Should NOT be converted to data URI
+        self.assertNotIn('src="data:image/png;base64,', out)
+        # Should still have the src attribute
+        self.assertIn('src="../secret.png"', out)
+
+    def test_absolute_path_image_not_inlined(self):
+        # Create file with absolute path
+        (self.dir / "a.png").write_bytes(PNG)
+        abs_path = str((self.dir / "a.png").resolve())
+        html = GOOD.replace("</body>", f'<img src="{abs_path}" alt=""></body>')
+        out = inline.inline_html(html, self.dir)
+        # Should NOT be converted to data URI
+        self.assertNotIn('src="data:image/png;base64,', out)
+        # Should still have the original src
+        self.assertIn(f'src="{abs_path}"', out)
+
+    def test_nested_relative_image_is_inlined(self):
+        # Create nested directory with image
+        (self.dir / "img").mkdir()
+        (self.dir / "img" / "a.png").write_bytes(PNG)
+        html = GOOD.replace("</body>", '<img src="img/a.png" alt=""></body>')
+        out = inline.inline_html(html, self.dir)
+        # Should be converted to data URI
+        self.assertIn('src="data:image/png;base64,', out)
+
+    def test_bad_data_start_falls_back_to_1(self):
+        html = GOOD.replace("</body>", '<pre data-lang="rust" data-start="x" data-path="test.rs" data-who="Author"><code>code</code></pre></body>')
+        out = inline.inline_html(html, self.dir)
+        # Should show path with :1 instead of crashing
+        self.assertIn("test.rs:1", out)
+        self.assertIn('class="cx"', out)
+
 
 if __name__ == "__main__":
     unittest.main()
