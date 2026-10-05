@@ -99,9 +99,22 @@ def lock():
         lf.unlink(missing_ok=True)
 
 
-def read_lines() -> list[str]:
+def _split(data: bytes) -> list[str]:
+    # "\n"으로만 자른다. splitlines()는 U+2028 같은 문자에서도 잘라 기록을 깨뜨린다
+    parts = data.decode("utf-8", "replace").split("\n")
+    if parts and parts[-1] == "":
+        parts.pop()
+    return parts
+
+
+def _snapshot() -> tuple[bytes, list[str]]:
     f = paths.memory_file()
-    return f.read_text(encoding="utf-8").splitlines() if f.exists() else []
+    data = f.read_bytes() if f.exists() else b""
+    return data, _split(data)
+
+
+def read_lines() -> list[str]:
+    return _snapshot()[1]
 
 
 def parse(lines: list[str]) -> list[dict]:
@@ -116,24 +129,38 @@ def parse(lines: list[str]) -> list[dict]:
     return out
 
 
+def _write_atomic(target: Path, data: bytes) -> None:
+    tmp = target.with_name(target.name + ".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, target)
+
+
+def _tail(since_size: int) -> bytes:
+    f = paths.memory_file()
+    if not f.exists():
+        return b""
+    with open(f, "rb") as cur:
+        cur.seek(since_size)
+        return cur.read()  # 읽은 뒤에 add로 붙은 줄
+
+
 def archive(today: datetime.date) -> Path:
     d = paths.archive_dir()
     d.mkdir(parents=True, exist_ok=True)
     a = d / f"{today.isoformat()}.jsonl"
     if not a.exists() and paths.memory_file().exists():
-        shutil.copyfile(paths.memory_file(), a)
+        _write_atomic(a, paths.memory_file().read_bytes())
     return a
 
 
 def replace_lines(lines: list[str], since_size: int) -> None:
-    f = paths.memory_file()
-    tmp = f.with_name(f.name + ".tmp")
-    body = "".join(l + "\n" for l in lines)
-    with open(f, "rb") as cur:
-        cur.seek(since_size)
-        tail = cur.read().decode("utf-8", "ignore")  # 읽은 뒤에 add로 붙은 줄
-    tmp.write_text(body + tail, encoding="utf-8")
-    os.replace(tmp, f)
+    body = "".join(l + "\n" for l in lines).encode("utf-8")
+    _write_atomic(paths.memory_file(), body + _tail(since_size))
 
 
 def _dump(r: dict) -> str:
@@ -146,8 +173,8 @@ def prune(key: str | None = None, type_: str | None = None, before: str | None =
     today = today or datetime.date.today()
     with lock():
         f = paths.memory_file()
-        size = f.stat().st_size if f.exists() else 0
-        lines = read_lines()
+        data, lines = _snapshot()
+        size = len(data)
         archive(today)
         keep, removed = [], 0
         for line in lines:
@@ -170,14 +197,16 @@ def prune(key: str | None = None, type_: str | None = None, before: str | None =
 
 
 def restore(date: str, today=None) -> Path:
+    datetime.date.fromisoformat(date)  # archive 밖으로 못 나가게
     a = paths.archive_dir() / f"{date}.jsonl"
     if not a.exists():
         raise FileNotFoundError(f"archive가 없습니다: {a}")
     today = today or datetime.date.today()
     with lock():
-        if today.isoformat() != date:
-            archive(today)
-        tmp = paths.memory_file().with_name("memory.jsonl.tmp")
-        shutil.copyfile(a, tmp)
-        os.replace(tmp, paths.memory_file())
+        data, _ = _snapshot()
+        if data:  # 현재 상태의 유일한 사본을 잃지 않게 늘 안전 사본을 남긴다
+            stamp = datetime.datetime.now().strftime("%H%M%S")
+            paths.archive_dir().mkdir(parents=True, exist_ok=True)
+            _write_atomic(paths.archive_dir() / f"{today.isoformat()}.pre-restore-{stamp}.jsonl", data)
+        _write_atomic(paths.memory_file(), a.read_bytes() + _tail(len(data)))
     return a

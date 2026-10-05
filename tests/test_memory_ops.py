@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -68,6 +69,65 @@ class PruneTest(MemoryOpsBase):
         self.write(rec(key="a"), rec(key="b"))
         memory.archive(D)
         self.assertEqual(len((paths.archive_dir() / "2026-10-05.jsonl").read_text().splitlines()), 1)
+
+
+class SafetyTest(MemoryOpsBase):
+    def test_unicode_line_separator_survives_prune(self):
+        sep = "a\u2028b\u0085c\x1cd"
+        self.write(rec(key="gone"), rec(key="keep", insight=sep))
+        self.assertEqual(memory.prune(key="gone", today=D), 1)
+        recs = memory.parse(memory.read_lines())
+        self.assertEqual([r["key"] for r in recs], ["keep"])
+        self.assertEqual(recs[0]["insight"], sep)
+
+    def test_restore_leaves_pre_restore_copy(self):
+        self.write(rec(key="a"), rec(key="b"))
+        memory.prune(key="a", today=D)
+        with open(paths.memory_file(), "a", encoding="utf-8") as f:
+            f.write(rec(key="added") + "\n")
+        memory.restore("2026-10-05", today=D)
+        pre = list(paths.archive_dir().glob("2026-10-05.pre-restore-*.jsonl"))
+        self.assertEqual(len(pre), 1)
+        self.assertIn('"added"', pre[0].read_text())
+
+    def test_restore_keeps_appended_tail(self):
+        self.write(rec(key="a"))
+        memory.archive(D)
+        orig = memory._tail
+        calls = []
+
+        def spy(size):
+            if not calls:  # 스냅샷과 교체 사이에 add가 끼어든 상황
+                with open(paths.memory_file(), "a", encoding="utf-8") as f:
+                    f.write(rec(key="late") + "\n")
+                calls.append(1)
+            return orig(size)
+
+        memory._tail = spy
+        try:
+            memory.restore("2026-10-05", today=D)
+        finally:
+            memory._tail = orig
+        keys = [r["key"] for r in memory.parse(memory.read_lines())]
+        self.assertEqual(keys, ["a", "late"])
+
+    def test_archive_is_atomic_no_tmp_left(self):
+        self.write(rec())
+        a = memory.archive(D)
+        self.assertFalse(a.with_name(a.name + ".tmp").exists())
+
+    def test_files_are_0600(self):
+        self.write(rec(key="a"), rec(key="b"))
+        memory.prune(key="a", today=D)
+        self.assertEqual(stat.S_IMODE(paths.memory_file().stat().st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE((paths.archive_dir() / "2026-10-05.jsonl").stat().st_mode), 0o600)
+        memory.restore("2026-10-05", today=D)
+        self.assertEqual(stat.S_IMODE(paths.memory_file().stat().st_mode), 0o600)
+
+    def test_restore_rejects_bad_date(self):
+        for bad in ("../memory", "x", "2026-13-01"):
+            with self.assertRaises(ValueError):
+                memory.restore(bad, today=D)
 
 
 class LockTest(MemoryOpsBase):
