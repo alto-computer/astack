@@ -6,6 +6,7 @@ from pathlib import Path
 from . import check as _check
 from . import done as _done
 from . import inline as _inline
+from . import media as _media
 from . import memory
 from . import recall as _recall
 
@@ -67,6 +68,21 @@ def _cmd_recall(args) -> int:
     return 0
 
 
+def _cmd_transcript(args) -> int:
+    try:
+        t = _media.transcript(args.url, lang=args.lang)
+    except _media.MediaError as e:
+        print(f"astack transcript: {e}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps({**t, "lines": [[s, l] for s, l in t["lines"]]}, ensure_ascii=False))
+        return 0
+    print(f"# {t['title']}\n# {t['channel']} · {t['upload_date']} · {t['duration']}s\n# {t['url']}\n# thumbnail {t['thumbnail']}")
+    for s, line in t["lines"]:
+        print(f"[{_media.fmt_ts(s)}] {line}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -94,6 +110,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--now", action="store_true")
     r.add_argument("--json", action="store_true")
     r.set_defaults(fn=_cmd_recall)
+    t = sub.add_parser("transcript", help="영상 자막과 메타데이터 (yt-dlp)")
+    t.add_argument("url")
+    t.add_argument("--lang", default="en")
+    t.add_argument("--json", action="store_true")
+    t.set_defaults(fn=_cmd_transcript)
     return p
 
 
