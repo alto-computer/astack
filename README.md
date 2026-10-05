@@ -27,10 +27,16 @@ Then add `recipes/claude/CLAUDE.md.snippet` to `~/.claude/CLAUDE.md`.
 | `spec` | A spec or design doc | What it builds, flows, decisions to review |
 | `change` | A task's commits or a PR | What changed and what to check |
 | `recall` | A topic or "now" | One thing to read now |
+| `interview` | A podcast or interview video | A magazine that keeps the full conversation |
+| `seminar` | A slide talk video | A report where slides follow your scroll |
+| `paper` | A paper PDF or arXiv link | A lossless reader with every figure |
+| `repo` | A GitHub repo | Structure, core loop, clever parts, why, weak spots |
 
 ## CLI
 
-`astack check | inline | done | memory | recall`
+`astack check | inline | done | memory | recall | transcript | slides | pdf`
+
+Needs yt-dlp and ffmpeg (brew). PDF tools need macOS.
 
 Run `astack <command> -h` for details.
 

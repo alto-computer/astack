@@ -41,6 +41,10 @@ description: Use when any astack skill is about to write an understanding HTML. 
 | evidence-tiers | 사실 주장 | 확인 / 추론 / 모름. 코드는 의도의 증거가 아니다 |
 | review-after-flow | 가정·결정 | 흐름을 보여준 뒤에 리뷰 표 |
 | anchor-to-source | 모든 주장 | 원문 위치로 바로 갈 수 있게 |
+| convert-not-summarize | 모든 원자 | 정보량은 그대로, 형식만 바꾼다. "요약해줘"여도 변환 |
+| speaker-first | interview, seminar | 화자의 논지·순서·강조가 주인공. 내 해설은 따로 |
+| lossless-gate | paper | figure·table·수치 개수를 원문과 대조해야 끝난다 |
+| build-up-diagrams | 부품 3개 이상 | 한 장에 다 그리지 말고 하나씩 쌓는다 |
 
 ## 시작할 때
 - `astack memory search skill:<이 스킬 이름>`으로 교정 기록을 읽는다.

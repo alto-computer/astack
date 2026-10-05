@@ -3,3 +3,7 @@ __pycache__/
 .superpowers/
 docs/superpowers/specs/references/interview-reference-magazine.html
 docs/superpowers/specs/references/seminar-reference-report.html
+docs/astack/interview/
+docs/astack/seminar/
+docs/astack/paper/
+docs/astack/repo/
