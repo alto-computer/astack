@@ -26,6 +26,7 @@ description: Use when any astack skill is about to write an understanding HTML. 
 
 ## 시각화
 - 2단: 본문 | 그림. 그림은 스크롤에 맞춰 장면마다 바뀐다. 문서는 한 가지 모습뿐.
+- 좁은 화면은 `.stage`를 숨긴다. 장면마다 `.inl.vis-inl` 사본을 두고, 사본의 SVG id에 접두사를 붙인다.
 - 그림에는 관심사 색. 본문 글자에는 색 없음(굵게만).
 - 실선 = 우리가 만드는 것, 점선 = 바깥, 빨간 실 = 지금 단계.
 - 흐름은 관심사 레인의 시퀀스 그림. 에러는 실패 지점부터 빨간 점선.

@@ -138,6 +138,12 @@ def check_html(html: str) -> list[Issue]:
         issues.append(Issue("error", "placeholder", f"채우지 않은 자리표시: {m.group(0)}"))
     if CODE_SLOT in html:
         issues.append(Issue("error", "placeholder", f"채우지 않은 코드 자리: {CODE_SLOT}"))
+    seen: dict[str, int] = {}
+    for v in re.findall(r"""\bid=["']([^"']+)["']""", ph):
+        seen[v] = seen.get(v, 0) + 1
+    for v, n in seen.items():
+        if n > 1:
+            issues.append(Issue("warn", "dup-id", f"중복 id: {v} (그림 사본이면 접두사)"))
 
     text = prose_text(SOURCE_EL.sub(" ", html))
     for p in SLOP:

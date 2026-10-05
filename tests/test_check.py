@@ -180,6 +180,18 @@ class CheckTest(unittest.TestCase):
         html = GOOD.replace("</body>", '<pre data-lang="auto"><code>{{실제 코드}}</code></pre></body>')
         self.assertIn("placeholder", codes(html))
 
+    def test_duplicate_id_warns(self):
+        svg = '<svg><defs><marker id="ah"></marker></defs></svg>'
+        html = GOOD.replace("</body>", svg + svg + "</body>")
+        self.assertIn("dup-id", codes(html, "warn"))
+        self.assertNotIn("dup-id", codes(html))
+        msgs = [i.message for i in check.check_html(html) if i.code == "dup-id"]
+        self.assertEqual(msgs, ["중복 id: ah (그림 사본이면 접두사)"])
+
+    def test_ids_in_code_and_comments_are_not_duplicates(self):
+        html = GOOD.replace("</body>", '<p id="x">a</p><pre><code>&lt;p id="x"&gt;</code></pre><code>id="x"</code><!-- id="x" --></body>')
+        self.assertNotIn("dup-id", codes(html, "warn"))
+
     def test_question_and_jyo_endings_split_sentences(self):
         half = "이 " * 20
         html = GOOD.replace("<p>바뀐 곳은 두 군데다.</p>", f"<p>{half}붙죠. 그렇다면 {half}할까요? 그래서 {half}끝.</p>")

@@ -108,6 +108,13 @@ class TemplateTest(unittest.TestCase):
         self.assertIn('href="00-지도.html"', html)
         self.assertIn("그래서 나한테는?", html)
 
+    def test_quest_chapter_scenes_have_mobile_figure_slot(self):
+        html = (ROOT / "skills/quest/assets/chapter-template.html").read_text(encoding="utf-8")
+        scenes = re.findall(r'<section class="scene.*?</section>', html, re.S)
+        self.assertTrue(scenes)
+        for sc in scenes:
+            self.assertIn("inl vis-inl", sc)
+
     def test_map_template_has_converge_sections(self):
         html = (ROOT / "skills/map/assets/template.html").read_text(encoding="utf-8")
         for s in ('id="known"', 'id="agree"', 'id="conflict"', 'id="open"', 'id="decided"'):
