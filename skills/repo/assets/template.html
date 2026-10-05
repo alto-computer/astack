@@ -1,0 +1,78 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="description" content="[이 레포가 무엇이고 어디가 영리한지 한 줄]">
+<meta name="rooms:created" content="[RFC3339 지금 시각]">
+<meta name="rooms:machine" content="[머신 이름]">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[owner/repo] 레포 읽기</title>
+<!--astack:css-->
+</head><body data-depth="all">
+<div class="top"><div class="top-in"><span class="mark">[owner/repo] <span>repo</span></span><span class="where" id="where"></span><span class="sp"></span></div><div class="prog" id="prog"></div></div>
+<nav class="toc" aria-label="목차">
+  <a href="#r0" data-sec="r0"><i></i><span>0 · Overview</span></a>
+  <a href="#r1" data-sec="r1"><i></i><span>1 · 아키텍처</span></a>
+  <a href="#r2" data-sec="r2"><i></i><span>2 · 핵심 루프</span></a>
+  <a href="#r3" data-sec="r3"><i></i><span>3 · 데이터 흐름</span></a>
+  <a href="#r4" data-sec="r4"><i></i><span>4 · 영리한 부분과 왜</span></a>
+  <a href="#r5" data-sec="r5"><i></i><span>5 · 약점</span></a>
+</nav>
+<div class="wrap">
+<header class="cover" id="r0" data-astack="30s">
+  <div class="kick">Repo · [owner/repo]</div>
+  <h1>[이 레포가 하는 일 한 문장]</h1>
+  <div class="meta">repo · [커밋 해시 7자리] · [읽는 시간]분</div>
+  <p class="l30">[무엇을, 어떤 구조로, 어디가 영리한지 두 줄]</p>
+  <div class="legend">실선 = 이 레포의 코드 · 점선 = 바깥(사용자, 외부 API, OS) · 빨간 실 = 지금 보는 단계</div>
+</header>
+<section class="overview" data-astack="3m">
+  <div><div class="kick">3분 · 큰 그림</div><p>[주요 부품과 그 사이 흐름 두세 줄]</p></div>
+  <div>[부품 지도 SVG]</div>
+</section>
+
+<div class="reader"><div class="scenes">
+  <div class="secHead" id="r1"><div class="n">§1</div><h2>아키텍처와 폴더 구조</h2></div>
+  <section class="scene lvl2" id="arch" data-i="1" data-sec="r1">
+    <h3 class="st"><span class="no">1.1</span><span>[부품: 무엇을 맡나]</span></h3>
+    <div class="lead"><p>[폴더 → 부품 대응 한 줄]</p></div>
+    <div class="d2"><pre class="tree">[실제 폴더 트리, 중요한 것만]</pre></div>
+  </section>
+
+  <div class="secHead" id="r2"><div class="n">§2</div><h2>핵심 루프</h2></div>
+  <section class="scene lvl2" id="loop" data-i="2" data-sec="r2">
+    <h3 class="st"><span class="no">2.1</span><span>[루프 한 바퀴: 입력 → 처리 → 출력]</span></h3>
+    <div class="lead"><p>[한 바퀴에 무슨 일이 일어나나]</p></div>
+    <div class="d2"><p class="why"><b>왜 이렇게 만들었나.</b> [이유] <span class="ev ev-ok">확인</span> [커밋·PR·이슈 링크]</p></div>
+    <div class="codes"><pre data-lang="ts" data-start="1" data-path="[파일]" data-who="[부품]"><code>[실제 코드]</code></pre></div>
+  </section>
+
+  <div class="secHead" id="r3"><div class="n">§3</div><h2>데이터 흐름</h2></div>
+  <section class="scene lvl2" id="flow1" data-i="3" data-sec="r3">
+    <h3 class="st"><span class="no">3.1</span><span>[사용자가 X를 하면]</span></h3>
+    <div class="lead"><p>[누가, 언제, 무엇을 넘기나]</p></div>
+    <div class="codes"><pre data-lang="ts" data-start="1" data-path="[파일]" data-who="[부품]"><code>[실제 코드]</code></pre></div>
+  </section>
+
+  <div class="secHead" id="r4"><div class="n">§4</div><h2>영리한 부분과 왜</h2></div>
+  <section class="scene lvl2" id="clever1" data-i="4" data-sec="r4">
+    <h3 class="st"><span class="no">4.1</span><span>[영리한 부분]</span></h3>
+    <div class="lead"><p>[무엇이 영리한가, 보통은 어떻게 하나]</p></div>
+    <div class="d2"><p class="why"><b>왜.</b> [의도] <span class="ev ev-mid">추론</span> [근거: 커밋 메시지·PR 설명·이슈. 코드는 동작의 증거이지 의도의 증거가 아니다]</p>
+      <p class="why"><b>모름.</b> <span class="ev ev-bad">모름</span> [근거를 못 찾은 것]</p></div>
+    <div class="codes"><pre data-lang="ts" data-start="1" data-path="[파일]" data-who="[부품]"><code>[실제 코드]</code></pre></div>
+  </section>
+
+  <div class="secHead" id="r5"><div class="n">§5</div><h2>약점과 내 일에 쓰면</h2></div>
+  <section class="scene lvl2" id="weak1" data-i="5" data-sec="r5">
+    <h3 class="st"><span class="no">5.1</span><span>[약점: 언제 깨지나]</span></h3>
+    <div class="lead"><p>[조건과 결과. 이슈 링크]</p></div>
+  </section>
+</div><aside class="stage">
+  <div class="vis" data-v="1">[부품 관계 SVG]</div>
+  <div class="vis" data-v="2">[루프 시퀀스 SVG]</div>
+  <div class="vis" data-v="3">[흐름 시퀀스 SVG]</div>
+  <div class="vis" data-v="4">[영리한 부분 전후 비교 SVG]</div>
+  <div class="vis" data-v="5"></div>
+</aside></div>
+<footer data-astack="source">원문 [레포 URL @ 커밋] · 요청 "[요청 원문]" · Claude Code가 썼습니다</footer>
+</div>
+<!--astack:js-->
+</body></html>

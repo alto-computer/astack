@@ -16,3 +16,4 @@ details.postit>summary{list-style:none;cursor:pointer;font-size:12px;color:var(-
 details.postit>summary::-webkit-details-marker{display:none}
 details.postit[open]{display:block;margin:10px 0;padding:12px 14px;background:#fff8c5;border-radius:10px}
 details.postit[open]>summary{margin-bottom:6px}
+pre.tree{font-family:var(--mono);font-size:13px;line-height:1.6;background:var(--surface);border-radius:10px;padding:10px 12px;overflow-x:auto;margin:0}
