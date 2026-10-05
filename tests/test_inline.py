@@ -101,6 +101,10 @@ class InlineTest(unittest.TestCase):
         out = inline.inline_html(GOOD.replace("</body>", '<section class="scene" data-img="s1.png"></section></body>'), self.dir)
         self.assertIn('data-img="data:image/png;base64,', out)
 
+    def test_js_marker_includes_quiz(self):
+        out = inline.inline_html(GOOD.replace("</body>", "<!--astack:js--></body>"), self.dir)
+        self.assertIn("details.quiz", out)
+
 
 if __name__ == "__main__":
     unittest.main()

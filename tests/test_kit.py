@@ -31,6 +31,17 @@ class KitTest(unittest.TestCase):
         css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
         self.assertIn("details.postit", css)
 
+    def test_quiz_js_grades_and_has_no_storage(self):
+        js = (KIT / "quiz.js").read_text(encoding="utf-8")
+        for s in ["details.quiz", "data-ok", "data-why", ".verdict"]:
+            self.assertIn(s, js, s)
+        for banned in ["localStorage", "sessionStorage", "indexedDB", "fetch("]:
+            self.assertNotIn(banned, js, banned)
+
+    def test_ext_css_styles_quiz(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        self.assertIn("details.quiz", css)
+
 
 if __name__ == "__main__":
     unittest.main()

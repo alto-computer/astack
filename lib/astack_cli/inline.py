@@ -77,6 +77,9 @@ def inline_html(html: str, base_dir: Path, kit_dir: Path | None = None) -> str:
     if ext.exists():
         css += "\n" + ext.read_text(encoding="utf-8")
     js = (kit / "reader.js").read_text(encoding="utf-8")
+    quiz = kit / "quiz.js"
+    if quiz.exists():
+        js += "\n" + quiz.read_text(encoding="utf-8")
     html = html.replace("<!--astack:css-->", f"<style>{css}</style>")
     html = html.replace("<!--astack:js-->", f"<script>{js}</script>")
     html = re.sub(r"""(<img\b[^>]*\bsrc=)["']([^"']+)["']""", lambda m: _image(m, base_dir), html, flags=re.I)

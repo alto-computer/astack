@@ -17,3 +17,15 @@ details.postit>summary::-webkit-details-marker{display:none}
 details.postit[open]{display:block;margin:10px 0;padding:12px 14px;background:#fff8c5;border-radius:10px}
 details.postit[open]>summary{margin-bottom:6px}
 pre.tree{font-family:var(--mono);font-size:13px;line-height:1.6;background:var(--surface);border-radius:10px;padding:10px 12px;overflow-x:auto;margin:0}
+/* 점검 퀴즈 */
+details.quiz{margin:18px 0;border:1px solid var(--hairline);border-radius:12px;padding:10px 14px;background:var(--canvas)}
+details.quiz>summary{cursor:pointer;font-size:14px;color:var(--ink-2)}
+details.quiz[open]>summary{margin-bottom:8px}
+details.quiz .q{font-weight:500;margin:0 0 8px}
+details.quiz .opts{margin:0;padding-left:22px;display:grid;gap:6px}
+details.quiz .opts li{cursor:pointer;border-radius:8px;padding:4px 8px}
+details.quiz .opts li:hover,details.quiz .opts li:focus-visible{background:var(--surface)}
+details.quiz .opts li.ok{background:#e7f5ec}
+details.quiz .opts li.no{background:var(--accent-soft)}
+details.quiz .verdict{margin:8px 0 0;font-size:14px}
+details.quiz .ans{margin:8px 0 0;padding:8px 12px;background:var(--surface);border-radius:8px}
