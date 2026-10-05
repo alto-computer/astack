@@ -1,8 +1,10 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from . import check as _check
+from . import done as _done
 from . import inline as _inline
 from . import memory
 
@@ -38,6 +40,15 @@ def _cmd_inline(args) -> int:
     return 0
 
 
+def _cmd_done(args) -> int:
+    code, notes = _done.done(args.file, args.skill, room=args.room, force=args.force)
+    for n in notes:
+        print(n, file=sys.stderr)
+    if code == 0:
+        print(Path(args.file).resolve())
+    return code
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -51,6 +62,12 @@ def build_parser() -> argparse.ArgumentParser:
     i = sub.add_parser("inline", help="키트 CSS/JS, 이미지, 코드 강조를 HTML 안에 넣는다")
     i.add_argument("files", nargs="+")
     i.set_defaults(fn=_cmd_inline)
+    d = sub.add_parser("done", help="검사 후 outputs.log에 기록하고 rooms link를 부른다")
+    d.add_argument("file")
+    d.add_argument("--skill", required=True)
+    d.add_argument("--room")
+    d.add_argument("--force", action="store_true")
+    d.set_defaults(fn=_cmd_done)
     return p
 
 
