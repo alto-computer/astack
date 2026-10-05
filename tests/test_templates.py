@@ -14,7 +14,15 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change", "recall"} <= names, names)
+        self.assertTrue({"spec", "change", "recall", "interview"} <= names, names)
+
+    def test_atom_skills_respond_only_on_request(self):
+        for name in ("interview", "seminar", "paper", "repo"):
+            p = ROOT / f"skills/{name}/SKILL.md"
+            if not p.exists():
+                continue
+            front = p.read_text(encoding="utf-8").split("---", 2)[1]
+            self.assertIn("요청할 때", front, name)
 
     def test_raw_template_fails_with_meta_placeholders(self):
         for t in TEMPLATES:
