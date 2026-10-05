@@ -1,0 +1,8 @@
+{
+  "name": "astack",
+  "description": "에이전트가 Alto의 방식대로 사람이 읽는 이해물(HTML)을 만들게 하는 스킬 묶음",
+  "version": "0.1.0",
+  "author": { "name": "Junseon Yoon", "email": "wnstjsy@gmail.com" },
+  "license": "MIT",
+  "keywords": ["understanding", "html", "spec", "review"]
+}
