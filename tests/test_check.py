@@ -63,6 +63,77 @@ class CheckTest(unittest.TestCase):
         self.assertIn("보인다", text)
         self.assertNotIn("숨김", text)
 
+    def test_meta_outside_64kb_has_64kb_message(self):
+        # Meta present but after 64KB should say "밖에 있습니다" with "64KB"
+        big = "<style>" + ("a{}" * 30000) + "</style>"
+        html = GOOD.replace('<meta charset="utf-8">', '<meta charset="utf-8">' + big)
+        msgs = [i.message for i in check.check_html(html) if i.code == "meta"]
+        self.assertTrue(any("밖에 있습니다" in m and "64KB" in m for m in msgs), msgs)
+
+    def test_missing_meta_has_no_64kb_message(self):
+        # Meta truly absent should say "없습니다" without "64KB" in that part
+        html = GOOD.replace('<meta name="description" content="Rooms가 메타를 앞 64KB에서만 읽는 이유">', "")
+        msgs = [i.message for i in check.check_html(html) if i.code == "meta"]
+        self.assertTrue(any("없습니다" in m for m in msgs), msgs)
+        self.assertFalse(any("64KB" in m for m in msgs if "없습니다" in m),
+                        "Missing meta message should not mention 64KB")
+
+    def test_many_short_list_items_no_long_warning(self):
+        # Many short <li> items should not trigger long-sentence warning
+        html = GOOD.replace("<section data-astack=\"3m\"><p>바뀐 곳은 두 군데다.</p>",
+                           "<section data-astack=\"3m\"><ul><li>항목1</li><li>항목2</li>" +
+                           ("<li>항목</li>" * 20) + "</ul>")
+        warns = codes(html, "warn")
+        self.assertNotIn("long", warns, f"Should not warn on list items: {warns}")
+
+    def test_genuinely_long_sentence_still_warns(self):
+        # One genuinely long sentence should still warn
+        html = GOOD.replace("<p>바뀐 곳은 두 군데다.</p>",
+                           "<p>" + "단어 " * 30 + "긴 문장.</p>")
+        warns = codes(html, "warn")
+        self.assertIn("long", warns)
+
+    def test_svg_title_does_not_count(self):
+        # <title> inside <svg> should not trigger error
+        html = GOOD.replace("</body>", '<svg><title>다이어그램</title></svg></body>')
+        self.assertNotIn("title", codes(html), "SVG title should not count")
+
+    def test_raw_title_in_body_still_errors(self):
+        # A real <title> tag in body should still error
+        html = GOOD.replace("</body>", '<title>이건 에러</title></body>')
+        self.assertIn("title", codes(html))
+
+    def test_meta_content_with_apostrophe(self):
+        # Meta content with apostrophe should be read correctly
+        html = GOOD.replace('content="Rooms가 메타를 앞 64KB에서만 읽는 이유"',
+                           'content="It\'s working"')
+        issues = [i for i in check.check_html(html) if i.code == "meta"]
+        # Should not report empty content
+        self.assertFalse(any("비었습니다" in i.message for i in issues))
+
+    def test_meta_content_with_escaped_quotes(self):
+        # Meta content with escaped quotes should work
+        html = GOOD.replace('content="Rooms가 메타를 앞 64KB에서만 읽는 이유"',
+                           'content="He said \\"hello\\""')
+        issues = [i for i in check.check_html(html) if i.code == "meta"]
+        # Should not report empty content
+        self.assertFalse(any("비었습니다" in i.message for i in issues))
+
+    def test_url_in_code_no_error(self):
+        # url() inside <code> should not trigger external error
+        html = GOOD.replace("</body>", '<code>background: url(image.png)</code></body>')
+        self.assertNotIn("external", codes(html), "url() in code should not error")
+
+    def test_url_in_pre_no_error(self):
+        # url() inside <pre> should not trigger external error
+        html = GOOD.replace("</body>", '<pre>background: url(image.png)</pre></body>')
+        self.assertNotIn("external", codes(html), "url() in pre should not error")
+
+    def test_url_in_style_attribute_still_errors(self):
+        # url() in style attribute should still trigger error
+        html = GOOD.replace("</body>", '<div style="background: url(image.png)"></div></body>')
+        self.assertIn("external", codes(html), "url() in style attribute should error")
+
 
 if __name__ == "__main__":
     unittest.main()
