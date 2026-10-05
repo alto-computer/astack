@@ -240,6 +240,40 @@ class ConsolidateTest(MemoryOpsBase):
             memory.replace_lines = real
         self.assertIn(("correction", "late"), self.keys())
 
+    def test_second_consolidate_same_day_archives_snapshot(self):
+        self.write(rec(key="a"))
+        memory.consolidate(today=D)
+        with open(paths.memory_file(), "a", encoding="utf-8") as f:
+            f.write("{broken\n")
+        memory.consolidate(today=D)
+        texts = [p.read_text() for p in paths.archive_dir().glob("2026-10-05*.jsonl")]
+        self.assertTrue(any("{broken" in t for t in texts))
+
+    def test_unreadable_records_pass_through(self):
+        a = rec(insight=["x"])
+        b = json.dumps({"type": "taste", "insight": "no key", "source": "observed", "date": "2020-01-01"})
+        c = rec(type="taste", key="k", source="observed", date="2026-10-01", confidence="0.5")
+        self.write(a, b, c)
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["kept_unreadable"], 2)
+        out = memory.parse(memory.read_lines())
+        self.assertEqual(len(out), 3)
+        self.assertIn({"type": "taste", "key": "k", "insight": "x", "source": "observed", "date": "2026-10-01",
+                       "host": "h", "confidence": "0.5"}, out)
+
+    def test_records_missing_insight_are_not_deduped(self):
+        a = json.dumps({"type": "taste", "key": "k", "source": "told", "date": "2026-10-01", "n": 1})
+        b = json.dumps({"type": "taste", "key": "k", "source": "told", "date": "2026-10-01", "n": 2})
+        self.write(a, b)
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["merged"], 0)
+        self.assertEqual(len(memory.parse(memory.read_lines())), 2)
+
+    def test_blank_lines_not_counted(self):
+        self.write(rec(), "", "   ")
+        rep = memory.consolidate(today=D, dry_run=True)
+        self.assertEqual((rep["before"], rep["broken"]), (1, 0))
+
     def test_cli_consolidate_prints_report(self):
         self.write(rec())
         self.assertEqual(cli.main(["memory", "consolidate", "--dry-run"]), 0)

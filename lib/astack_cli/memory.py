@@ -158,6 +158,20 @@ def archive(today: datetime.date) -> Path:
     return a
 
 
+def snapshot_archive(today: datetime.date, data: bytes) -> Path | None:
+    """덮어쓰기 직전 스냅샷 바이트를 그대로 남긴다. 같은 날 두 번째부터는 시각이 붙은 새 파일."""
+    if not data:
+        return None
+    d = paths.archive_dir()
+    d.mkdir(parents=True, exist_ok=True)
+    a = d / f"{today.isoformat()}.jsonl"
+    while a.exists():
+        stamp = datetime.datetime.now().strftime("%H%M%S%f")
+        a = d / f"{today.isoformat()}.{stamp}.jsonl"
+    _write_atomic(a, data)
+    return a
+
+
 def replace_lines(lines: list[str], since_size: int) -> None:
     body = "".join(l + "\n" for l in lines).encode("utf-8")
     _write_atomic(paths.memory_file(), body + _tail(since_size))
@@ -175,7 +189,7 @@ def prune(key: str | None = None, type_: str | None = None, before: str | None =
         f = paths.memory_file()
         data, lines = _snapshot()
         size = len(data)
-        archive(today)
+        snapshot_archive(today, data)
         keep, removed = [], 0
         for line in lines:
             try:
@@ -212,8 +226,18 @@ def restore(date: str, today=None) -> Path:
     return a
 
 
+def _num(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _plain(r: dict) -> bool:
+    return all(isinstance(r.get(k), str) and r.get(k) for k in REQUIRED)
+
+
 def _decay(r: dict, today: datetime.date) -> dict:
     c0 = r.get("confidence0", r.get("confidence", 0.5))
+    if not _num(c0) or ("confidence" in r and not _num(r["confidence"])):
+        return r
     try:
         age = (today - datetime.date.fromisoformat(str(r.get("date", ""))[:10])).days
     except ValueError:
@@ -226,9 +250,13 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
     with lock():
         data, lines = _snapshot()
         size = len(data)
+        lines = [l for l in lines if l.strip()]
         recs = parse(lines)
-        rep = {"before": len(lines), "after": 0, "merged": 0, "superseded": [], "decayed": [], "dropped": [],
-               "promoted": [], "patch_suggestions": [], "broken": len([l for l in lines if l.strip()]) - len(recs)}
+        rep = {"before": len(lines), "after": 0, "kept_unreadable": 0, "merged": 0, "superseded": [], "decayed": [], "dropped": [],
+               "promoted": [], "patch_suggestions": [], "broken": len(lines) - len(recs)}
+        odd = [r for r in recs if not _plain(r)]
+        rep["kept_unreadable"] = len(odd)
+        recs = [r for r in recs if _plain(r)]
         latest: dict[tuple, dict] = {}
         for r in recs:
             k = (r.get("type"), r.get("key"), r.get("insight"), r.get("source"))
@@ -249,6 +277,9 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
                     rep["superseded"].append(r["key"])
                     continue
                 d = _decay(r, today)
+                if d is r:
+                    out.append(r)
+                    continue
                 if d["confidence"] < 0.2:
                     rep["dropped"].append(r["key"])
                     continue
@@ -272,8 +303,9 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
             out.append({"type": "preference", "key": key, "insight": "규칙: " + " / ".join(r["insight"] for r in rs[-3:]),
                         "source": "told", "date": today.isoformat(), "host": paths.host(), "promoted_from": len(rs)})
             rep["promoted"].append(key)
+        out += odd
         rep["after"] = len(out)
         if not dry_run:
-            archive(today)
+            snapshot_archive(today, data)
             replace_lines([_dump(r) for r in out], size)
         return rep
