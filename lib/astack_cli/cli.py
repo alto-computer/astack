@@ -8,6 +8,7 @@ from . import check as _check
 from . import course as _course
 from . import done as _done
 from . import dream as _dream
+from . import feed as _feed
 from . import inline as _inline
 from . import media as _media
 from . import memory
@@ -165,6 +166,21 @@ def _cmd_dream(args) -> int:
     return 0
 
 
+def _cmd_feed(args) -> int:
+    try:
+        if args.action == "seed":
+            if len(args.rest) != 2:
+                raise ValueError('사용법: astack feed seed "<이름>" <채널 URL>')
+            print("추가함" if _feed.seed(*args.rest) else "이미 있음")
+        else:
+            for c in _feed.candidates(since=args.since, per_channel=args.per_channel):
+                print(json.dumps(c, ensure_ascii=False))
+    except (ValueError, _media.MediaError, memory.InvalidRecord) as e:
+        print(f"astack feed: {e}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -227,6 +243,12 @@ def build_parser() -> argparse.ArgumentParser:
     dr.add_argument("action", choices=["collect"])
     dr.add_argument("--date")
     dr.set_defaults(fn=_cmd_dream)
+    fe = sub.add_parser("feed", help="화이트리스트 채널(seed)과 오늘 후보(candidates)")
+    fe.add_argument("action", choices=["seed", "candidates"])
+    fe.add_argument("rest", nargs="*")
+    fe.add_argument("--since")
+    fe.add_argument("--per-channel", type=int, default=5)
+    fe.set_defaults(fn=_cmd_feed)
     return p
 
 
