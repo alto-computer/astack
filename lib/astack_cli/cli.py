@@ -3,6 +3,7 @@ import json
 import sys
 
 from . import check as _check
+from . import inline as _inline
 from . import memory
 
 
@@ -30,6 +31,13 @@ def _cmd_check(args) -> int:
     return worst
 
 
+def _cmd_inline(args) -> int:
+    for f in args.files:
+        _inline.inline_file(f)
+        print(f)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -40,6 +48,9 @@ def build_parser() -> argparse.ArgumentParser:
     c = sub.add_parser("check", help="이해물 HTML이 출력 계약을 지키는지 검사")
     c.add_argument("files", nargs="+")
     c.set_defaults(fn=_cmd_check)
+    i = sub.add_parser("inline", help="키트 CSS/JS, 이미지, 코드 강조를 HTML 안에 넣는다")
+    i.add_argument("files", nargs="+")
+    i.set_defaults(fn=_cmd_inline)
     return p
 
 

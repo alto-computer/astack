@@ -1,0 +1,67 @@
+import base64
+import mimetypes
+import re
+from html import escape, unescape
+from pathlib import Path
+
+from . import paths
+
+try:
+    from pygments import highlight
+    from pygments.formatters import HtmlFormatter
+    from pygments.lexers import get_lexer_by_name
+    HAS_PYGMENTS = True
+except ImportError:  # 강조 없이도 동작한다
+    HAS_PYGMENTS = False
+
+LANG = {"ts": "typescript", "js": "javascript", "rs": "rust", "py": "python"}
+
+
+def _kit_dir() -> Path:
+    return paths.repo_root() / "skills/design/assets"
+
+
+def _image(m, base_dir: Path) -> str:
+    src = m.group(2)
+    if src.startswith(("data:", "#", "http://", "https://")):
+        return m.group(0)
+    f = (base_dir / src).resolve()
+    if not f.is_file():
+        return m.group(0)  # check가 external로 잡는다
+    mime = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
+    data = base64.b64encode(f.read_bytes()).decode("ascii")
+    return f'{m.group(1)}"data:{mime};base64,{data}"'
+
+
+def _code(m) -> str:
+    attrs, body = m.group(1), m.group(2)
+    get = lambda k, d="": (re.search(rf'data-{k}="([^"]*)"', attrs) or [None, d])[1]
+    lang, start, path, who = get("lang", "text"), int(get("start", "1") or 1), get("path"), get("who")
+    code = unescape(body)
+    if HAS_PYGMENTS:
+        try:
+            lexer = get_lexer_by_name(LANG.get(lang, lang))
+        except Exception:
+            lexer = get_lexer_by_name("text")
+        inner = highlight(code, lexer, HtmlFormatter(linenos="inline", linenostart=start, cssclass="hl", wrapcode=True))
+    else:
+        inner = f'<div class="hl"><pre><code>{escape(code)}</code></pre></div>'
+    where = f"{path}:{start}" if path else ""
+    head = f'<div class="codehead"><span class="dot"></span><span class="path">{escape(where)}</span><span class="who">{escape(who)}</span></div>'
+    return f'<div class="cx">{head}{inner}</div>'
+
+
+def inline_html(html: str, base_dir: Path, kit_dir: Path | None = None) -> str:
+    kit = kit_dir or _kit_dir()
+    css = (kit / "alto.css").read_text(encoding="utf-8")
+    js = (kit / "reader.js").read_text(encoding="utf-8")
+    html = html.replace("<!--astack:css-->", f"<style>{css}</style>")
+    html = html.replace("<!--astack:js-->", f"<script>{js}</script>")
+    html = re.sub(r"""(<img\b[^>]*\bsrc=)["']([^"']+)["']""", lambda m: _image(m, base_dir), html, flags=re.I)
+    html = re.sub(r"<pre(\s[^>]*data-lang=[^>]*)><code>(.*?)</code></pre>", _code, html, flags=re.S)
+    return html
+
+
+def inline_file(path) -> None:
+    p = Path(path)
+    p.write_text(inline_html(p.read_text(encoding="utf-8"), p.parent), encoding="utf-8")
