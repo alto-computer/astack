@@ -8,6 +8,7 @@ from . import done as _done
 from . import inline as _inline
 from . import media as _media
 from . import memory
+from . import pdf as _pdf
 from . import recall as _recall
 
 
@@ -94,6 +95,20 @@ def _cmd_slides(args) -> int:
     return 0
 
 
+def _cmd_pdf(args) -> int:
+    try:
+        if args.action == "pages":
+            for p in _pdf.pages(Path(args.a), Path(args.b), max_dim=args.max):
+                print(p)
+        else:
+            x, y, w, h = (int(v) for v in args.box)
+            print(_pdf.crop(Path(args.a), x, y, w, h, Path(args.b)))
+    except (_pdf.PdfError, ValueError) as e:
+        print(f"astack pdf: {e}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -131,6 +146,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("outdir")
     s.add_argument("--threshold", type=float, default=0.08)
     s.set_defaults(fn=_cmd_slides)
+    pd = sub.add_parser("pdf", help="PDF 쪽을 PNG로 렌더(pages), 그림 영역 자르기(crop)")
+    pd.add_argument("action", choices=["pages", "crop"])
+    pd.add_argument("a", help="pages: PDF 경로 / crop: PNG 경로")
+    pd.add_argument("box", nargs="*", help="crop: x y w h (픽셀)")
+    pd.add_argument("b", help="pages: 출력 폴더 / crop: 출력 PNG")
+    pd.add_argument("--max", type=int, default=2200)
+    pd.set_defaults(fn=_cmd_pdf)
     return p
 
 
