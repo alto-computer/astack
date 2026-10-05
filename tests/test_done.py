@@ -66,6 +66,18 @@ class DoneTest(unittest.TestCase):
         code, _ = done.done(self.file, "spec", force=True, now=NOW)
         self.assertEqual(code, 0)
 
+    def test_skill_with_tab_rejected(self):
+        code, notes = done.done(self.file, "a\tb", now=NOW)
+        self.assertEqual(code, 1)
+        self.assertFalse(paths.outputs_log().exists())
+        self.assertTrue(notes and "tab or newline" in notes[0])
+
+    def test_missing_file_rejected(self):
+        code, notes = done.done(self.dir / "nonexistent.html", "spec", now=NOW)
+        self.assertEqual(code, 1)
+        self.assertFalse(paths.outputs_log().exists())
+        self.assertTrue(notes and "not a file" in notes[0])
+
 
 if __name__ == "__main__":
     unittest.main()

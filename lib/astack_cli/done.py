@@ -9,6 +9,14 @@ from . import check, paths
 def done(path, skill: str, room: str | None = None, force: bool = False,
          now: datetime.datetime | None = None) -> tuple[int, list[str]]:
     p = Path(path).resolve()
+    # Validate skill and path don't contain tab/newline
+    if any(c in skill for c in "\t\n\r"):
+        return 1, ["error: skill/path must not contain tab or newline"]
+    if any(c in str(p) for c in "\t\n\r"):
+        return 1, ["error: skill/path must not contain tab or newline"]
+    # Check if file exists
+    if not p.is_file():
+        return 1, [f"error: not a file: {p}"]
     errors = [i for i in check.check_file(p) if i.level == "error"]
     if errors and not force:
         return 1, [f"error {i.code}: {i.message}" for i in errors]
