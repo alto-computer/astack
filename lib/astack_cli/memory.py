@@ -210,3 +210,70 @@ def restore(date: str, today=None) -> Path:
             _write_atomic(paths.archive_dir() / f"{today.isoformat()}.pre-restore-{stamp}.jsonl", data)
         _write_atomic(paths.memory_file(), a.read_bytes() + _tail(len(data)))
     return a
+
+
+def _decay(r: dict, today: datetime.date) -> dict:
+    c0 = r.get("confidence0", r.get("confidence", 0.5))
+    try:
+        age = (today - datetime.date.fromisoformat(str(r.get("date", ""))[:10])).days
+    except ValueError:
+        age = 0
+    return {**r, "confidence0": c0, "confidence": round(c0 * 0.5 ** (max(age, 0) / 30), 3)}
+
+
+def consolidate(today=None, dry_run: bool = False) -> dict:
+    today = today or datetime.date.today()
+    with lock():
+        data, lines = _snapshot()
+        size = len(data)
+        recs = parse(lines)
+        rep = {"before": len(lines), "after": 0, "merged": 0, "superseded": [], "decayed": [], "dropped": [],
+               "promoted": [], "patch_suggestions": [], "broken": len([l for l in lines if l.strip()]) - len(recs)}
+        latest: dict[tuple, dict] = {}
+        for r in recs:
+            k = (r.get("type"), r.get("key"), r.get("insight"), r.get("source"))
+            if k in latest:
+                rep["merged"] += 1
+                if str(r.get("date", "")) < str(latest[k].get("date", "")):
+                    continue
+            latest[k] = r
+        recs = list(latest.values())
+        told_date: dict[str, str] = {}
+        for r in recs:
+            if r.get("source") == "told":
+                told_date[r["key"]] = max(told_date.get(r["key"], ""), str(r.get("date", "")))
+        out = []
+        for r in recs:
+            if r.get("source") == "observed":
+                if r.get("key") in told_date and told_date[r["key"]] >= str(r.get("date", "")):
+                    rep["superseded"].append(r["key"])
+                    continue
+                d = _decay(r, today)
+                if d["confidence"] < 0.2:
+                    rep["dropped"].append(r["key"])
+                    continue
+                if d["confidence"] != r.get("confidence"):
+                    rep["decayed"].append([r["key"], d["confidence0"], d["confidence"]])
+                r = d
+            out.append(r)
+        groups: dict[str, list[dict]] = {}
+        for r in out:
+            if r.get("type") == "correction":
+                groups.setdefault(r["key"], []).append(r)
+        promoted_keys = {r["key"] for r in out if r.get("type") == "preference" and "promoted_from" in r}
+        for key, rs in sorted(groups.items()):
+            if len(rs) < 3:
+                continue
+            rs.sort(key=lambda r: str(r.get("date", "")))
+            if key.startswith("skill:"):
+                rep["patch_suggestions"].append({"key": key, "count": len(rs), "insights": [r["insight"] for r in rs]})
+            if key in promoted_keys:
+                continue
+            out.append({"type": "preference", "key": key, "insight": "규칙: " + " / ".join(r["insight"] for r in rs[-3:]),
+                        "source": "told", "date": today.isoformat(), "host": paths.host(), "promoted_from": len(rs)})
+            rep["promoted"].append(key)
+        rep["after"] = len(out)
+        if not dry_run:
+            archive(today)
+            replace_lines([_dump(r) for r in out], size)
+        return rep

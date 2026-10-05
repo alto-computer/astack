@@ -168,5 +168,82 @@ class CliTest(MemoryOpsBase):
         self.assertEqual(cli.main(["memory", "add", '{"type":"preference","key":"k","insight":"i","source":"told"}']), 0)
 
 
+class ConsolidateTest(MemoryOpsBase):
+    def keys(self):
+        return [(r["type"], r["key"]) for r in memory.parse(memory.read_lines())]
+
+    def test_duplicates_merge_to_latest(self):
+        self.write(rec(date="2026-10-01"), rec(date="2026-10-03"))
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["merged"], 1)
+        self.assertEqual([r["date"] for r in memory.parse(memory.read_lines())], ["2026-10-03"])
+
+    def test_newer_told_supersedes_observed(self):
+        self.write(rec(type="taste", key="topic:a", source="observed", date="2026-10-01", confidence=0.9),
+                   rec(type="preference", key="topic:a", source="told", date="2026-10-02"))
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["superseded"], ["topic:a"])
+        self.assertEqual(self.keys(), [("preference", "topic:a")])
+
+    def test_decay_is_not_compounded(self):
+        self.write(rec(type="taste", key="topic:b", source="observed", date="2026-09-05", confidence=0.8))
+        memory.consolidate(today=D)
+        memory.consolidate(today=D)
+        r = memory.parse(memory.read_lines())[0]
+        self.assertEqual((r["confidence0"], r["confidence"]), (0.8, 0.4))
+
+    def test_old_observed_is_dropped(self):
+        self.write(rec(type="taste", key="topic:c", source="observed", date="2026-06-01", confidence=0.5))
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["dropped"], ["topic:c"])
+        self.assertEqual(self.keys(), [])
+
+    def test_told_is_kept_regardless_of_age(self):
+        self.write(rec(type="exclude", key="channel:z", source="told", date="2025-01-01"))
+        memory.consolidate(today=D)
+        self.assertEqual(self.keys(), [("exclude", "channel:z")])
+
+    def test_repeated_corrections_promote_once(self):
+        self.write(rec(insight="a", date="2026-10-01"), rec(insight="b", date="2026-10-02"), rec(insight="c", date="2026-10-03"))
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["promoted"], ["skill:interview"])
+        self.assertEqual(rep["patch_suggestions"][0]["count"], 3)
+        rep2 = memory.consolidate(today=D)
+        self.assertEqual(rep2["promoted"], [])
+        self.assertEqual(sum(1 for t, _ in self.keys() if t == "preference"), 1)
+
+    def test_broken_lines_survive_in_archive(self):
+        self.write(rec(key="ok"), "{not json")
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["broken"], 1)
+        self.assertIn("{not json", (paths.archive_dir() / "2026-10-05.jsonl").read_text())
+
+    def test_dry_run_changes_nothing(self):
+        self.write(rec(date="2026-10-01"), rec(date="2026-10-03"))
+        before = paths.memory_file().read_text()
+        memory.consolidate(today=D, dry_run=True)
+        self.assertEqual(paths.memory_file().read_text(), before)
+
+    def test_append_during_consolidate_is_kept(self):
+        self.write(rec(key="a"))
+        real = memory.replace_lines
+
+        def racing(lines, since_size):
+            with open(paths.memory_file(), "a", encoding="utf-8") as f:
+                f.write(rec(key="late") + "\n")
+            real(lines, since_size)
+
+        memory.replace_lines = racing
+        try:
+            memory.consolidate(today=D)
+        finally:
+            memory.replace_lines = real
+        self.assertIn(("correction", "late"), self.keys())
+
+    def test_cli_consolidate_prints_report(self):
+        self.write(rec())
+        self.assertEqual(cli.main(["memory", "consolidate", "--dry-run"]), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

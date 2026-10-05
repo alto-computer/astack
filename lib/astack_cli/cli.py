@@ -35,8 +35,8 @@ def _memory(args) -> int:
 
 
 def _consolidate(args) -> int:
-    print("consolidate는 Task 2에서 붙는다", file=sys.stderr)
-    return 2
+    print(json.dumps(memory.consolidate(dry_run=args.dry_run), ensure_ascii=False))
+    return 0
 
 
 def _cmd_check(args) -> int:
