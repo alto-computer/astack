@@ -180,6 +180,11 @@ class CheckTest(unittest.TestCase):
         html = GOOD.replace("</body>", '<pre data-lang="auto"><code>{{실제 코드}}</code></pre></body>')
         self.assertIn("placeholder", codes(html))
 
+    def test_commented_out_img_is_not_external(self):
+        html = GOOD.replace("</body>", '<!-- <img src="bench/chart.svg"> --></body>')
+        self.assertNotIn("external", codes(html))
+        self.assertIn("external", codes(GOOD.replace("</body>", '<img src="bench/chart.svg"></body>')))
+
     def test_duplicate_id_warns(self):
         svg = '<svg><defs><marker id="ah"></marker></defs></svg>'
         html = GOOD.replace("</body>", svg + svg + "</body>")

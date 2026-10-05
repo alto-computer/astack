@@ -97,15 +97,16 @@ def check_html(html: str) -> list[Issue]:
     if n_titles != 1:
         issues.append(Issue("error", "title", f"<title>이 {n_titles}개입니다. 본문의 <title> 글자는 &lt;title&gt;로 쓰세요"))
 
+    live = re.sub(r"<!--.*?-->", " ", html, flags=re.S)  # 주석 안의 태그는 불러오지 않는다
     for tag in ("script", "img", "iframe", "source", "video", "audio"):
-        for m in re.finditer(rf"""<{tag}\b[^>]*\bsrc=["']([^"']+)["']""", html, re.I):
+        for m in re.finditer(rf"""<{tag}\b[^>]*\bsrc=["']([^"']+)["']""", live, re.I):
             if not m.group(1).startswith(("data:", "#")):
                 issues.append(Issue("error", "external", f'<{tag} src="{m.group(1)[:80]}">가 파일을 불러옵니다. astack inline으로 내장하세요'))
-    for m in re.finditer(r"<link\b[^>]*>", html, re.I):
+    for m in re.finditer(r"<link\b[^>]*>", live, re.I):
         if re.search(r"""rel=["'][^"']*(stylesheet|preload|preconnect|icon)""", m.group(0), re.I):
             issues.append(Issue("error", "external", f"{m.group(0)[:80]}가 파일을 불러옵니다"))
 
-    for m in re.finditer(r"""\bdata-img=["']([^"']+)["']""", html, re.I):
+    for m in re.finditer(r"""\bdata-img=["']([^"']+)["']""", live, re.I):
         if not m.group(1).startswith(("data:", "#")):
             issues.append(Issue("error", "external", f'data-img="{m.group(1)[:80]}"가 파일을 불러옵니다. astack inline으로 내장하세요'))
 

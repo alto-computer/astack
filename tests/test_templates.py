@@ -115,6 +115,17 @@ class TemplateTest(unittest.TestCase):
         for sc in scenes:
             self.assertIn("inl vis-inl", sc)
 
+    def test_quest_chapter_has_experiment_report_block(self):
+        html = (ROOT / "skills/quest/assets/chapter-template.html").read_text(encoding="utf-8")
+        block = re.search(r"<!-- 실험 보고서 장이면 tome 앞에:.*?-->", html, re.S)
+        self.assertIsNotNone(block)
+        self.assertLess(block.start(), html.index('<section class="tome">'))
+        for s in ('<section class="report" id="report">', "방법", "차트", "원자료", "재현 명령", "한계",
+                  '<img src="bench/{{차트}}.svg"', 'class="ustab"', '<pre data-lang="bash"><code>{{명령}}</code></pre>'):
+            self.assertIn(s, block.group(0))
+        css = (ROOT / "skills/design/assets/alto-ext.css").read_text(encoding="utf-8")
+        self.assertIn(".report figure img{max-width:100%;height:auto}", css)
+
     def test_map_template_has_converge_sections(self):
         html = (ROOT / "skills/map/assets/template.html").read_text(encoding="utf-8")
         for s in ('id="known"', 'id="agree"', 'id="conflict"', 'id="open"', 'id="decided"'):

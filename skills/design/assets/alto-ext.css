@@ -32,6 +32,8 @@ details.quiz .ans{margin:8px 0 0;padding:8px 12px;background:var(--surface);bord
 .chnav{margin:28px 0 8px;font-size:14px;color:var(--ink-2)}
 .chnav a{color:var(--ink)}
 .tome{margin:32px 0 0}
+/* 실험 보고서 장: 차트는 본문 폭 */
+.report figure img{max-width:100%;height:auto}
 /* 그림 칸 안의 figure: 무대 높이를 넘지 않는다 */
 .vis figure{margin:0}
 .vis img,.vis svg{display:block;max-width:100%;height:auto;margin:0 auto}
