@@ -5,13 +5,13 @@ description: Use when 사용자가 외부 GitHub 레포를 학습 자료로 읽�
 
 # astack repo — 남의 레포를 학습 자료로
 
-**약속:** 레포를 클론하지 않고도 구조, 핵심 루프, 영리한 부분(파일:줄), 그렇게 만든 이유와 근거 등급, 약점을 안다.
+**약속:** 레포를 직접 클론해 읽지 않고도 구조, 핵심 루프, 영리한 부분(파일:줄), 그렇게 만든 이유와 근거 등급, 약점을 안다.
 
 먼저 `astack:design`을 읽고 `astack memory search skill:repo`로 교정 기록을 본다.
 
 ## 원칙
 - **evidence-tiers**: 이유에는 등급을 단다. 확인(커밋·PR·이슈·문서에 적힘) / 추론(정황) / 모름. 코드는 동작의 증거이지 의도의 증거가 아니다.
-- **anchor-to-source**: 모든 코드는 실제 파일과 실제 줄 번호. `data-path`에 `파일:줄`, 커밋 고정 링크.
+- **anchor-to-source**: 모든 코드는 실제 파일과 실제 줄 번호. `data-path`에 파일 경로, `data-start`에 시작 줄(inline이 `파일:줄`로 보여 준다). 커밋 고정 링크(`https://github.com/<owner>/<repo>/blob/<커밋>/<파일>#L<줄>`)는 `p.why`의 근거 자리에.
 - **definition-then-case**: 낯선 개념은 통용 이름과 일반 정의 → 이 레포의 사례.
 - **build-up-diagrams**: 부품이 셋 이상이면 하나씩 쌓아 그린다.
 
