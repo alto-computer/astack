@@ -14,7 +14,7 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change", "recall", "interview"} <= names, names)
+        self.assertTrue({"spec", "change", "recall", "interview", "seminar"} <= names, names)
 
     def test_atom_skills_respond_only_on_request(self):
         for name in ("interview", "seminar", "paper", "repo"):
