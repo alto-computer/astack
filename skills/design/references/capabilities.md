@@ -15,3 +15,6 @@
 | memory | `astack memory add|search` | 같음 | |
 | route | `astack route "<입력>"` | 같음 | YouTube는 needs_judgment |
 | course-check | `astack course check <폴더>` | 같음 | 지도·장·퀴즈·링크 |
+| dream-collect | `astack dream collect [--date D]` | 같음 | 상태 없음, 날짜로 고름 |
+| feed | `astack feed seed\|candidates` | YouTube 구독은 `aside` CLI로 위임 | 화이트리스트는 memory에만 |
+| memory-maintain | `astack memory prune\|consolidate\|restore` | 같음 | `.lock`은 consolidate 중에만 |

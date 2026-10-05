@@ -35,12 +35,16 @@ Then add `recipes/claude/CLAUDE.md.snippet` to `~/.claude/CLAUDE.md`.
 | `seminar` | A slide talk video | A report where slides follow your scroll |
 | `paper` | A paper PDF or arXiv link | A lossless reader with every figure |
 | `repo` | A GitHub repo | Structure, core loop, clever parts, why, weak spots |
+| `dream` | Today's pages | An evening journal with spaced review |
+| `feed` | Your channel whitelist | A 30-minute morning page |
 
 ## CLI
 
-`astack route | course | check | inline | done | memory | recall | transcript | slides | pdf`
+`astack route | course | check | inline | done | memory | recall | transcript | slides | pdf | dream | feed`
 
 Needs yt-dlp and ffmpeg (brew). PDF tools need macOS.
+
+Scheduling (cron, Telegram) comes with host recipes.
 
 Run `astack <command> -h` for details.
 

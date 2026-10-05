@@ -55,3 +55,8 @@ description: Use when any astack skill is about to write an understanding HTML. 
 ## 시작할 때
 - `astack memory search skill:<이 스킬 이름>`으로 교정 기록을 읽는다.
 - 사용자가 선호, 제외, 교정을 말하면 `astack memory add '{"type":"correction","key":"skill:<이름>","insight":"…","source":"told"}'`. 기록에서 다시 알 수 있는 사실은 쓰지 않는다.
+
+## 기억 정리 (에이전트용, 저녁 20:30)
+- `astack memory consolidate` — 중복 합치기, 최신 told가 오래된 observed를 대체, observed는 나이로 감쇠(30일 반감), 같은 교정 3번이면 규칙으로 승격, `skill:` 교정 반복은 레포 패치 **제안만**. 직전 상태는 `~/.astack/archive/<날짜>.jsonl`에 저장되며, 읽을 수 없는 레코드는 그대로 두고 모든 변경 전 스냅샷이 보관된다.
+- 되돌리기: `astack memory restore <날짜>`. 지우기: `astack memory prune --key <접두사>`.
+- 사람용 dream과 따로 돈다. 둘이 만나는 곳은 `memory add` 한 줄뿐.
