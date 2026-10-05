@@ -45,6 +45,11 @@ description: Use when any astack skill is about to write an understanding HTML. 
 | speaker-first | interview, seminar | 화자의 논지·순서·강조가 주인공. 내 해설은 따로 |
 | lossless-gate | paper | figure·table·수치 개수를 원문과 대조해야 끝난다 |
 | build-up-diagrams | 부품 3개 이상 | 한 장에 다 그리지 말고 하나씩 쌓는다 |
+| definition-then-case | 개념 설명 | 일반 정의(통용 이름) → 지금 사례 → 깊이 |
+| retrieval-check | 장 끝 | 이해를 묻는 질문. 암기 금지. 오답 = 오해 진단 |
+| converge | map, dream | 쌓여도 두꺼워지지 않고 정확해진다 |
+| explain-the-number | 실험 | 숫자를 제한하는 요인, 엉뚱한 걸 잰 건 아닌지 |
+| build-the-lever | 실험 | 손으로 재지 말고 다시 돌릴 벤치를 만든다 |
 
 ## 시작할 때
 - `astack memory search skill:<이 스킬 이름>`으로 교정 기록을 읽는다.

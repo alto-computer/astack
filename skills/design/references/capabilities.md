@@ -13,3 +13,5 @@
 | inline-assets | `astack inline <f>` | 같음 | `img src`, `data-img` |
 | rooms-link | `astack done`이 `rooms link` 호출 | 같음 | 없으면 건너뜀 |
 | memory | `astack memory add|search` | 같음 | |
+| route | `astack route "<입력>"` | 같음 | YouTube는 needs_judgment |
+| course-check | `astack course check <폴더>` | 같음 | 지도·장·퀴즈·링크 |

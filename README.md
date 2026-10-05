@@ -24,6 +24,10 @@ Then add `recipes/claude/CLAUDE.md.snippet` to `~/.claude/CLAUDE.md`.
 
 | Skill | Input | Output |
 |---|---|---|
+| `astack` | Anything: a link, a file, a question | Sends it to the right skill |
+| `quest` | A question | A course: a map and chapters with quizzes |
+| `study` | One page and a follow-up question | The answer, added to that page |
+| `map` | A topic folder | One page that sums up the topic |
 | `spec` | A spec or design doc | What it builds, flows, decisions to review |
 | `change` | A task's commits or a PR | What changed and what to check |
 | `recall` | A topic or "now" | One thing to read now |
@@ -34,7 +38,7 @@ Then add `recipes/claude/CLAUDE.md.snippet` to `~/.claude/CLAUDE.md`.
 
 ## CLI
 
-`astack check | inline | done | memory | recall | transcript | slides | pdf`
+`astack route | course | check | inline | done | memory | recall | transcript | slides | pdf`
 
 Needs yt-dlp and ffmpeg (brew). PDF tools need macOS.
 
