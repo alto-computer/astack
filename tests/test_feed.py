@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import os
 import sys
@@ -72,6 +74,29 @@ class FeedTest(unittest.TestCase):
     def test_cli(self):
         self.assertEqual(cli.main(["feed", "seed", "Y", "https://www.youtube.com/@y"]), 0)
         self.assertEqual(cli.main(["feed", "seed", "Z", "not-a-url"]), 2)
+
+    def test_seed_rejects_video_url(self):
+        with self.assertRaises(ValueError):
+            feed.seed("Bad", "https://www.youtube.com/watch?v=AAAAAAAAAAA")
+
+    def test_candidates_prints_skip_message_to_stderr(self):
+        feed.seed("Bad", "https://www.youtube.com/@bad")
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            result = feed.candidates(runner=lambda cmd, **kw: R("", 1))
+        self.assertEqual(result, [])
+        self.assertIn("건너뜀 Bad", stderr.getvalue())
+
+    def test_latest_guards_json_loads(self):
+        calls = []
+
+        def runner(cmd, **kw):
+            calls.append(cmd)
+            return R("invalid json")
+
+        with self.assertRaises(feed.MediaError) as ctx:
+            feed.latest("https://www.youtube.com/@test", runner=runner)
+        self.assertIn("채널 목록을 읽지 못했습니다", str(ctx.exception))
 
 
 if __name__ == "__main__":

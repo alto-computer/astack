@@ -2,13 +2,14 @@
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 from . import memory, paths
-from .media import MediaError
+from .media import MediaError, _yt
 
 YT_ID = re.compile(r"(?:v=|youtu\.be/|/shorts/|/live/)([\w-]{11})")
-CHANNEL_URL = re.compile(r"https://www\.youtube\.com/[^\s\"']+")
+CHANNEL_URL = re.compile(r"https://www\.youtube\.com/(?:@[^/\s]+|channel/[^/\s]+|c/[^/\s]+|user/[^/\s]+)/?$")
 PREFIX = "feed:youtube:"
 
 
@@ -28,7 +29,7 @@ def whitelist() -> list[dict]:
 
 
 def seed(name: str, url: str) -> bool:
-    if not CHANNEL_URL.fullmatch(url.rstrip("/")):
+    if not CHANNEL_URL.fullmatch(url):
         raise ValueError(f"YouTube 채널 URL이 아닙니다: {url}")
     if any(w["name"] == name for w in whitelist()):
         return False
@@ -52,31 +53,34 @@ def seen_ids() -> set[str]:
     return ids
 
 
-def latest(url: str, limit: int = 5, runner=subprocess.run) -> list[dict]:
+def latest(url: str, limit: int = 5, cookies: str | None = None, runner=subprocess.run) -> list[dict]:
     cmd = ["yt-dlp", "--flat-playlist", "--playlist-end", str(limit), "--extractor-args",
            "youtubetab:approximate_date", "-J", url.rstrip("/") + "/videos"]
     try:
-        r = runner(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL)
-    except FileNotFoundError:
-        raise MediaError("yt-dlp가 없습니다. `brew install yt-dlp`")
-    if r.returncode != 0:
-        raise MediaError(f"채널을 읽지 못했습니다: {url}")
+        r = _yt(cmd, cookies, runner)
+    except MediaError:
+        raise
     out = []
-    for e in json.loads(r.stdout or "{}").get("entries", []) or []:
+    try:
+        entries = json.loads(r.stdout or "{}").get("entries", []) or []
+    except ValueError:
+        raise MediaError(f"채널 목록을 읽지 못했습니다: {url}")
+    for e in entries:
         if e.get("id"):
             out.append({"id": e["id"], "title": e.get("title", ""), "url": f"https://www.youtube.com/watch?v={e['id']}",
                         "duration": e.get("duration") or 0, "upload_date": e.get("upload_date") or ""})
     return out
 
 
-def candidates(since: str | None = None, per_channel: int = 5, runner=subprocess.run) -> list[dict]:
+def candidates(since: str | None = None, per_channel: int = 5, cookies: str | None = None, runner=subprocess.run) -> list[dict]:
     seen = seen_ids()
     cut = (since or "").replace("-", "")
     out = []
     for ch in whitelist():
         try:
-            vids = latest(ch["url"], per_channel, runner)
-        except MediaError:
+            vids = latest(ch["url"], per_channel, cookies=cookies, runner=runner)
+        except MediaError as e:
+            print(f"astack feed: 건너뜀 {ch['name']}: {e}", file=sys.stderr)
             continue
         for v in vids:
             if v["id"] in seen or (cut and v["upload_date"] and v["upload_date"] < cut):

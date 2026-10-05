@@ -173,7 +173,7 @@ def _cmd_feed(args) -> int:
                 raise ValueError('사용법: astack feed seed "<이름>" <채널 URL>')
             print("추가함" if _feed.seed(*args.rest) else "이미 있음")
         else:
-            for c in _feed.candidates(since=args.since, per_channel=args.per_channel):
+            for c in _feed.candidates(since=args.since, per_channel=args.per_channel, cookies=args.cookies_from_browser):
                 print(json.dumps(c, ensure_ascii=False))
     except (ValueError, _media.MediaError, memory.InvalidRecord) as e:
         print(f"astack feed: {e}", file=sys.stderr)
@@ -248,6 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
     fe.add_argument("rest", nargs="*")
     fe.add_argument("--since")
     fe.add_argument("--per-channel", type=int, default=5)
+    fe.add_argument("--cookies-from-browser", metavar="BROWSER", help="429·403이면 chrome 등 브라우저 쿠키로")
     fe.set_defaults(fn=_cmd_feed)
     return p
 
