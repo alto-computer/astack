@@ -14,7 +14,7 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change", "recall", "interview", "seminar"} <= names, names)
+        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper"} <= names, names)
 
     def test_atom_skills_respond_only_on_request(self):
         for name in ("interview", "seminar", "paper", "repo"):
@@ -54,6 +54,11 @@ class TemplateTest(unittest.TestCase):
             scenes = set(re.findall(r'class="scene[^"]*"[^>]*data-i="(\d+)"', html))
             slots = set(re.findall(r'class="vis" data-v="(\d+)"', html))
             self.assertEqual(scenes, slots, t.name)
+
+    def test_paper_template_has_postit_and_figure_slots(self):
+        html = (ROOT / "skills/paper/assets/template.html").read_text(encoding="utf-8")
+        self.assertIn('<details class="postit">', html)
+        self.assertIn('class="vis" data-v="1"', html)
 
 
 if __name__ == "__main__":
