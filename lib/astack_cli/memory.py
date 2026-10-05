@@ -1,6 +1,10 @@
+import contextlib
 import datetime
 import json
 import os
+import shutil
+import time
+from pathlib import Path
 
 from . import paths
 
@@ -40,6 +44,10 @@ def add(raw: str, host: str | None = None, today: datetime.date | None = None) -
     line = (json.dumps(rec, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
     f = paths.memory_file()
     f.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(100):  # consolidate 중이면 최대 5초 기다린다
+        if not paths.lock_file().exists():
+            break
+        time.sleep(0.05)
     # O_APPEND + 한 번의 write: 짧은 한 줄은 다른 프로세스의 쓰기와 섞이지 않는다
     fd = os.open(f, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
     try:
@@ -64,3 +72,112 @@ def search(query: str) -> list[dict]:
         if str(rec.get("key", "")).startswith(query) or query in str(rec.get("insight", "")):
             out.append(rec)
     return out
+
+
+STALE_LOCK = 600  # 초. 이보다 오래된 잠금은 죽은 프로세스가 남긴 것으로 본다
+
+
+class MemoryLocked(RuntimeError):
+    pass
+
+
+@contextlib.contextmanager
+def lock():
+    lf = paths.lock_file()
+    lf.parent.mkdir(parents=True, exist_ok=True)
+    if lf.exists() and time.time() - lf.stat().st_mtime > STALE_LOCK:
+        lf.unlink(missing_ok=True)
+    try:
+        fd = os.open(lf, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        raise MemoryLocked("다른 consolidate가 돌고 있습니다") from None
+    try:
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        yield
+    finally:
+        lf.unlink(missing_ok=True)
+
+
+def read_lines() -> list[str]:
+    f = paths.memory_file()
+    return f.read_text(encoding="utf-8").splitlines() if f.exists() else []
+
+
+def parse(lines: list[str]) -> list[dict]:
+    out = []
+    for line in lines:
+        try:
+            r = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(r, dict):
+            out.append(r)
+    return out
+
+
+def archive(today: datetime.date) -> Path:
+    d = paths.archive_dir()
+    d.mkdir(parents=True, exist_ok=True)
+    a = d / f"{today.isoformat()}.jsonl"
+    if not a.exists() and paths.memory_file().exists():
+        shutil.copyfile(paths.memory_file(), a)
+    return a
+
+
+def replace_lines(lines: list[str], since_size: int) -> None:
+    f = paths.memory_file()
+    tmp = f.with_name(f.name + ".tmp")
+    body = "".join(l + "\n" for l in lines)
+    with open(f, "rb") as cur:
+        cur.seek(since_size)
+        tail = cur.read().decode("utf-8", "ignore")  # 읽은 뒤에 add로 붙은 줄
+    tmp.write_text(body + tail, encoding="utf-8")
+    os.replace(tmp, f)
+
+
+def _dump(r: dict) -> str:
+    return json.dumps(r, ensure_ascii=False, separators=(",", ":"))
+
+
+def prune(key: str | None = None, type_: str | None = None, before: str | None = None, today=None) -> int:
+    if not (key or type_ or before):
+        raise ValueError("--key, --type, --before 중 하나는 있어야 합니다")
+    today = today or datetime.date.today()
+    with lock():
+        f = paths.memory_file()
+        size = f.stat().st_size if f.exists() else 0
+        lines = read_lines()
+        archive(today)
+        keep, removed = [], 0
+        for line in lines:
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError:
+                keep.append(line)
+                continue
+            hit = isinstance(r, dict) \
+                and (key is None or str(r.get("key", "")).startswith(key)) \
+                and (type_ is None or r.get("type") == type_) \
+                and (before is None or str(r.get("date", "")) < before)
+            if hit:
+                removed += 1
+            else:
+                keep.append(line)
+        if removed:
+            replace_lines(keep, size)
+        return removed
+
+
+def restore(date: str, today=None) -> Path:
+    a = paths.archive_dir() / f"{date}.jsonl"
+    if not a.exists():
+        raise FileNotFoundError(f"archive가 없습니다: {a}")
+    today = today or datetime.date.today()
+    with lock():
+        if today.isoformat() != date:
+            archive(today)
+        tmp = paths.memory_file().with_name("memory.jsonl.tmp")
+        shutil.copyfile(a, tmp)
+        os.replace(tmp, paths.memory_file())
+    return a

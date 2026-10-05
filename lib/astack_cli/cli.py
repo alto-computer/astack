@@ -15,17 +15,28 @@ from . import route as _route
 
 
 def _memory(args) -> int:
-    if args.action == "add":
-        try:
-            rec = memory.add(args.value)
-        except memory.InvalidRecord as e:
-            print(f"astack memory: {e}", file=sys.stderr)
-            return 2
-        print(json.dumps(rec, ensure_ascii=False))
-        return 0
-    for rec in memory.search(args.value):
-        print(json.dumps(rec, ensure_ascii=False))
+    try:
+        if args.action == "add":
+            rec = memory.add(args.value or "")
+            print(json.dumps(rec, ensure_ascii=False))
+        elif args.action == "search":
+            for rec in memory.search(args.value or ""):
+                print(json.dumps(rec, ensure_ascii=False))
+        elif args.action == "prune":
+            print(f"지운 기록 {memory.prune(key=args.key, type_=args.type, before=args.before)}개")
+        elif args.action == "restore":
+            print(memory.restore(args.value or ""))
+        elif args.action == "consolidate":
+            return _consolidate(args)
+    except (memory.InvalidRecord, ValueError, FileNotFoundError, memory.MemoryLocked) as e:
+        print(f"astack memory: {e}", file=sys.stderr)
+        return 2
     return 0
+
+
+def _consolidate(args) -> int:
+    print("consolidate는 Task 2에서 붙는다", file=sys.stderr)
+    return 2
 
 
 def _cmd_check(args) -> int:
@@ -129,9 +140,13 @@ def _cmd_course(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
-    m = sub.add_parser("memory", help="기억 쓰기·찾기")
-    m.add_argument("action", choices=["add", "search"])
-    m.add_argument("value")
+    m = sub.add_parser("memory", help="기억 쓰기·찾기·정리")
+    m.add_argument("action", choices=["add", "search", "prune", "restore", "consolidate"])
+    m.add_argument("value", nargs="?")
+    m.add_argument("--key")
+    m.add_argument("--type")
+    m.add_argument("--before")
+    m.add_argument("--dry-run", action="store_true")
     m.set_defaults(fn=_memory)
     c = sub.add_parser("check", help="이해물 HTML이 출력 계약을 지키는지 검사")
     c.add_argument("files", nargs="+")

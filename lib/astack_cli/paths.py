@@ -25,3 +25,15 @@ def host() -> str:
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
+
+
+def archive_dir() -> Path:
+    return home() / "archive"
+
+
+def lock_file() -> Path:
+    return home() / ".lock"
+
+
+def journal_dir() -> Path:
+    return home() / "journal"
