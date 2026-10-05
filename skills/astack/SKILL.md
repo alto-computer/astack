@@ -13,6 +13,7 @@ description: Use when 사용자가 무엇을 원하는지 스킬 이름 없이 �
 3. true면 판단한다:
    - YouTube: 제목·설명·썸네일을 본다(`astack transcript <url> --json`의 title). 슬라이드 발표·강연·컨퍼런스 talk면 `seminar`, 대담·팟캐스트·인터뷰면 `interview`.
    - 일반 링크: 글 하나면 `quest`(사례 또는 개념 유형, Quick), 레포·논문이 본문이면 해당 원자.
+   - 파일: 열어 보고 원자 또는 quest. 이해물 HTML에 후속 질문이 붙어 있으면 study.
 4. 고른 스킬과 이유를 채팅에 한 줄로 알리고 진행한다. 확인을 기다리지 않는다.
 
 ## 라우팅 표
@@ -26,3 +27,4 @@ description: Use when 사용자가 무엇을 원하는지 스킬 이름 없이 �
 | "오늘 정리", "하루 정리" | dream |
 | 질문, 공부하고 싶은 것 | quest |
 | "지난주 거", "X 관련 뭐 쌓였지" | recall |
+| 이해물 HTML 경로 + 후속 질문 | study |

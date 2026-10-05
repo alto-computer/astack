@@ -38,6 +38,30 @@ class RouteTest(unittest.TestCase):
         for t in ["오늘 정리", "오늘 정리해줘", "하루 정리"]:
             self.assertEqual(self.s(t), "dream", t)
 
+    def test_recall_phrases(self):
+        for t in ["지난주 거 보여줘", "에이전트 관련 뭐 쌓였지", "최근에 본 것들", "recall codex"]:
+            r = route.route(t)
+            self.assertEqual((r.skill, r.needs_judgment), ("recall", False), t)
+
+    def test_today_learned_is_quest_not_dream(self):
+        r = route.route("오늘 배운 거 정리")
+        self.assertEqual((r.skill, r.needs_judgment), ("quest", False))
+
+    def test_local_html_is_study_with_judgment(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "01-a.html"
+            p.write_text("<p>x</p>")
+            r = route.route(str(p))
+            self.assertEqual((r.skill, r.needs_judgment), ("study", True))
+
+    def test_other_local_file_is_quest_with_judgment(self):
+        with tempfile.TemporaryDirectory() as d:
+            for name in ("notes.txt", "README.md"):
+                p = Path(d) / name
+                p.write_text("x")
+                r = route.route(str(p))
+                self.assertEqual((r.skill, r.needs_judgment), ("quest", True), name)
+
     def test_question_is_quest(self):
         r = route.route("Codex CLI 공부하고 싶어")
         self.assertEqual((r.skill, r.needs_judgment), ("quest", False))

@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 DREAM = re.compile(r"^(오늘|하루)\s*정리")
+RECALL = re.compile(r"(지난\s?주|어제|이번\s?주|최근).{0,12}(거|것|뭐)|관련.{0,6}(뭐|무엇).{0,6}쌓|쌓인\s?(거|것)|^recall\b")
 
 
 @dataclass
@@ -18,6 +19,8 @@ def route(text: str, cwd: Path | None = None) -> Route:
     t = text.strip()
     if DREAM.match(t):
         return Route("dream", "하루 정리 요청")
+    if RECALL.search(t):
+        return Route("recall", "쌓인 이해물 찾기")
     if re.match(r"^https?://", t):
         u = urlparse(t)
         host = (u.hostname or "").lower().removeprefix("www.").removeprefix("m.")
@@ -37,6 +40,9 @@ def route(text: str, cwd: Path | None = None) -> Route:
                 return Route("paper", "PDF 파일")
             if p.suffix.lower() == ".md" and "specs" in p.parts:
                 return Route("spec", "스펙 문서")
+            if p.suffix.lower() == ".html":
+                return Route("study", "이해물 HTML. 후속 질문이면 study", True)
+            return Route("quest", "파일. 종류를 읽고 판단", True)
     except OSError:
         pass
     return Route("quest", "질문")
