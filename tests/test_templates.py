@@ -14,7 +14,7 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change"} <= names, names)
+        self.assertTrue({"spec", "change", "recall"} <= names, names)
 
     def test_inlined_template_passes_contract(self):
         for t in TEMPLATES:

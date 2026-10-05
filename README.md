@@ -13,6 +13,24 @@
 
 `bin/astack`을 PATH에 둔다: `ln -s ~/personal/astack/bin/astack ~/.local/bin/astack`
 
+## 설치 확인
+
+설치가 완료되면 다음 명령어들을 실행하세요:
+
+```bash
+mkdir -p ~/.local/bin && ln -sf ~/personal/astack/bin/astack ~/.local/bin/astack
+astack recall --limit 1; echo $?    # 기대: 0
+printf '%s\n' "$HOME/personal" > ~/.astack/roots
+```
+
+Claude Code 프롬프트에서:
+```
+/plugin marketplace add ~/personal/astack
+/plugin install astack@astack-dev
+```
+
+그 후 `recipes/claude/CLAUDE.md.snippet`의 내용을 `~/.claude/CLAUDE.md` 끝에 추가하세요. (추가 전에 diff를 확인하세요.)
+
 ## 지금 있는 것 (P0~P1)
 
 - `astack:spec` 스펙·설계 문서의 이해물
