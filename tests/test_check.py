@@ -103,21 +103,19 @@ class CheckTest(unittest.TestCase):
         html = GOOD.replace("</body>", '<title>이건 에러</title></body>')
         self.assertIn("title", codes(html))
 
-    def test_meta_content_with_apostrophe(self):
-        # Meta content with apostrophe should be read correctly
-        html = GOOD.replace('content="Rooms가 메타를 앞 64KB에서만 읽는 이유"',
-                           'content="It\'s working"')
-        issues = [i for i in check.check_html(html) if i.code == "meta"]
-        # Should not report empty content
-        self.assertFalse(any("비었습니다" in i.message for i in issues))
+    def test_meta_content_with_double_quote_apostrophe(self):
+        # Meta content with apostrophe inside double quotes should be read correctly
+        # Old regex content=["']([^"']*)["'] would capture "It" (stops at apostrophe)
+        # New regex content=(["'])((?:(?!\1).)*?)\1 captures "It's working"
+        value = check._meta('<meta name="description" content="It\'s working">', "description")
+        self.assertEqual(value, "It's working")
 
-    def test_meta_content_with_escaped_quotes(self):
-        # Meta content with escaped quotes should work
-        html = GOOD.replace('content="Rooms가 메타를 앞 64KB에서만 읽는 이유"',
-                           'content="He said \\"hello\\""')
-        issues = [i for i in check.check_html(html) if i.code == "meta"]
-        # Should not report empty content
-        self.assertFalse(any("비었습니다" in i.message for i in issues))
+    def test_meta_content_with_single_quote_doublequote(self):
+        # Meta content with double quotes inside single quotes should be read correctly
+        # Old regex would capture "say" (stops at double quote)
+        # New regex captures the full value
+        value = check._meta('<meta name="description" content=\'say "hi" there\'>', "description")
+        self.assertEqual(value, 'say "hi" there')
 
     def test_url_in_code_no_error(self):
         # url() inside <code> should not trigger external error
@@ -133,6 +131,19 @@ class CheckTest(unittest.TestCase):
         # url() in style attribute should still trigger error
         html = GOOD.replace("</body>", '<div style="background: url(image.png)"></div></body>')
         self.assertIn("external", codes(html), "url() in style attribute should error")
+
+    def test_url_in_style_attr_with_single_quote_double_quote(self):
+        # Regression test: style='background:url("a.png")' should still trigger error
+        # Old regex style=["']([^"']*)["'] would capture "background:url(" (stops at ")
+        # New regex \bstyle=(["'])(.*?)\1 captures the full style value
+        html = GOOD.replace("</body>", '<div style=\'background:url("a.png")\'/></body>')
+        self.assertIn("external", codes(html), "url() in single-quoted style with double-quote should error")
+
+    def test_url_in_style_attr_with_double_quote_single_quote(self):
+        # Regression test: style="background:url('b.png')" should still trigger error
+        # Old regex would capture "background:url(" (stops at ')
+        html = GOOD.replace("</body>", '<div style="background:url(\'b.png\')"/></body>')
+        self.assertIn("external", codes(html), "url() in double-quoted style with single-quote should error")
 
 
 if __name__ == "__main__":

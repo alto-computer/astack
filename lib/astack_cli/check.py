@@ -91,9 +91,9 @@ def check_html(html: str) -> list[Issue]:
     # Extract <style>...</style> blocks
     for m in re.finditer(r"<style[^>]*>(.*?)</style>", html, re.S | re.I):
         style_content += m.group(1) + "\n"
-    # Extract style attributes
-    for m in re.finditer(r"""style=["']([^"']*)["']""", html, re.I):
-        style_content += m.group(1) + "\n"
+    # Extract style attributes (use backreference to handle quotes inside value)
+    for m in re.finditer(r"""\bstyle=(["'])(.*?)\1""", html, re.I | re.S):
+        style_content += m.group(2) + "\n"
 
     for m in re.finditer(r"""url\(\s*["']?([^)"']+)""", style_content):
         if not m.group(1).startswith(("data:", "#")):
