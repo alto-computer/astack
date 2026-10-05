@@ -1,0 +1,27 @@
+import os
+import socket
+from pathlib import Path
+
+
+def home() -> Path:
+    return Path(os.environ.get("ASTACK_HOME") or (Path.home() / ".astack"))
+
+
+def memory_file() -> Path:
+    return home() / "memory.jsonl"
+
+
+def outputs_log() -> Path:
+    return home() / "outputs.log"
+
+
+def roots_file() -> Path:
+    return home() / "roots"
+
+
+def host() -> str:
+    return os.environ.get("ASTACK_HOST") or socket.gethostname().split(".")[0]
+
+
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
