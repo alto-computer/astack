@@ -1,0 +1,14 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="description" content="Rooms가 메타를 앞 64KB에서만 읽는 이유">
+<meta name="rooms:created" content="2026-10-05T14:12:09+09:00">
+<meta name="rooms:machine" content="MacBook-Pro">
+<title>Task 4 메타 읽기</title>
+<style>body{margin:0}</style>
+</head><body>
+<header data-astack="30s"><h1>Task 4: 메타는 앞 64KB에서만 읽는다</h1><p>파일 머리에서 rooms 메타를 꺼낸다.</p></header>
+<section data-astack="3m"><p>바뀐 곳은 두 군데다.</p><pre><code>let _ = rw.write(&amp;head[..HEAD_LIMIT]);</code></pre></section>
+<p>본문에 &lt;title&gt;이라는 글자를 써도 이스케이프하면 괜찮다.</p>
+<a href="https://github.com/x/y/pull/1">원문 PR</a>
+<footer data-astack="source">원문 PR #1 · 요청 "Task 4 리뷰 통과" · Claude Code가 썼습니다</footer>
+</body></html>
