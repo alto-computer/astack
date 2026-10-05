@@ -164,6 +164,50 @@ class CheckTest(unittest.TestCase):
         html = GOOD.replace("</body>", "<pre><code>{{ value }}</code></pre></body>")
         self.assertNotIn("placeholder", codes(html))
 
+    def test_placeholder_in_attribute_fails(self):
+        html = GOOD.replace("</body>", '<section data-cap="{{캡션}}"></section></body>')
+        self.assertIn("placeholder", codes(html))
+
+    def test_placeholder_in_table_fails(self):
+        html = GOOD.replace("</body>", "<table><tr><td>{{값}}</td></tr></table></body>")
+        self.assertIn("placeholder", codes(html))
+
+    def test_placeholder_in_svg_fails(self):
+        html = GOOD.replace("</body>", "<svg><text>{{라벨}}</text></svg></body>")
+        self.assertIn("placeholder", codes(html))
+
+    def test_code_slot_placeholder_fails_even_inside_code(self):
+        html = GOOD.replace("</body>", '<pre data-lang="auto"><code>{{실제 코드}}</code></pre></body>')
+        self.assertIn("placeholder", codes(html))
+
+    def test_question_and_jyo_endings_split_sentences(self):
+        half = "이 " * 20
+        html = GOOD.replace("<p>바뀐 곳은 두 군데다.</p>", f"<p>{half}붙죠. 그렇다면 {half}할까요? 그래서 {half}끝.</p>")
+        self.assertNotIn("long", codes(html, "warn"))
+
+    def test_abbreviation_does_not_split(self):
+        self.assertEqual(check.sentences("A vs. B 비교다. 다음."), ["A vs. B 비교다.", "다음."])
+
+    def test_english_sentence_is_not_counted(self):
+        html = GOOD.replace("<p>바뀐 곳은 두 군데다.</p>", "<p>" + "word " * 40 + "end.</p>")
+        self.assertNotIn("long", codes(html, "warn"))
+
+    def test_adjacent_links_are_separate(self):
+        item = '<a class="index-item" href="#c">' + "챕터 " * 10 + "</a>"
+        html = GOOD.replace("<p>바뀐 곳은 두 군데다.</p>", "<nav>" + item * 3 + "</nav>")
+        self.assertNotIn("long", codes(html, "warn"))
+
+    def test_source_footer_is_not_counted_for_long_or_slop(self):
+        html = GOOD.replace('data-astack="source">', 'data-astack="source">' + "핵심은 " + "요청 " * 30 + "썼다. ")
+        self.assertNotEqual(html, GOOD)
+        self.assertNotIn("long", codes(html, "warn"))
+        self.assertNotIn("slop", codes(html, "warn"))
+
+    def test_source_without_claude_code_line_fails(self):
+        html = GOOD.replace("Claude Code가 썼습니다", "썼다")
+        msgs = [i.message for i in check.check_html(html) if i.code == "source"]
+        self.assertTrue(any("Claude Code가 썼습니다" in m for m in msgs), msgs)
+
     def test_data_img_file_is_external(self):
         html = GOOD.replace("</body>", '<section data-img="slides/s1.jpg"></section></body>')
         self.assertIn("external", codes(html))
