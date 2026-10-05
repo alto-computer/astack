@@ -58,5 +58,6 @@ description: Use when any astack skill is about to write an understanding HTML. 
 
 ## 기억 정리 (에이전트용, 저녁 20:30)
 - `astack memory consolidate` — 중복 합치기, 최신 told가 오래된 observed를 대체, observed는 나이로 감쇠(30일 반감), 같은 교정 3번이면 규칙으로 승격, `skill:` 교정 반복은 레포 패치 **제안만**. 직전 상태는 `~/.astack/archive/<날짜>.jsonl`에 저장되며, 읽을 수 없는 레코드는 그대로 두고 모든 변경 전 스냅샷이 보관된다.
-- 되돌리기: `astack memory restore <날짜>`. 지우기: `astack memory prune --key <접두사>`.
+- 되돌리기: `astack memory restore --list`로 스냅샷 이름을 본다(최신 먼저). `astack memory restore <날짜>`는 그날 첫 상태, 그 뒤 스냅샷·pre-restore 사본은 `astack memory restore <이름>`.
+- 지우기: `astack memory prune --key <접두사>`(접두사 일치라 `feed:youtube:A`는 `feed:youtube:AI…`도 지운다) · `--type <type>` · `--before YYYY-MM-DD`(날짜 없는 기록은 남는다).
 - 사람용 dream과 따로 돈다. 둘이 만나는 곳은 `memory add` 한 줄뿐.

@@ -290,5 +290,150 @@ class ConsolidateTest(MemoryOpsBase):
         self.assertEqual(cli.main(["memory", "consolidate", "--dry-run"]), 0)
 
 
+class RestoreNameTest(MemoryOpsBase):
+    def test_restore_by_archive_name_reaches_second_snapshot(self):
+        self.write(rec(key="a"), rec(key="b"), rec(key="c"))
+        memory.prune(key="a", today=D)
+        memory.prune(key="c", today=D)
+        snaps = [p for p in paths.archive_dir().glob("2026-10-05.*.jsonl")]
+        self.assertEqual(len(snaps), 1)
+        name = snaps[0].name[:-len(".jsonl")]
+        memory.restore(name, today=D)
+        self.assertEqual([r["key"] for r in memory.parse(memory.read_lines())], ["b", "c"])
+        memory.restore(snaps[0].name, today=D)  # .jsonl을 붙여도 된다
+        self.assertEqual([r["key"] for r in memory.parse(memory.read_lines())], ["b", "c"])
+
+    def test_restore_reaches_pre_restore_copy(self):
+        self.write(rec(key="a"), rec(key="b"))
+        memory.prune(key="a", today=D)
+        memory.restore("2026-10-05", today=D)
+        pre = next(paths.archive_dir().glob("2026-10-05.pre-restore-*.jsonl"))
+        memory.restore(pre.name[:-len(".jsonl")], today=D)
+        self.assertEqual([r["key"] for r in memory.parse(memory.read_lines())], ["b"])
+
+    def test_restore_rejects_names_outside_archive(self):
+        for bad in ("2026-10-05.abc", "2026-10-05/../../memory", "2026-10-05.pre-restore-", "../2026-10-05"):
+            with self.assertRaises(ValueError, msg=bad):
+                memory.restore(bad, today=D)
+
+    def test_archives_newest_first(self):
+        d = paths.archive_dir()
+        d.mkdir(parents=True)
+        for i, n in enumerate(["2026-10-04", "2026-10-05", "2026-10-05.120000000000", "2026-10-05.pre-restore-130000000000"]):
+            (d / f"{n}.jsonl").write_text(rec() + "\n")
+            os.utime(d / f"{n}.jsonl", (1000 + i, 1000 + i))
+        (d / "notes.txt").write_text("x")
+        self.assertEqual(memory.archives(), ["2026-10-05.pre-restore-130000000000", "2026-10-05.120000000000",
+                                             "2026-10-05", "2026-10-04"])
+        self.assertEqual(memory.archives("2026-10-05")[-1], "2026-10-05")
+
+    def test_cli_list_and_bare_date_warning(self):
+        import contextlib
+        import io
+        self.write(rec(key="a"), rec(key="b"), rec(key="c"))
+        today = datetime.date.today()
+        memory.prune(key="a", today=today)
+        memory.prune(key="b", today=today)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(cli.main(["memory", "restore", "--list"]), 0)
+        self.assertEqual(len(out.getvalue().splitlines()), 2)
+        err = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            self.assertEqual(cli.main(["memory", "restore", today.isoformat()]), 0)
+        self.assertIn("--list", err.getvalue())
+
+    def test_two_restores_in_same_second_keep_both_copies(self):
+        self.write(rec(key="s0"))
+        memory.archive(D)
+        self.write(rec(key="s1"))
+        stamps = iter(["120000000000", "120000000000", "120000000001"])
+        orig = memory._stamp
+        memory._stamp = lambda: next(stamps)
+        try:
+            memory.restore("2026-10-05", today=D)
+            memory.restore("2026-10-05", today=D)
+        finally:
+            memory._stamp = orig
+        pre = sorted(paths.archive_dir().glob("2026-10-05.pre-restore-*.jsonl"))
+        self.assertEqual(len(pre), 2)
+        self.assertTrue(any('"s1"' in p.read_text() for p in pre))
+
+
+    def test_design_skill_documents_restore_names(self):
+        skill = (Path(__file__).resolve().parents[1] / "skills/design/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("astack memory restore --list", skill)
+        self.assertIn("astack memory restore <이름>", skill)
+        self.assertIn("접두사 일치", skill)
+
+
+class PruneGuardTest(MemoryOpsBase):
+    def test_before_must_be_iso_date(self):
+        self.write(rec(date="2026-10-01"))
+        before = paths.memory_file().read_bytes()
+        for bad in ("yesterday", "어제", "2026-9-1", "2026-10-01T00:00", "2026-13-01"):
+            with self.assertRaises(ValueError, msg=bad):
+                memory.prune(before=bad, today=D)
+        self.assertEqual(paths.memory_file().read_bytes(), before)
+        self.assertFalse(paths.archive_dir().exists())
+
+    def test_before_skips_records_without_valid_date(self):
+        no_date = json.dumps({"type": "taste", "key": "k", "insight": "i", "source": "observed"})
+        self.write(rec(key="old", date="2026-08-01"), rec(key="blank", date=""), rec(key="odd", date="last week"), no_date)
+        self.assertEqual(memory.prune(before="2026-09-01", today=D), 1)
+        self.assertEqual([r["key"] for r in memory.parse(memory.read_lines())], ["blank", "odd", "k"])
+
+    def test_unknown_type_is_error(self):
+        self.write(rec())
+        with self.assertRaises(ValueError):
+            memory.prune(type_="corection", today=D)
+
+    def test_cli_bad_before_exits_2(self):
+        self.write(rec())
+        self.assertEqual(cli.main(["memory", "prune", "--before", "yesterday"]), 2)
+        self.assertEqual(len(memory.read_lines()), 1)
+
+    def test_prune_with_no_hit_writes_no_archive(self):
+        self.write(rec(key="a"))
+        self.assertEqual(memory.prune(key="zzz", today=D), 0)
+        self.assertFalse(paths.archive_dir().exists())
+
+
+class SymlinkTest(MemoryOpsBase):
+    def setUp(self):
+        super().setUp()
+        self.real = Path(self.tmp.name) / "sync" / "memory.jsonl"
+        self.real.parent.mkdir()
+        self.real.write_text(rec(key="a") + "\n" + rec(key="b") + "\n", encoding="utf-8")
+        os.chmod(self.real, 0o600)
+        paths.memory_file().symlink_to(self.real)
+
+    def test_prune_consolidate_restore_keep_the_link(self):
+        memory.prune(key="a", today=D)
+        self.assertTrue(paths.memory_file().is_symlink())
+        self.assertNotIn('"a"', self.real.read_text())
+        memory.consolidate(today=D)
+        self.assertTrue(paths.memory_file().is_symlink())
+        memory.restore("2026-10-05", today=D)
+        self.assertTrue(paths.memory_file().is_symlink())
+        self.assertIn('"a"', self.real.read_text())
+        self.assertEqual(stat.S_IMODE(self.real.stat().st_mode), 0o600)
+        self.assertEqual(list(self.real.parent.glob("*.tmp")), [])
+
+
+class DurableWriteTest(MemoryOpsBase):
+    def test_atomic_write_fsyncs_and_writes_everything(self):
+        calls = []
+        orig = os.fsync
+        os.fsync = lambda fd: calls.append(fd)
+        try:
+            data = b"x" * (1 << 20)
+            memory._write_atomic(Path(self.tmp.name) / "big", data)
+        finally:
+            os.fsync = orig
+        self.assertEqual((Path(self.tmp.name) / "big").read_bytes(), data)
+        self.assertGreaterEqual(len(calls), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

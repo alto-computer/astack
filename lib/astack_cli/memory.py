@@ -2,6 +2,7 @@ import contextlib
 import datetime
 import json
 import os
+import re
 import shutil
 import time
 from pathlib import Path
@@ -129,15 +130,25 @@ def parse(lines: list[str]) -> list[dict]:
     return out
 
 
+def _live() -> Path:
+    # 심볼릭 링크면 링크가 가리키는 실제 파일을 바꾼다. 링크 자체를 덮으면 동기화 레포와 끊긴다
+    return Path(os.path.realpath(paths.memory_file()))
+
+
 def _write_atomic(target: Path, data: bytes) -> None:
     tmp = target.with_name(target.name + ".tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    try:
-        os.write(fd, data)
-    finally:
-        os.close(fd)
+    with os.fdopen(fd, "wb") as fh:  # write()가 끝까지 쓴다. os.write 한 번은 일부만 쓸 수 있다
+        fh.write(data)
+        fh.flush()
+        os.fsync(fh.fileno())
     os.chmod(tmp, 0o600)
     os.replace(tmp, target)
+    dfd = os.open(target.parent, os.O_RDONLY)
+    try:
+        os.fsync(dfd)
+    finally:
+        os.close(dfd)
 
 
 def _tail(since_size: int) -> bytes:
@@ -158,23 +169,44 @@ def archive(today: datetime.date) -> Path:
     return a
 
 
-def snapshot_archive(today: datetime.date, data: bytes) -> Path | None:
-    """덮어쓰기 직전 스냅샷 바이트를 그대로 남긴다. 같은 날 두 번째부터는 시각이 붙은 새 파일."""
+def _stamp() -> str:
+    return datetime.datetime.now().strftime("%H%M%S%f")
+
+
+def snapshot_archive(today: datetime.date, data: bytes, tag: str = "") -> Path | None:
+    """덮어쓰기 직전 스냅샷 바이트를 그대로 남긴다. 같은 날 두 번째부터는 시각이 붙은 새 파일.
+    tag(pre-restore)가 있으면 늘 시각을 붙인다. 이미 있는 파일은 절대 덮지 않는다."""
     if not data:
         return None
     d = paths.archive_dir()
     d.mkdir(parents=True, exist_ok=True)
-    a = d / f"{today.isoformat()}.jsonl"
-    while a.exists():
-        stamp = datetime.datetime.now().strftime("%H%M%S%f")
-        a = d / f"{today.isoformat()}.{stamp}.jsonl"
+    a = None if tag else d / f"{today.isoformat()}.jsonl"
+    while a is None or a.exists():
+        a = d / f"{today.isoformat()}.{tag + '-' if tag else ''}{_stamp()}.jsonl"
     _write_atomic(a, data)
     return a
 
 
+ARCHIVE_NAME = re.compile(r"^(\d{4}-\d{2}-\d{2})(\.\d+|\.pre-restore-\d+)?$")
+
+
+def archives(date: str | None = None) -> list[str]:
+    """archive 이름(restore에 넘기는 값), 최신 먼저."""
+    d = paths.archive_dir()
+    if not d.is_dir():
+        return []
+    found = []
+    for p in d.glob("*.jsonl"):
+        name = p.name[:-len(".jsonl")]
+        m = ARCHIVE_NAME.fullmatch(name)
+        if m and (date is None or m.group(1) == date):
+            found.append((p.stat().st_mtime_ns, name))
+    return [n for _, n in sorted(found, reverse=True)]
+
+
 def replace_lines(lines: list[str], since_size: int) -> None:
     body = "".join(l + "\n" for l in lines).encode("utf-8")
-    _write_atomic(paths.memory_file(), body + _tail(since_size))
+    _write_atomic(_live(), body + _tail(since_size))
 
 
 def _dump(r: dict) -> str:
@@ -184,12 +216,14 @@ def _dump(r: dict) -> str:
 def prune(key: str | None = None, type_: str | None = None, before: str | None = None, today=None) -> int:
     if not (key or type_ or before):
         raise ValueError("--key, --type, --before 중 하나는 있어야 합니다")
+    if type_ is not None and type_ not in TYPES:
+        raise ValueError(f"모르는 type: {type_} (가능: {', '.join(sorted(TYPES))})")
+    if before is not None and not _iso_date(before):
+        raise ValueError(f"--before는 YYYY-MM-DD 날짜: {before}")
     today = today or datetime.date.today()
     with lock():
-        f = paths.memory_file()
         data, lines = _snapshot()
         size = len(data)
-        snapshot_archive(today, data)
         keep, removed = [], 0
         for line in lines:
             try:
@@ -200,29 +234,44 @@ def prune(key: str | None = None, type_: str | None = None, before: str | None =
             hit = isinstance(r, dict) \
                 and (key is None or str(r.get("key", "")).startswith(key)) \
                 and (type_ is None or r.get("type") == type_) \
-                and (before is None or str(r.get("date", "")) < before)
+                and (before is None or (_iso_date(r.get("date")) and r["date"] < before))
             if hit:
                 removed += 1
             else:
                 keep.append(line)
         if removed:
+            snapshot_archive(today, data)
             replace_lines(keep, size)
         return removed
 
 
-def restore(date: str, today=None) -> Path:
-    datetime.date.fromisoformat(date)  # archive 밖으로 못 나가게
-    a = paths.archive_dir() / f"{date}.jsonl"
+def _iso_date(v) -> bool:
+    if not isinstance(v, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", v):
+        return False
+    try:
+        datetime.date.fromisoformat(v)
+    except ValueError:
+        return False
+    return True
+
+
+def restore(name: str, today=None) -> Path:
+    """name: 날짜(그날 첫 상태) 또는 archives()의 이름(시각·pre-restore 스냅샷)."""
+    if name.endswith(".jsonl"):
+        name = name[:-len(".jsonl")]
+    m = ARCHIVE_NAME.fullmatch(name)  # archive 밖으로 못 나가게
+    if not m:
+        raise ValueError(f"archive 이름이 아닙니다: {name} (YYYY-MM-DD 또는 --list의 이름)")
+    datetime.date.fromisoformat(m.group(1))
+    a = paths.archive_dir() / f"{name}.jsonl"
     if not a.exists():
         raise FileNotFoundError(f"archive가 없습니다: {a}")
     today = today or datetime.date.today()
     with lock():
         data, _ = _snapshot()
-        if data:  # 현재 상태의 유일한 사본을 잃지 않게 늘 안전 사본을 남긴다
-            stamp = datetime.datetime.now().strftime("%H%M%S")
-            paths.archive_dir().mkdir(parents=True, exist_ok=True)
-            _write_atomic(paths.archive_dir() / f"{today.isoformat()}.pre-restore-{stamp}.jsonl", data)
-        _write_atomic(paths.memory_file(), a.read_bytes() + _tail(len(data)))
+        # 현재 상태의 유일한 사본을 잃지 않게 늘 안전 사본을 남긴다
+        snapshot_archive(today, data, tag="pre-restore")
+        _write_atomic(_live(), a.read_bytes() + _tail(len(data)))
     return a
 
 

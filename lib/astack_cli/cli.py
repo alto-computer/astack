@@ -31,12 +31,26 @@ def _memory(args) -> int:
         elif args.action == "prune":
             print(f"지운 기록 {memory.prune(key=args.key, type_=args.type, before=args.before)}개")
         elif args.action == "restore":
-            print(memory.restore(args.value or ""))
+            return _restore(args)
         elif args.action == "consolidate":
             return _consolidate(args)
     except (memory.InvalidRecord, ValueError, FileNotFoundError, memory.MemoryLocked) as e:
         print(f"astack memory: {e}", file=sys.stderr)
         return 2
+    return 0
+
+
+def _restore(args) -> int:
+    if args.list:
+        for name in memory.archives():
+            print(name)
+        return 0
+    name = args.value or ""
+    same_day = memory.archives(name) if memory.ARCHIVE_NAME.fullmatch(name) and "." not in name else []
+    if len(same_day) > 1:
+        print(f"astack memory: {name} 스냅샷이 {len(same_day)}개입니다. 그날 첫 상태로 되돌립니다. "
+              "최근 것은 --list로 이름을 보고 지정하세요", file=sys.stderr)
+    print(memory.restore(name))
     return 0
 
 
@@ -199,6 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--type")
     m.add_argument("--before")
     m.add_argument("--dry-run", action="store_true")
+    m.add_argument("--list", action="store_true", help="restore: archive 이름, 최신 먼저")
     m.set_defaults(fn=_memory)
     c = sub.add_parser("check", help="이해물 HTML이 출력 계약을 지키는지 검사")
     c.add_argument("files", nargs="+")
