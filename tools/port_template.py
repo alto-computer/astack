@@ -1,0 +1,69 @@
+"""사용자가 고른 Aside 템플릿을 astack 템플릿으로 옮긴다 (C6, C7).
+
+배치·JS는 그대로 두고, Alto 디테일(alto-override.css)만 첫 <style> 끝에 덧붙인다.
+원본이 바뀌면 다시 실행한다:
+  python3 tools/port_template.py interview
+  python3 tools/port_template.py seminar
+"""
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OVERRIDE = ROOT / "docs/superpowers/specs/references/alto-override.css"
+ASIDE = Path.home() / ".aside/u/0/skills/user"
+
+HEAD = ('<meta charset="utf-8">\n'
+        '<meta name="description" content="[이 이해물이 무엇인지 한 줄]">\n'
+        '<meta name="rooms:created" content="[RFC3339 지금 시각]">\n'
+        '<meta name="rooms:machine" content="[머신 이름]">\n')
+
+JOBS = {
+    "interview": {
+        "src": ASIDE / "podcast-magazine/assets/template.html",
+        "title": "[메인 제목] — 인터뷰",
+        "markers": [('<header class="cover">', "30s"), ('<section class="standfirst">', "3m"), ('<footer class="foot">', "source")],
+        "footer": "",
+    },
+    "seminar": {
+        "src": ASIDE / "seminar-report/assets/report-template.html",
+        "title": "{{TITLE}} — 세미나",
+        "markers": [('<header class="cover">', "30s"), ('<section class="mapwrap">', "3m")],
+        "footer": '<footer class="astack-source" data-astack="source">원본 영상 {{SOURCE_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>',
+    },
+}
+
+
+def port(src: str, override: str, title: str, markers: list[tuple[str, str]], source_footer: str) -> str:
+    s, n = re.subn(r'<meta charset="utf-8">\s*', lambda m: HEAD, src, count=1, flags=re.I)
+    if n != 1:
+        raise ValueError('<meta charset="utf-8">가 없습니다')
+    s = re.sub(r"<title>.*?</title>", lambda m: f"<title>{title}</title>", s, count=1, flags=re.S)
+    i = s.index("</style>")
+    s = s[:i] + "\n" + override.strip() + "\n" + s[i:]
+    for tag, layer in markers:
+        if s.count(tag) != 1:
+            raise ValueError(f"표식 자리 {tag}가 {s.count(tag)}개입니다")
+        s = s.replace(tag, tag[:-1] + f' data-astack="{layer}">')
+    s = re.sub(r'<img\b[^>]*\bsrc="(images/[^"]+)"[^>]*>',
+               lambda m: f"<!-- 그림 자리: {m.group(1)} (있으면 img 태그로 넣고, 없으면 비워 둔다) -->", s)
+    s = re.sub(r'src="\{\{[^"]*\}\}"', 'src=""', s)
+    s = re.sub(r'data-img="[^"]*"', 'data-img=""', s)
+    if source_footer:
+        j = s.rindex("</body>")
+        s = s[:j] + source_footer + "\n" + s[j:]
+    return s
+
+
+def main(name: str) -> None:
+    job = JOBS[name]
+    out = ROOT / f"skills/{name}/assets/template.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    html = port(job["src"].read_text(encoding="utf-8"), OVERRIDE.read_text(encoding="utf-8"),
+                job["title"], job["markers"], job["footer"])
+    out.write_text(html, encoding="utf-8")
+    print(out)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
