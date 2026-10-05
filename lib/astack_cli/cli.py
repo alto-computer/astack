@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from . import check as _check
+from . import course as _course
 from . import done as _done
 from . import inline as _inline
 from . import media as _media
@@ -116,6 +117,15 @@ def _cmd_route(args) -> int:
     return 0
 
 
+def _cmd_course(args) -> int:
+    worst = 0
+    for name, i in _course.check_course(Path(args.folder)):
+        print(f"{name}: {i.level} {i.code}: {i.message}")
+        if i.level == "error":
+            worst = 1
+    return worst
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -163,6 +173,10 @@ def build_parser() -> argparse.ArgumentParser:
     ro = sub.add_parser("route", help="입력(링크, 파일, 질문)을 어느 스킬로 보낼지")
     ro.add_argument("text")
     ro.set_defaults(fn=_cmd_route)
+    co = sub.add_parser("course", help="quest 코스 폴더 검사")
+    co.add_argument("action", choices=["check"])
+    co.add_argument("folder")
+    co.set_defaults(fn=_cmd_course)
     return p
 
 
