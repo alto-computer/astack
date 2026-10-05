@@ -38,6 +38,16 @@ class KitTest(unittest.TestCase):
         for banned in ["localStorage", "sessionStorage", "indexedDB", "fetch("]:
             self.assertNotIn(banned, js, banned)
 
+    def test_ext_css_sizes_stage_figures(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        self.assertIn(".vis img,.vis svg{display:block;max-width:100%;height:auto;margin:0 auto}", css)
+        self.assertIn(".stage .vis img{max-height:calc(100vh - 190px);object-fit:contain}", css)
+
+    def test_open_postit_sets_text_color(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        rule = css.split("details.postit[open]{", 1)[1].split("}", 1)[0]
+        self.assertIn("color:var(--ink)", rule)
+
     def test_ext_css_styles_quiz(self):
         css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
         self.assertIn("details.quiz", css)

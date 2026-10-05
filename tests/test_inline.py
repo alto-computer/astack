@@ -53,6 +53,19 @@ class InlineTest(unittest.TestCase):
             self.assertIn('class="linenos"', out)
             self.assertIn(">271<", out)
 
+    @unittest.skipUnless(inline.HAS_PYGMENTS, "Pygments 없음")
+    def test_auto_lang_uses_file_extension(self):
+        html = GOOD.replace("</body>", '<pre data-lang="auto" data-start="1" data-path="src/main.rs"><code>fn main() {}</code></pre></body>')
+        out = inline.inline_html(html, self.dir)
+        self.assertIn('<span class="k">fn</span>', out)
+
+    @unittest.skipUnless(inline.HAS_PYGMENTS, "Pygments 없음")
+    def test_auto_lang_unknown_extension_is_plain(self):
+        html = GOOD.replace("</body>", '<pre data-lang="auto" data-path="notes.zzz"><code>fn main() {}</code></pre></body>')
+        out = inline.inline_html(html, self.dir)
+        self.assertIn('class="cx"', out)
+        self.assertNotIn('<span class="k">fn</span>', out)
+
     def test_non_image_file_not_inlined(self):
         (self.dir / "notes.txt").write_text("secret", encoding="utf-8")
         out = inline.inline_html(GOOD.replace("</body>", '<img src="notes.txt" alt=""></body>'), self.dir)

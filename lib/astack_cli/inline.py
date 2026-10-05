@@ -9,7 +9,7 @@ from . import paths
 try:
     from pygments import highlight
     from pygments.formatters import HtmlFormatter
-    from pygments.lexers import get_lexer_by_name
+    from pygments.lexers import get_lexer_by_name, get_lexer_for_filename
     HAS_PYGMENTS = True
 except ImportError:  # 강조 없이도 동작한다
     HAS_PYGMENTS = False
@@ -59,7 +59,10 @@ def _code(m) -> str:
     code = unescape(body)
     if HAS_PYGMENTS:
         try:
-            lexer = get_lexer_by_name(LANG.get(lang, lang))
+            if lang in ("", "auto"):
+                lexer = get_lexer_for_filename(path)  # 경로 확장자로 정한다
+            else:
+                lexer = get_lexer_by_name(LANG.get(lang, lang))
         except Exception:
             lexer = get_lexer_by_name("text")
         inner = highlight(code, lexer, HtmlFormatter(linenos="inline", linenostart=start, cssclass="hl", wrapcode=True))

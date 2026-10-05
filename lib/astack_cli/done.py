@@ -36,4 +36,6 @@ def done(path, skill: str, room: str | None = None, force: bool = False,
                 notes.append(f"rooms link 실패({r.returncode}): {r.stderr.strip()[:200]}")
         except (OSError, subprocess.TimeoutExpired) as e:
             notes.append(f"rooms link 실패: {e}")
+    else:
+        notes.append("rooms 없음: 방 링크 건너뜀")
     return 0, notes

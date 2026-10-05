@@ -70,6 +70,27 @@ class TemplateTest(unittest.TestCase):
         self.assertIn('<details class="postit">', html)
         self.assertIn('class="vis" data-v="1"', html)
 
+    def test_paper_and_repo_body_placeholders_are_braces(self):
+        for name in ("paper", "repo"):
+            html = (ROOT / f"skills/{name}/assets/template.html").read_text(encoding="utf-8")
+            with self.subTest(name=name):
+                body = re.sub(r'<meta name="[^"]+" content="[^"]*">', "", html)
+                self.assertEqual(re.findall(r"\[[^\[\]\n]{1,80}\]", body), [])
+                self.assertIn("{{", body)
+
+    def test_paper_postit_is_not_inside_p(self):
+        html = (ROOT / "skills/paper/assets/template.html").read_text(encoding="utf-8")
+        self.assertIsNone(re.search(r"<p>(?:(?!</p>).)*<details", html, re.S))
+
+    def test_paper_figure_path_names_the_document(self):
+        html = (ROOT / "skills/paper/assets/template.html").read_text(encoding="utf-8")
+        self.assertIn("<!-- <날짜>-<slug>-figs/fig-1.png -->", html)
+
+    def test_repo_code_slots_pick_language_from_path(self):
+        html = (ROOT / "skills/repo/assets/template.html").read_text(encoding="utf-8")
+        self.assertNotIn('data-lang="ts"', html)
+        self.assertEqual(html.count('data-lang="auto"'), 3)
+
     def test_repo_template_has_evidence_tiers_and_weakness(self):
         html = (ROOT / "skills/repo/assets/template.html").read_text(encoding="utf-8")
         for s in ("ev ev-ok", "ev ev-mid", "ev ev-bad", 'id="r5"'):

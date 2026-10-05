@@ -22,8 +22,11 @@ def _memory(args) -> int:
             rec = memory.add(args.value or "")
             print(json.dumps(rec, ensure_ascii=False))
         elif args.action == "search":
-            for rec in memory.search(args.value or ""):
+            found = memory.search(args.value or "")
+            for rec in found:
                 print(json.dumps(rec, ensure_ascii=False))
+            if not found:
+                print("astack memory: 결과 없음", file=sys.stderr)
         elif args.action == "prune":
             print(f"지운 기록 {memory.prune(key=args.key, type_=args.type, before=args.before)}개")
         elif args.action == "restore":
@@ -122,8 +125,12 @@ def _mmss(sec: float) -> str:
 def _cmd_pdf(args) -> int:
     try:
         if args.action == "pages":
-            for p in _pdf.pages(Path(args.a), Path(args.b), max_dim=args.max):
+            ps = _pdf.pages(Path(args.a), Path(args.b), max_dim=args.max)
+            for p in ps:
                 print(p)
+            if ps:
+                w, h = _pdf._image_size(ps[0])
+                print(f"astack pdf: {len(ps)}쪽, 쪽 크기 {w}x{h}px (crop 좌표 기준)", file=sys.stderr)
         else:
             x, y, w, h = (int(v) for v in args.box)
             print(_pdf.crop(Path(args.a), x, y, w, h, Path(args.b)))

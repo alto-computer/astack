@@ -41,7 +41,7 @@ class DoneTest(unittest.TestCase):
     def test_done_without_rooms(self):
         code, notes = done.done(self.file, "change", now=NOW)
         self.assertEqual(code, 0)
-        self.assertEqual(notes, [])
+        self.assertEqual(notes, ["rooms 없음: 방 링크 건너뜀"])
         line = paths.outputs_log().read_text(encoding="utf-8").strip()
         self.assertEqual(line, f"2026-10-05T14:12:09+09:00\tchange\t{self.file.resolve()}")
 

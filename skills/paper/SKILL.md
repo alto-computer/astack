@@ -21,11 +21,11 @@ description: Use when 사용자가 논문 PDF나 arXiv 링크를 읽기 쉬운 �
 5. (보조) 선행연구 → **포스트잇**: 이해가 기대는 소수만 웹으로 확인해 `<details class="postit">`에. 기본은 접힘. 본문에 섞지 않는다.
 
 ## 워크플로
-1. 본문: arXiv면 `https://ar5iv.org/abs/<id>`를 읽어 섹션·수식·캡션을 얻는다. 아니면 PDF를 Read 도구로 쪽마다 읽는다.
-2. 쪽 이미지: `astack pdf pages <pdf> <slug>-pages/`.
-3. figure 전량: 쪽 이미지를 보고 상자를 정해 `astack pdf crop <page.png> x y w h figs/fig-N.png`. 애매하면 캡션 위 블록까지 넓게 자른다(누락보다 낫다). 개수를 본문의 "Figure N/Table N" 개수와 맞춘다.
+1. 본문: arXiv면 `https://ar5iv.org/abs/<id>`를 읽어 섹션·수식·캡션을 얻는다. 아니면 PDF를 Read 도구로 쪽마다 읽는다. ar5iv의 Figure/Table 번호와 본문 교차 참조는 틀릴 수 있다. 번호와 '(Table N)' 참조는 PDF 쪽 이미지로 확인한다.
+2. 쪽 이미지: `astack pdf pages <pdf> docs/astack/paper/<날짜>-<slug>-pages/`.
+3. figure 전량: 쪽 이미지를 보고 상자를 정해 `astack pdf crop <page.png> x y w h docs/astack/paper/<날짜>-<slug>-figs/fig-N.png`(표는 `tab-N.png`). 좌표는 쪽 PNG의 실제 픽셀(긴 변 2200, `pdf pages`가 stderr에 쪽 크기를 알린다). Read 도구가 줄여 보여 주면 비율을 곱한다. 애매하면 캡션 위 블록까지 넓게 자른다(누락보다 낫다). 개수를 본문의 "Figure N/Table N" 개수와 맞춘다.
 4. 매핑: 어떤 figure·수치가 어떤 주장을 받치는지 표로 적고, 원문 수치 목록을 만든다(6번 검증에 쓴다).
-5. `assets/template.html`을 복사해 섹션마다 `.secHead`, 하위 섹션마다 장면(`data-i`)과 그림 칸(`data-v`)을 늘린다. figure는 `<img src="figs/fig-N.png">`.
+5. `assets/template.html`을 복사해 섹션마다 `.secHead`, 하위 섹션마다 장면(`data-i`)과 그림 칸(`data-v`)을 늘린다. figure는 `<img src="<날짜>-<slug>-figs/fig-N.png">`. `{{…}}` 자리표시를 모두 채운다. 남으면 check가 막는다.
 6. 무손실 검증(게이트): figure·table 개수와 수치 목록을 결과물과 대조한다. 하나라도 빠지면 채우고 다시.
 7. 메타 → `astack inline` → `astack check` → `astack done <f> --skill paper`.
 

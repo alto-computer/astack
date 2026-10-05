@@ -168,6 +168,17 @@ class CliTest(MemoryOpsBase):
         self.assertEqual(cli.main(["memory", "add", '{"type":"preference","key":"k","insight":"i","source":"told"}']), 0)
 
 
+class SearchCliTest(MemoryOpsBase):
+    def test_zero_results_say_so_on_stderr(self):
+        import contextlib
+        import io
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            self.assertEqual(cli.main(["memory", "search", "skill:없음"]), 0)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("결과 없음", err.getvalue())
+
+
 class ConsolidateTest(MemoryOpsBase):
     def keys(self):
         return [(r["type"], r["key"]) for r in memory.parse(memory.read_lines())]

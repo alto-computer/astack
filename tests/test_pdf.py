@@ -48,6 +48,27 @@ class PagesTest(unittest.TestCase):
             self.assertTrue(all(p.stat().st_size > 0 for p in got))
 
 
+class PagesCliTest(unittest.TestCase):
+    def test_cli_prints_page_size_for_crop_coordinates(self):
+        import contextlib
+        import io
+        from astack_cli import cli
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d) / "a.pdf"
+            src.write_bytes(b"%PDF")
+            out = Path(d) / "pages"
+            old_pages, old_size = pdf.pages, pdf._image_size
+            pdf.pages = lambda a, b, max_dim=2200: [b / "page-001.png", b / "page-002.png"]
+            pdf._image_size = lambda img: (1700, 2200)
+            err = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                    self.assertEqual(cli.main(["pdf", "pages", str(src), str(out)]), 0)
+            finally:
+                pdf.pages, pdf._image_size = old_pages, old_size
+            self.assertIn("astack pdf: 2쪽, 쪽 크기 1700x2200px (crop 좌표 기준)", err.getvalue())
+
+
 class PagesErrorTest(unittest.TestCase):
     def test_missing_pdf_is_error(self):
         with tempfile.TemporaryDirectory() as d:
