@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>astack v1 — Spec</title>
+<meta name="description" content="astack v1 스펙. 사용자의 에이전트가 Alto의 방식대로 사람이 읽는 이해물(HTML)을 만들게 하는 스킬 묶음. 공리 7개, 스킬 카탈로그, 호출 방식, 출력 계약, 상태, 호스트 레시피, Rooms 접점, 마이그레이션.">
+<meta name="rooms:created" content="2026-10-05T18:00:00+09:00">
+<meta name="rooms:machine" content="main-mac">
+<style>
+  :root{--bg:#f7f6f3;--surface:#fff;--border:#eae7e0;--ink:#1f2328;--muted:#73757b;--accent:#3a5a7c;--accent-bg:#eef2f6;--mono:ui-monospace,'SF Mono',Menlo,monospace;--sans:-apple-system,'Pretendard','Apple SD Gothic Neo',sans-serif}
+  @media (prefers-color-scheme:dark){:root{--bg:#14140f;--surface:#1c1c17;--border:#2c2c26;--ink:#e8e6e1;--muted:#9a988f;--accent:#8fb0d0;--accent-bg:#1f2731}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7}
+  .layout{display:grid;grid-template-columns:230px 1fr;max-width:1320px;margin:0 auto}
+  nav{position:sticky;top:0;height:100vh;overflow:auto;padding:32px 18px;border-right:1px solid var(--border);font-size:13px}
+  nav h4{margin:0 0 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  nav a{display:block;padding:5px 8px;border-radius:4px;color:var(--ink);text-decoration:none}
+  nav a:hover{background:var(--accent-bg);color:var(--accent)}
+  main{padding:48px 64px 120px;max-width:920px}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+  h2{font-size:21px;margin:56px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  h2 .n{color:var(--muted);margin-right:8px;font-variant-numeric:tabular-nums}
+  h3{font-size:16px;margin:28px 0 8px}
+  .meta{color:var(--muted);font-size:13px;margin-bottom:28px}
+  .lead{font-size:16px;border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:20px 0}
+  code{font-family:var(--mono);font-size:.88em;background:var(--accent-bg);padding:1px 5px;border-radius:3px}
+  pre{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55}
+  pre code{background:none;padding:0}
+  table{border-collapse:collapse;width:100%;margin:12px 0 18px;font-size:14px;background:var(--surface)}
+  th,td{border:1px solid var(--border);padding:8px 11px;text-align:left;vertical-align:top}
+  th{font-size:12px;color:var(--muted);font-weight:600;background:var(--bg)}
+  .ax{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 18px;margin:12px 0}
+  .ax b{color:var(--accent)}
+  .ax .d{color:var(--muted);font-size:13.5px;margin-top:6px}
+  .box{background:var(--accent-bg);border-radius:6px;padding:12px 16px;margin:16px 0;font-size:14px}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border:1px solid var(--border);border-radius:999px;color:var(--muted);margin-left:6px;vertical-align:middle}
+  ul,ol{padding-left:22px} li{margin:3px 0}
+  svg{display:block;max-width:100%;height:auto;margin:16px 0;background:var(--surface);border:1px solid var(--border);border-radius:6px}
+  @media (max-width:820px){.layout{grid-template-columns:1fr}nav{display:none}main{padding:28px 20px 80px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <h4>astack v1</h4>
+  <a href="#s0">0. 개요</a>
+  <a href="#s1">1. 공리</a>
+  <a href="#s2">2. 사용자 시나리오</a>
+  <a href="#s3">3. 스킬 카탈로그</a>
+  <a href="#s4">4. 호출</a>
+  <a href="#s5">5. 출력 계약</a>
+  <a href="#s6">6. 이해 원칙</a>
+  <a href="#s7">7. 상태와 기억</a>
+  <a href="#s8">8. 능력과 호스트</a>
+  <a href="#s9">9. 스케줄과 예산</a>
+  <a href="#s10">10. Rooms 접점</a>
+  <a href="#s11">11. 레포 구조</a>
+  <a href="#s12">12. 마이그레이션</a>
+  <a href="#s13">13. 테스트</a>
+  <a href="#s14">14. 열린 질문</a>
+</nav>
+<main>
+
+<h1>astack v1</h1>
+<div class="meta">Spec · 2026-10-05 · Alto Computer · 대상 레포 <code>alto-computer/astack</code> · 상태: 초안</div>
+
+<div class="lead"><b>astack은 사용자의 에이전트가 Alto의 경험대로 "이해물"을 만들게 하는 선택형 빌트인 스킬이다.</b> 설치하면 에이전트가 더 좋은 이해물을 만들고, 결국 사람이 더 잘 이해하게 된다.</div>
+
+<!-- ================================================= -->
+<h2 id="s0"><span class="n">0.</span>개요</h2>
+
+<h3>문제</h3>
+<ul>
+  <li><b>에이전트가 일하는 걸 멍하니 보는 시간이 늘었다.</b> 예: superpowers subagent-driven-development로 Plan을 3시간 돌리면, 이해는 전부 끝난 뒤 한꺼번에 몰린다.</li>
+  <li><b>궁금한 게 생겨도 바로 파고들 재고가 없다.</b> 브리프에서 관심 항목을 찾아도 딥다이브를 요청하고 기다려야 해서 흐름이 끊긴다.</li>
+  <li><b>이해물을 만드는 스킬이 흩어져 있다.</b> Aside용과 Claude Code용 HTML 스킬이 서로 다른 규칙으로 갈라졌고, 맥미니와 다른 에이전트에서는 쓸 수 없다.</li>
+</ul>
+
+<h3>목표 (한 줄)</h3>
+<p><b>기다리는 모든 순간에, 지금 일과 같은 맥락의 이해물이 이미 준비돼 있다. 궁금한 건 던져두면 쌓이고, 쌓인 건 필요할 때 꺼내진다.</b></p>
+
+<h3>세 주체의 경계</h3>
+<table>
+  <tr><th>주체</th><th>하는 일</th><th>하지 않는 일</th></tr>
+  <tr><td>사용자의 에이전트 (Claude Code, Codex, Hermes, Aside)</td><td>실제로 일한다. 사용자 설정을 따른다</td><td></td></tr>
+  <tr><td><b>astack</b></td><td>에이전트에게 <b>잘 이해시키는 방법</b>을 준다</td><td>프로세스, 개발, 스케줄, 저장소 운영</td></tr>
+  <tr><td>Alto Rooms</td><td>결과물을 모아서 보여준다</td><td>AI 일</td></tr>
+  <tr><td>superpowers</td><td>무엇을, 어떻게 만들지 (프로세스, 설계 관문)</td><td></td></tr>
+</table>
+<p>astack과 Rooms는 서로를 몰라도 각각 동작한다. 하나만 설치한 사람도 잘 쓸 수 있어야 한다.</p>
+
+<h3>범위 밖</h3>
+<ul>
+  <li>개발 프로세스 스킬 (brainstorming, 계획, TDD, 리뷰). superpowers의 몫.</li>
+  <li>e2e 검증 문서. 증거는 PR 리뷰 게이트에서 본다.</li>
+  <li>읽음 상태 추적. Rooms 클라이언트 상태라 astack은 알 수 없다.</li>
+  <li>취미 브리프 (HF 논문 목록 등). 지금처럼 Instinct가 맡는다.</li>
+  <li>v1.1로 미룸: <code>check</code> (별도 점검 덱), <code>article</code> (긴 글, X 스레드), 월간 수렴.</li>
+</ul>
+
+<h3>용어</h3>
+<table>
+  <tr><th>용어</th><th>정의</th></tr>
+  <tr><td>이해물</td><td>astack이 만드는 HTML 한 장. 사람이 읽고 이해하기 위한 것</td></tr>
+  <tr><td>교본</td><td>quest, feed가 만드는 딥다이브 이해물</td></tr>
+  <tr><td>원자</td><td>소스 하나 → 이해물 하나를 만드는 스킬. 이름은 소스 종류</td></tr>
+  <tr><td>재고</td><td>쌓여 있는 이해물 전체. 할 일 목록이 아니라 서랍</td></tr>
+  <tr><td>작업 위치</td><td>스킬이 실행되는 폴더. 결과물은 그 아래 <code>docs/astack/</code>에 쌓인다</td></tr>
+  <tr><td>호스트</td><td>astack을 실행하는 에이전트. Claude Code, Codex, Hermes, Aside</td></tr>
+  <tr><td>능력</td><td>"자막 가져오기"처럼 스킬이 필요로 하는 동작. 호스트마다 구현이 다르다</td></tr>
+</table>
+
+<!-- ================================================= -->
+<h2 id="s1"><span class="n">1.</span>공리</h2>
+<p>모든 결정은 이 일곱 개에서 나온다. 개별 규칙과 충돌하면 공리가 이긴다.</p>
+
+<div class="ax"><b>1. 모든 산출물은 HTML이다.</b>
+<div class="d">퀴즈, 질의응답, 종합, 개념 설명 모두 HTML로 남긴다. 채팅과 알림에는 경로와 한 줄 요약만 둔다. 진행 상황, 실패 이유 같은 운영 메시지는 예외다. HTML은 파일 하나로 완결되고(self-contained), 저장소, API 키, 외부 호출 없이 격리 환경에서 동작해야 한다.</div></div>
+
+<div class="ax"><b>2. 이해만 한다.</b>
+<div class="d">"무엇을 할지"는 프로세스 도구(superpowers 등)가 만들고, "사람이 그걸 이해하게"는 astack이 만든다. 그래서 개발 문서(스펙, 변경)도 다루지만 개발 프로세스는 다루지 않는다.</div></div>
+
+<div class="ax"><b>3. 저장 위치는 환경을 따르고, Rooms가 있으면 링크한다.</b>
+<div class="d">기본 경로는 <code>&lt;작업 위치&gt;/docs/astack/&lt;스킬&gt;/YYYY-MM-DD-&lt;slug&gt;.html</code>이다. 사용자 지시와 프로젝트 규칙(CLAUDE.md, AGENTS.md)이 우선한다. <code>rooms link</code> 명령이 있으면 호출하고, 없으면 건너뛴다.</div></div>
+
+<div class="ax"><b>4. 런타임이 없다.</b>
+<div class="d">언제, 어디서 실행할지는 호스트가 정한다 (Hermes cron, 세션 훅). astack은 "어떻게 이해할지"만 안다. 대신 호스트용 설정 레시피를 함께 배포한다.</div></div>
+
+<div class="ax"><b>5. 상태는 파일에 있다.</b>
+<div class="d">astack의 상태는 <code>~/.astack/</code>의 텍스트 파일뿐이다. 레포에는 틀만 있고 개인 데이터는 없다. 색인이 필요하면 파일에서 다시 만들 수 있는 파생물로만 둔다.</div></div>
+
+<div class="ax"><b>6. 이해는 비동기다. 재고는 넉넉히.</b>
+<div class="d">astack은 작업 흐름을 절대 멈추지 않는다. 기다리는 순간에 읽을 게 없으면 실패다. 설계를 확정하는 동기식 관문은 superpowers brainstorming의 HARD-GATE가 맡고, astack은 그 관문에서 빨리 깊게 이해하게 돕는다.</div></div>
+
+<div class="ax"><b>7. 만드는 건 많이, 보여주는 건 적게.</b>
+<div class="d">희소한 건 생산이 아니라 사람의 주의력이다. 재고는 할 일 목록이 아니라 서랍이다 (안 읽은 개수, 밀린 표시 없음). 업무 중 대기에는 같은 맥락만 내민다. 모든 이해물은 30초 / 3분 / 30분 세 층을 가진다. 고르는 비용을 줄이려고 "다음 하나"만 준다. 코스가 여러 장이어도 입구는 지도 한 장, 알림은 한 줄이다. 발산(quest, feed)만큼 수렴(dream, map)을 정해진 리듬으로 돌린다.</div>
+<table>
+  <tr><th>등급</th><th>무엇</th><th>다루는 방식</th></tr>
+  <tr><td>업무</td><td>spec, change, recall now</td><td>최우선. 대기 시간에만, 같은 맥락만</td></tr>
+  <tr><td>핵심 공부</td><td>quest (실험 포함)</td><td>적중률이 생명. 저녁에 내가 고른 것만 밤에 돌린다. map으로 수렴</td></tr>
+  <tr><td>아침 읽기</td><td>feed (화이트리스트 채널)</td><td>아침 30분 분량만 만든다</td></tr>
+  <tr><td>취미</td><td>HF 논문 목록 등</td><td>astack 밖 (Instinct)</td></tr>
+</table></div>
+
+<!-- ================================================= -->
+<h2 id="s2"><span class="n">2.</span>사용자 시나리오</h2>
+<table>
+  <tr><th>#</th><th>상황</th><th>일어나는 일</th></tr>
+  <tr><td>1</td><td><b>Plan을 3시간 돌리는 중</b></td><td>Task가 리뷰를 통과할 때마다 그 Task의 <code>change</code>가 백그라운드로 생긴다. 에이전트가 Task N+1을 만드는 동안 나는 Task N을 이해한다. 끝나면 Plan 전체 요약 한 장만 남는다</td></tr>
+  <tr><td>2</td><td><b>개발 설계 중</b></td><td>brainstorming이 스펙을 저장하면 <code>spec</code>이 이해용 HTML을 만든다 (지금도 동작 중). 결정 목록, 레거시 충돌, go 전 점검 퀴즈를 보고 승인한다</td></tr>
+  <tr><td>3</td><td><b>대기 중 멍한 순간</b></td><td><code>recall now</code> → 지금 작업과 같은 맥락의 3분짜리 하나</td></tr>
+  <tr><td>4</td><td><b>지하철에서 궁금한 게 생기면</b></td><td>Telegram Quest 토픽에 한 줄 → 확인 없이 바로 진행 → 끝나면 즉시 알림. 교본이 재고에 쌓인다</td></tr>
+  <tr><td>5</td><td><b>아침</b></td><td>feed "오늘 30분" 한 장. 화이트리스트 채널 신작 중 30분 분량만, 읽는 순서대로. 밤 goal 결과도 같은 아침에 1통</td></tr>
+  <tr><td>6</td><td><b>저녁</b></td><td>dream이 하루를 엮고 간격 복습과 "내 말로 한 줄"을 묻는다. 21:00에 "오늘 밤 돌릴 질문"을 받는다. 고른 것만 밤에 goal로 돌린다</td></tr>
+  <tr><td>7</td><td><b>집중 공부 시간</b></td><td><code>study</code>로 교본 하나를 깊게. 후속 질문과 더 파기가 같은 교본에 덧붙는다</td></tr>
+  <tr><td>8</td><td><b>팟캐스트 보다가 직접</b></td><td><code>/interview &lt;링크&gt;</code> 또는 "이 인터뷰 정리해줘"</td></tr>
+  <tr><td>9</td><td><b>실험이 궁금할 때</b></td><td>"Aside vs browser-harness vs Chrome vs 새 헤드리스 브라우저 속도 비교" → 벤치를 찾거나 새로 만들어 밤에 돌린다 → 실험 보고서 + 재현 가능한 벤치 코드</td></tr>
+  <tr><td>10</td><td><b>무언가를 공부하고 싶을 때</b></td><td>"Codex CLI 공부" → 지도 + 10~12장 코스. 입구는 지도 한 장</td></tr>
+</table>
+
+<!-- ================================================= -->
+<h2 id="s3"><span class="n">3.</span>스킬 카탈로그</h2>
+
+<svg viewBox="0 0 860 300" role="img" aria-label="astack 스킬 층 구조">
+  <style>.t{font:13px -apple-system,sans-serif;fill:#1f2328}.s{font:11px -apple-system,sans-serif;fill:#73757b}.b{fill:#fff;stroke:#eae7e0}.a{fill:#eef2f6;stroke:#3a5a7c}</style>
+  <text x="20" y="28" class="s">사용자 동사</text>
+  <rect x="20" y="38" width="250" height="52" rx="6" class="a"/><text x="36" y="60" class="t">quest  만들어두기</text><text x="36" y="78" class="s">질문 또는 소스 → 코스 (지도 + 장)</text>
+  <rect x="290" y="38" width="250" height="52" rx="6" class="a"/><text x="306" y="60" class="t">study  깊게 이해하기</text><text x="306" y="78" class="s">교본 하나를 동기로 깊게</text>
+  <rect x="560" y="38" width="280" height="52" rx="6" class="a"/><text x="576" y="60" class="t">recall  꺼내기</text><text x="576" y="78" class="s">주제 · 지금 작업 · 기간 · now</text>
+  <text x="20" y="122" class="s">원자 (단축키, quest의 부품)</text>
+  <rect x="20" y="132" width="820" height="40" rx="6" class="b"/><text x="36" y="157" class="t">interview · seminar · paper · repo · spec · change</text>
+  <text x="20" y="204" class="s">자동 실행</text>
+  <rect x="20" y="214" width="400" height="40" rx="6" class="b"/><text x="36" y="239" class="t">feed (아침 30분) · dream · map (수렴)</text>
+  <rect x="440" y="214" width="400" height="40" rx="6" class="b"/><text x="456" y="239" class="t">memory (add · search · prune · consolidate)</text>
+  <text x="20" y="284" class="s">공통: astack (입구) · design (공통 문서, 직접 부르지 않음) · setup (스크립트, 스킬 아님)</text>
+</svg>
+
+<h3>3.1 사용자 동사</h3>
+<table>
+  <tr><th>스킬</th><th>하는 일</th><th>입력 → 출력</th><th>방식</th></tr>
+  <tr><td><code>quest</code></td><td>만들어두기. 질문이면 소스부터 찾고, 실험이 필요하면 돌린다</td><td>한 줄 질문 또는 소스 → 코스 (지도 + 장). 유형: 만들기 → 비교와 스타터 플랜, 개념 → 교본, 사례 → 케이스 스터디, 실험 → 실험 보고서와 벤치 코드</td><td>비동기. 확인을 기다리지 않음. 낮에 던진 건 완료 시 즉시 무음 알림, 밤 goal은 아침에 묶어서. 기본 깊이 Standard</td></tr>
+  <tr><td><code>study</code></td><td>깊게 이해하기</td><td>교본 하나 + 후속 질문 → 같은 교본에 덧붙이거나 하위 교본 생성</td><td>동기. 집중 공부 시간에만</td></tr>
+  <tr><td><code>recall</code></td><td>재고에서 꺼내기. 새 이해를 만들지 않음</td><td>주제 / 지금 작업 / 기간 → 읽을 목록 HTML. <code>recall now</code>는 딱 하나</td><td>요청, 그리고 긴 작업 시작 시 자동</td></tr>
+</table>
+
+<h3>3.2 quest 상세</h3>
+<ol>
+  <li><b>판별</b>: 입력이 소스 하나면 해당 원자로 바로 간다. 질문이면 유형(만들기, 개념, 사례)을 정한다.</li>
+  <li><b>분해</b>: 하위 질문 3~6개. 첫 알림에 보여주고, 답장이 오면 방향을 바꾼다. 기다리지 않는다.</li>
+  <li><b>수집과 선별</b>: GitHub, 엔지니어링 블로그, 발표, 논문, X. 상위 3~5개를 고른다 (실사용, 최근 활동, 신뢰하는 사람의 언급).</li>
+  <li><b>원자 호출</b>: 병렬 서브에이전트로 repo, seminar, interview, paper를 부른다.</li>
+  <li><b>종합</b>: 하위 질문 × 소스 비교, 각자의 해법, 스타터 플랜 또는 교본, 점검 퀴즈.</li>
+  <li><b>적재와 알림</b>: <code>docs/astack/quest/&lt;날짜&gt;-&lt;slug&gt;/</code>. 시작한 곳으로 알린다 (기본 Telegram).</li>
+</ol>
+<h3>3.2.1 결과물 단위: 코스</h3>
+<p>한 장에 다 넣으면 얕아지거나 안 읽힌다. 토큰이 넉넉하므로 quest의 결과는 코스 한 벌이다.</p>
+<pre><code>docs/astack/quest/&lt;날짜&gt;-&lt;slug&gt;/
+  00-지도.html     입구. 전체 구조, 장별 30초 요약, 읽는 순서 (= 이 방의 map)
+  01-….html ~ NN   장마다 질문 하나</code></pre>
+<table>
+  <tr><th>규칙</th><th>내용</th></tr>
+  <tr><td>한 장 = 한 질문</td><td>장 제목이 질문 하나로 말해져야 한다</td></tr>
+  <tr><td>한 장 = 10~15분</td><td>넘으면 쪼개고, 너무 짧으면 합친다</td></tr>
+  <tr><td>세 층 + 퀴즈</td><td>장마다 30초 / 3분 / 본문, 끝에 점검</td></tr>
+  <tr><td>연결</td><td>이전, 다음, 지도 링크. 같은 개념은 장이 달라도 같은 이름</td></tr>
+</table>
+<table>
+  <tr><th>깊이</th><th>구성</th></tr>
+  <tr><td>Quick</td><td>지도 + 5장</td></tr>
+  <tr><td><b>Standard (기본)</b></td><td>지도 + 10~12장. why 장과 실험 또는 실습 장 포함</td></tr>
+  <tr><td>Deep</td><td>지도 + 20장 이상. 장마다 하위 문서와 실습. "깊게"라고 할 때</td></tr>
+</table>
+<p>만드는 순서: 장 설계(지도 초안) → 장마다 서브에이전트 병렬 집필(클론은 한 번 공유) → 용어 통일과 겹침 제거 → 지도 확정. 원자도 소스가 길면 같은 방식으로 장을 나눈다 (예: 3시간 팟캐스트).</p>
+
+<h3>3.2.2 실험 유형</h3>
+<ol>
+  <li><b>가설과 지표</b>: 무엇을 무엇으로 잴지 (페이지 로드, 스냅샷 시간, 액션 지연, 메모리 등).</li>
+  <li><b>기존 벤치 탐색</b>: 쓸 만하면 재사용한다.</li>
+  <li><b>없으면 제작</b>: 재현 가능한 스크립트. 벤치 자체가 남는 자산이다 (build-the-lever).</li>
+  <li><b>환경 고정</b>: 머신, 버전, 워밍업, 교차 실행, 반복 횟수를 기록한다.</li>
+  <li><b>실행</b>: 맥미니에서 밤에. 다른 작업과 자원을 다투지 않게.</li>
+  <li><b>분석</b>: 숫자를 제한하는 요인과, 엉뚱한 걸 잰 건 아닌지까지 확인한다 (explain-the-number).</li>
+  <li><b>보고서</b>: 방법, 차트, 원자료, 재현 명령, 한계. 벤치 코드는 quest 폴더에 보존한다.</li>
+</ol>
+<p><b>브라우저 프로필</b>: 기본은 Aside 실제 프로필 (로그인과 권한, 실사용 조건). 가드레일:</p>
+<table>
+  <tr><th>가드레일</th><th>내용</th></tr>
+  <tr><td>읽기 전용</td><td>로그인된 사이트에서는 읽고 이동만. 글쓰기, 구매, 삭제, 설정 변경 금지</td></tr>
+  <tr><td>세션 보존</td><td>실제 프로필의 캐시, 쿠키를 지우지 않는다. 콜드 스타트 측정만 깨끗한 프로필</td></tr>
+  <tr><td>한 번에 하나</td><td>Aside 프로필을 쓰는 goal은 순서대로. 병렬은 다른 브라우저끼리만</td></tr>
+  <tr><td>부하는 내 쪽에</td><td>반복 측정은 로컬 테스트 페이지나 내 서버에서. 외부 사이트를 반복 호출해 계정이 제한되지 않게</td></tr>
+</table>
+<p>비교 실험은 "실사용 조건"(Aside 프로필)과 "깨끗한 조건"(새 프로필)을 함께 잰다. 둘의 차이가 프로필 상태의 영향이다.</p>
+
+<h3>3.2.3 밤 goal</h3>
+<p>21:00에 Telegram으로 "오늘 밤 돌릴 질문"을 받는다. 후보는 오늘 작업에서 나온 질문, dream이 뽑은 새 질문, 요즘 관심사이고, 자유 입력도 받는다. 내가 고른 것만 돌려서 적중률을 높인다. 답이 없으면 후보 1번 하나만 돌린다.</p>
+<table>
+  <tr><th>항목</th><th>설계</th></tr>
+  <tr><td>성공 조건</td><td>유형별 판정. 예: 실험은 반복 3회와 편차 기준, 보고서와 재현 명령. 코스는 모든 장에 세 층과 퀴즈, 지도에서 모든 장 도달, 원문 근거</td></tr>
+  <tr><td>반복</td><td>조건을 만족하거나 시간, 예산이 다 될 때까지</td></tr>
+  <tr><td>결정 기록</td><td>밤새 무엇을 왜 정했는지 남긴다 (show-me-your-work 방식)</td></tr>
+  <tr><td>실패 대비</td><td>체크포인트에서 이어간다 (pause/resume 방식)</td></tr>
+  <tr><td>개수</td><td>밤에 최대 3개</td></tr>
+  <tr><td>아침</td><td>07:00에 1통. goal별 성공 여부, 핵심 3줄, 지도 링크</td></tr>
+</table>
+<p><b>클론 캐시</b>: <code>~/.cache/astack/repos/</code>. Rooms Home과 작업 위치 밖에 둬서 오염을 막고, 다음 quest에서 재사용한다.</p>
+
+<h3>3.3 원자</h3>
+<p>소스 하나 → 이해물 하나. 이름은 소스 종류다. quest의 부품이면서 직접 부를 수 있는 단축키다. 형식을 직접 정하고 싶을 때 쓴다.</p>
+<table>
+  <tr><th>스킬</th><th>소스</th><th>출력 형식</th><th>자동 선택</th></tr>
+  <tr><td><code>interview</code></td><td>팟캐스트, 인터뷰, 대담 영상</td><td>대화를 보존한 매거진 에디션</td><td>요청할 때만</td></tr>
+  <tr><td><code>seminar</code></td><td>슬라이드 발표 영상</td><td>스크롤하면 슬라이드가 바뀌는 리포트</td><td>요청할 때만</td></tr>
+  <tr><td><code>paper</code></td><td>논문 PDF, arXiv</td><td>구조화, 시각화한 무손실 리더</td><td>요청할 때만</td></tr>
+  <tr><td><code>repo</code></td><td>외부 GitHub 레포</td><td>아키텍처, 핵심 루프, 영리한 부분(파일:줄), why(PR, 이슈 근거), 약점</td><td>요청할 때만</td></tr>
+  <tr><td><code>spec</code></td><td>스펙, 설계 문서 (구현 전)</td><td>목적 → 구조 → 흐름(인터랙티브) → 결정과 트레이드오프 → 근거. 확정할 결정 목록, 레거시 충돌 표시, go 전 점검 퀴즈</td><td><b>허용</b> (스펙 저장 시)</td></tr>
+  <tr><td><code>change</code></td><td>Task 커밋 범위, 브랜치, PR (구현 후)</td><td>만들어진 것, 스펙 대비 차이, 에이전트의 임의 결정, 위험한 곳, 점검 퀴즈. Task 단위와 Plan 전체 요약 두 가지</td><td><b>허용</b> (Task 리뷰 통과 시, Plan 완료 시)</td></tr>
+</table>
+<p>"정리해줘"처럼 <b>요청하면</b> 반응하고, 링크를 붙여넣기만 했을 땐 반응하지 않는다. 원자는 요약이 아니라 무손실 변환이며, 맨 위 3분 층이 요약 역할을 한다.</p>
+
+<h3>3.4 자동 실행</h3>
+<table>
+  <tr><th>스킬</th><th>하는 일</th><th>출력</th></tr>
+  <tr><td><code>feed</code></td><td>아침 30분 읽을거리. 화이트리스트 YouTube 채널의 신작만</td><td>"오늘 30분" HTML 한 장. 깊은 매거진 1~2개 + 짧은 카드 2~3개, 읽는 순서대로</td></tr>
+  <tr><td><code>dream</code></td><td>사람을 위한 dream. 오늘 이해물을 엮는다</td><td>Journal HTML: 공통 주제, 부딪히는 주장, 새 질문, 간격 복습(1일, 7일, 30일 전에서 1문항씩), "내 말로 한 줄" 질문. 주 1회는 주간 수렴 모드로 "이번 주 내 일에 쓸 것 3가지". 관심 변화를 발견하면 <code>memory add</code>로 관찰만 남긴다</td></tr>
+  <tr><td><code>map</code></td><td>주제 지도. 방(주제)마다 계속 갱신되는 한 장</td><td><code>map.html</code>: 지금까지 알게 된 것, 합의, 부딪히는 주장, 남은 질문, 내가 내린 결정. 새 이해물이 그 방에 들어올 때 갱신. quest 코스의 <code>00-지도</code>가 첫 판이다</td></tr>
+  <tr><td><code>memory</code></td><td>에이전트를 위한 기억. add, search, prune, consolidate</td><td>진실은 <code>memory.jsonl</code>. 바뀐 게 있을 때만 보고 HTML</td></tr>
+</table>
+
+<h3>3.5 feed 상세</h3>
+<table>
+  <tr><th>단계</th><th>내용</th></tr>
+  <tr><td>소스</td><td>화이트리스트 YouTube 채널만 (로그인 계정에서 실시간으로 읽음). 화이트리스트는 레포가 아니라 memory의 <code>told</code> 기록 (초기 9개 채널)</td></tr>
+  <tr><td>신작</td><td>지난 실행 이후 것. 이미 이해물이 있는 소스는 건너뛴다 (outputs.log + 본문의 원문 링크)</td></tr>
+  <tr><td>양</td><td><b>30분 분량만 만든다.</b> 신작이 많으면 취향 순으로 잘라내고 나머지는 만들지 않는다. 밀린 목록이 생기지 않는다</td></tr>
+  <tr><td>취향</td><td>기록에서 재구성 (만든 이해물, 좋아요) + memory (피드백, 교정)</td></tr>
+  <tr><td>피드백</td><td>Telegram 답장 "2번 별로"는 memory에 기록돼 다음 선택에 반영</td></tr>
+</table>
+
+<h3>3.6 공통</h3>
+<table>
+  <tr><th>항목</th><th>정체</th></tr>
+  <tr><td><code>astack</code></td><td>입구(라우터). 링크면 소스 종류로 원자를, 질문이면 quest를, "오늘 정리"면 dream을 고른다. Telegram에 무엇이든 던질 수 있게 하는 것이 목적</td></tr>
+  <tr><td><code>design</code></td><td>직접 부르지 않는 공통 문서. 다른 모든 스킬이 시작할 때 읽는다. 출력 계약(5장), 이해 원칙 색인(6장), Alto 토큰, 능력 지도</td></tr>
+  <tr><td><code>setup</code></td><td>스킬이 아니라 설치 스크립트. <code>./setup --host claude|codex|hermes|aside|auto</code></td></tr>
+</table>
+
+<!-- ================================================= -->
+<h2 id="s4"><span class="n">4.</span>호출</h2>
+
+<h3>4.1 세 가지 모드</h3>
+<table>
+  <tr><th>모드</th><th>언제</th><th>어떻게</th></tr>
+  <tr><td>요청</td><td>내가 부탁할 때</td><td>직접 지정 <code>/interview &lt;링크&gt;</code>, 자연어 "이 인터뷰 정리해줘", 던지기 (Telegram에 링크나 한 줄 → 입구가 판단)</td></tr>
+  <tr><td>흐름 속 자동</td><td>다른 작업 중 저절로</td><td>좁은 조건 목록 (4.2). pstack처럼 "이럴 때만" 방식이며, 모든 걸 가로채지 않는다</td></tr>
+  <tr><td>백그라운드</td><td>나 없이</td><td>맥미니 Hermes cron과 Telegram 토픽 (9장)</td></tr>
+</table>
+
+<h3>4.2 흐름 속 자동 조건</h3>
+<table>
+  <tr><th>조건</th><th>발동</th><th>연결 방식</th></tr>
+  <tr><td>스펙, 설계 문서가 저장됨</td><td><code>spec</code></td><td>이미 brainstorming과 함께 동작 중. 추가 설정 없음. 건너뛰는 일이 생기면 CLAUDE.md 한 줄로 보강</td></tr>
+  <tr><td>subagent-driven-development에서 Task가 리뷰 통과</td><td><code>change</code> (Task 단위, 백그라운드)</td><td>전역 CLAUDE.md 한 줄</td></tr>
+  <tr><td>Plan 전체 완료, PR 열림</td><td><code>change</code> (Plan 요약)</td><td>전역 CLAUDE.md 한 줄</td></tr>
+  <tr><td>긴 작업 시작 (서브에이전트 구현, e2e 등)</td><td><code>recall now</code> → 하나 처방. 재고가 없으면 같은 맥락 이해물 1개를 백그라운드 생성</td><td>전역 CLAUDE.md 한 줄</td></tr>
+</table>
+<p>CLAUDE.md는 superpowers가 공식으로 열어둔 확장 지점이다 (사용자 지침이 스킬보다 우선). 지시가 무시되면 Claude Code 훅(서브에이전트 종료, PR 생성)으로 바꾼다.</p>
+<pre><code>## astack
+- subagent-driven-development에서 Task가 리뷰를 통과할 때마다, 그 Task 커밋 범위로
+  astack:change를 백그라운드 서브에이전트로 실행하고 경로를 한 줄로 알려줘. 작업은 멈추지 마.
+- Plan이 끝나거나 PR을 열면 astack:change로 Plan 전체 요약을 만들어줘.
+- 5분 넘게 걸릴 작업을 시작할 때 astack:recall now로 지금 읽을 것 하나를 알려줘.</code></pre>
+
+<h3>4.3 알림</h3>
+<ul>
+  <li>시작한 곳으로 답한다. 보내는 쪽은 항상 호스트(Hermes 등)이고, astack은 일만 한다.</li>
+  <li>준선 기본값: Telegram. 낮에 던진 quest는 완료 즉시 무음 메시지(도착하되 집중을 깨지 않음). 밤 goal과 feed는 아침 1통, dream은 저녁 1통, 21:00 질문 받기 1통.</li>
+  <li>quest 첫 응답("받았어요, 이렇게 쪼개서 볼게요")은 머릿속 열린 고리를 닫는 신호다. 던진 순간 잊어도 된다.</li>
+  <li>메시지에는 30초 층(2~3줄)과 링크만. 본체는 HTML.</li>
+</ul>
+
+<!-- ================================================= -->
+<h2 id="s5"><span class="n">5.</span>출력 계약</h2>
+<p>모든 astack 이해물이 지키는 규칙. <code>design/references/output.md</code>에 둔다.</p>
+<table>
+  <tr><th>항목</th><th>규칙</th></tr>
+  <tr><td>형식</td><td>self-contained HTML 한 장. 이미지는 내장. 링크된 위치에서 열어도 깨지지 않는다</td></tr>
+  <tr><td>격리 환경</td><td>localStorage, API 키, 필수 외부 호출 없음. Rooms는 아티팩트를 별도 origin의 sandbox(allow-same-origin 없음)로 연다</td></tr>
+  <tr><td>경로</td><td><code>&lt;작업 위치&gt;/docs/astack/&lt;스킬&gt;/YYYY-MM-DD-&lt;slug&gt;.html</code>. 여러 파일이면 같은 이름의 폴더</td></tr>
+  <tr><td>메타</td><td><code>&lt;meta name="description"&gt;</code> (한두 줄 요약, HTML 표준), <code>rooms:created</code>, <code>rooms:machine</code>. 선택: <code>rooms:agent</code>, <code>rooms:session</code></td></tr>
+  <tr><td>세 층</td><td>맨 위에 30초 층(무엇이고 왜 중요한지 2줄)과 3분 층(핵심 구조 하나 + 그림 하나 + 퀴즈 하나). 그 아래 30분 본문</td></tr>
+  <tr><td>내장 점검</td><td>챕터 끝마다 접힌 블록. 객관식은 즉시 채점하고 오답마다 "흔한 오해" 해설과 원문 링크를 단다. 주관식은 정답 공개, 서술형은 모범답안과 핵심 포인트 공개. 상태는 페이지 안에서만</td></tr>
+  <tr><td>출처</td><td>모든 주장에 원문 위치 (타임스탬프, 페이지, 파일:줄, URL)</td></tr>
+  <tr><td>근거 등급</td><td>사실 주장은 확인 / 추론 / 모름으로 구분한다. 코드를 그 코드의 의도에 대한 증거로 쓰지 않는다</td></tr>
+  <tr><td>언어</td><td>한국어. 코드 식별자와 원문 인용은 그대로 두고 설명은 한국어로</td></tr>
+  <tr><td>디자인</td><td>바탕, 글자, 간격은 Alto 토큰으로 고정. 의미를 전달하는 색(상태, 흐름 강조)만 내용에 맞게. 그라데이션, 네온, 이모지 불릿, 마케팅 말투 금지</td></tr>
+  <tr><td>채팅 응답</td><td>경로 + 한 줄. 내용은 HTML에만</td></tr>
+  <tr><td>Rooms</td><td>완료 후 <code>rooms link &lt;파일&gt;</code>가 있으면 호출. dream은 <code>--journal &lt;날짜&gt;</code></td></tr>
+  <tr><td>기록</td><td>완료 후 <code>~/.astack/outputs.log</code>에 경로 한 줄</td></tr>
+</table>
+
+<h3>description 작성 규칙 (스킬 frontmatter)</h3>
+<p>superpowers writing-skills 지침을 따른다. "언제 쓰는지"만 쓰고 "무엇을 하는지"는 요약하지 않는다. <code>Use when</code>으로 시작한다. 요약해두면 에이전트가 본문을 읽지 않고 description만 보고 행동한다.</p>
+<pre><code>---
+name: interview
+description: Use when 사용자가 팟캐스트, 인터뷰, 대담 영상이나 자막을 정리하거나 아티팩트로 만들어달라고 요청할 때. "이 팟캐스트 정리해줘", "인터뷰 아티팩트로" 같은 요청.
+---</code></pre>
+
+<h3>스킬 본문 뼈대</h3>
+<ol>
+  <li>약속: 이 스킬을 쓰면 사용자가 얻는 것 한 줄</li>
+  <li>입력과 출력</li>
+  <li>원칙: 6장 색인 중 이 스킬에서 특히 중요한 것을 이름으로 부른다</li>
+  <li>워크플로: 번호 단계. 능력은 8장 능력 지도를 참조</li>
+  <li>완료 전 체크: 품질 체크리스트 + "사용자가 선호, 제외, 피드백, 교정을 말했으면 <code>astack-memory add</code>"</li>
+  <li>Gotchas: 실제로 겪은 함정</li>
+</ol>
+
+<!-- ================================================= -->
+<h2 id="s6"><span class="n">6.</span>이해 원칙</h2>
+<p>공리가 시스템의 정체성이라면, 이해 원칙은 콘텐츠를 잘 만드는 기술이다. pstack의 원칙 부품 방식을 따른다. 원칙마다 짧은 파일 하나(<code>design/principles/*.md</code>)를 두고, <code>design</code>에는 색인만 둔다. 같은 교정이 두 번 나오면 원칙이나 검사 스크립트로 올린다 (encode-lessons).</p>
+<table>
+  <tr><th>원칙</th><th>언제</th><th>요지</th><th>출처</th></tr>
+  <tr><td>convert-not-summarize</td><td>모든 원자</td><td>정보량은 그대로, 형식만 바꾼다</td><td>podcast-magazine, paper reader</td></tr>
+  <tr><td>three-layers</td><td>모든 이해물</td><td>30초 / 3분 / 30분</td><td>공리 7</td></tr>
+  <tr><td>definition-then-case</td><td>개념 설명</td><td>일반 정의 → 지금 사례 → 깊이</td><td>pstack teach</td></tr>
+  <tr><td>build-up-diagrams</td><td>부품 3개 이상</td><td>한 장에 다 그리지 않고 하나씩 쌓아 그린다</td><td>pstack teach</td></tr>
+  <tr><td>visual-per-paragraph</td><td>설명 문단</td><td>문단마다 옆에 그 내용을 설명하는 시각화</td><td>html-artifact</td></tr>
+  <tr><td>evidence-tiers</td><td>사실 주장</td><td>확인 / 추론 / 모름 구분. 모르는 건 모른다고</td><td>pstack why, html-artifact</td></tr>
+  <tr><td>anchor-to-source</td><td>모든 주장</td><td>원문 위치로 바로 갈 수 있게</td><td>seminar, paper</td></tr>
+  <tr><td>one-name-per-concept</td><td>글쓰기</td><td>개념 하나에 이름 하나</td><td>pstack unslop</td></tr>
+  <tr><td>retrieval-check</td><td>챕터 끝</td><td>이해를 묻는 질문 (왜, 만약, 비교, 적용). 암기 질문 금지</td><td>학습 과학</td></tr>
+  <tr><td>no-slop-ko</td><td>모든 글</td><td>한국어 AI 말투 금지. 가능하면 검사 스크립트로</td><td>pstack unslop, gstack slop-scan</td></tr>
+  <tr><td>explain-the-number</td><td>실험</td><td>숫자를 보고하기 전에 무엇이 그 숫자를 제한하는지, 다른 걸 잰 건 아닌지 확인</td><td>pstack</td></tr>
+  <tr><td>build-the-lever</td><td>실험</td><td>손으로 재지 말고 다시 돌릴 수 있는 벤치를 만든다</td><td>pstack</td></tr>
+  <tr><td>converge</td><td>dream, map</td><td>새 이해물이 들어와도 문서가 두꺼워지지 않고 더 정확해지게. "그래서 나한테는?"을 행동 3가지로 좁힌다</td><td>수렴층</td></tr>
+</table>
+
+<!-- ================================================= -->
+<h2 id="s7"><span class="n">7.</span>상태와 기억</h2>
+<table>
+  <tr><th>파일</th><th>역할</th></tr>
+  <tr><td><code>~/.astack/memory.jsonl</code></td><td><b>기억의 진실.</b> 한 줄에 기록 하나</td></tr>
+  <tr><td><code>~/.astack/archive/YYYY-MM-DD.jsonl</code></td><td>consolidate 직전 상태. 되돌리기와 감사용</td></tr>
+  <tr><td><code>~/.astack/outputs.log</code></td><td>astack이 쓴 이해물 경로 목록. 지워져도 루트 폴더의 <code>docs/astack/**</code>를 다시 훑으면 복구</td></tr>
+  <tr><td><code>~/.astack/.lock</code></td><td>consolidate 중에만 잡는 잠금</td></tr>
+  <tr><td>SQLite</td><td>v1에는 없음. 필요해지면 jsonl에서 만드는 파생 색인</td></tr>
+</table>
+
+<h3>기록 형식</h3>
+<pre><code>{"type":"exclude","key":"channel:남자의취미","insight":"feed에서 제외","source":"told","date":"2026-10-05","host":"hermes"}
+{"type":"correction","key":"skill:interview","insight":"질문자 발언도 전부 살릴 것","source":"told","date":"2026-10-05","host":"claude"}
+{"type":"taste","key":"topic:personal-agent","insight":"최근 2주 quest가 개인 에이전트 메모리로 몰림","confidence":0.7,"source":"observed","date":"2026-10-05","host":"hermes"}</code></pre>
+
+<h3>누가, 언제 쓰나</h3>
+<ul>
+  <li><b>판단은 에이전트, 형식은 스크립트.</b> 에이전트가 <code>astack-memory add '{…}'</code>를 호출하고, 스크립트가 형식을 검사하고 시간과 호스트를 붙인다. 짧은 한 줄 추가라 여러 에이전트가 동시에 써도 안전하다.</li>
+  <li><b>기록에서 다시 알 수 없는 것만 쓴다.</b> 사용자가 말한 선호, 제외, 피드백, 교정. 그리고 dream이 발견한 관심 변화. 무엇을 만들고 읽었는지, 구독과 좋아요는 쓰지 않는다 (재구성 가능).</li>
+  <li><b>읽기</b>: 스킬은 시작할 때 <code>astack-memory search &lt;관련 키&gt;</code>로 관련 기억을 읽는다.</li>
+</ul>
+
+<h3>consolidate (에이전트를 위한 dream)</h3>
+<ol>
+  <li>잠금을 잡고 현재 파일을 archive로 복사한다.</li>
+  <li>중복을 합친다. 모순은 최신 told가 오래된 observed를 이긴다. 오래된 관찰은 약하게 만든다. told는 취소 전까지 유지한다.</li>
+  <li>반복된 교정을 승격한다. <b>내 취향</b>(예: interview 교정 3회)은 기억 안의 강한 규칙으로 바꾼다. <b>스킬 결함</b>(예: seminar 슬라이드 순서 오류 반복)은 astack 레포 패치를 <b>제안만</b> 한다.</li>
+  <li>임시 파일에 쓰고 이름을 바꿔 원자적으로 교체한다. 잠금을 푼다.</li>
+  <li>바뀐 게 있으면 변경 보고 HTML을 만든다.</li>
+</ol>
+
+<h3>취향 = 재구성 + 기억</h3>
+<p>astack은 구독 목록이나 취향 파일을 저장하지 않는다. 취향은 매번 기록(만든 이해물, 좋아요, 북마크, 구독)에서 재구성하고, 기록으로 알 수 없는 명시적 선호만 memory에서 읽는다.</p>
+
+<!-- ================================================= -->
+<h2 id="s8"><span class="n">8.</span>능력과 호스트</h2>
+
+<h3>8.1 능력 지도 (<code>design/references/capabilities.md</code>)</h3>
+<p>스킬 본문에는 능력 이름만 쓴다. 호스트 차이는 이 문서 한 곳에 모은다.</p>
+<table>
+  <tr><th>능력</th><th>Aside</th><th>터미널 호스트 (Claude Code, Codex, Hermes)</th><th>주의</th></tr>
+  <tr><td>transcript</td><td><code>youtube.getTranscript(id,{lang,includeTimestamp:true})</code></td><td><code>scripts/transcript &lt;url&gt; --lang en</code> (yt-dlp)</td><td>자동 자막만 있으면 언어를 명시하고 첫 줄 확인</td></tr>
+  <tr><td>pdf-figures</td><td>REPL 크롭</td><td><code>scripts/pdf-figures</code></td><td>모든 그림 추출</td></tr>
+  <tr><td>clone</td><td>Bash git</td><td><code>git clone --depth 1</code> → <code>~/.cache/astack/repos/</code></td><td>Aside는 <code>/Library/Developer</code> 읽기 허용 필요 (적용됨)</td></tr>
+  <tr><td>subscriptions</td><td>로그인된 YouTube 구독, X 팔로우와 북마크</td><td><code>aside</code> CLI로 위임</td><td>실시간으로만 읽고 저장하지 않음</td></tr>
+  <tr><td>subagent</td><td>subagent 도구</td><td>Claude Code: Agent(<code>general-purpose</code>). Codex: <code>spawn_agent</code>(multi_agent 필요). Hermes: delegate</td><td>지원 안 되면 순차 실행, 결과 형식은 같게</td></tr>
+  <tr><td>inline-assets</td><td>REPL</td><td><code>scripts/inline-assets</code></td><td>self-contained 보장</td></tr>
+  <tr><td>rooms-link</td><td>Bash</td><td><code>rooms link</code> 있으면 호출</td><td>없으면 건너뜀</td></tr>
+  <tr><td>memory</td><td>Bash</td><td><code>bin/astack-memory</code></td><td></td></tr>
+</table>
+
+<h3>8.2 호스트</h3>
+<table>
+  <tr><th>호스트</th><th>머신</th><th>설치</th><th>맡는 일</th></tr>
+  <tr><td>Claude Code</td><td>메인 맥 (+맥미니)</td><td>플러그인 (<code>.claude-plugin/</code>), 전역 CLAUDE.md 블록</td><td>spec, change, recall now, 직접 요청</td></tr>
+  <tr><td>Codex</td><td>메인 맥 (+맥미니)</td><td>플러그인 (<code>.codex-plugin/</code>), <code>multi_agent = true</code></td><td>직접 요청</td></tr>
+  <tr><td>Hermes</td><td>맥미니</td><td>플러그인 (<code>.hermes-plugin/</code>), cron, Telegram 토픽, 작업 위치 <code>~/personal/notes</code></td><td>feed, dream, memory consolidate, 21:00 질문 받기, 밤 goal, Telegram 입구와 알림</td></tr>
+  <tr><td>Aside</td><td>메인 맥, 맥미니</td><td><code>~/.aside/u/0/skills/user/astack-*</code>로 복사. 쓰기 허용 <code>~/rooms</code>, 작업 위치 지정</td><td>로그인이 필요한 소스(구독, X, 구독 페이지), 직접 요청</td></tr>
+</table>
+<p>입구 계약은 <code>astack quest "…"</code> 명령 하나다. 어느 호스트에서 불러도 같다. Telegram은 그중 하나의 입구다.</p>
+
+<!-- ================================================= -->
+<h2 id="s9"><span class="n">9.</span>스케줄과 예산</h2>
+<table>
+  <tr><th>시간</th><th>작업</th><th>호스트</th></tr>
+  <tr><td>05:00</td><td><code>feed</code> → "오늘 30분"</td><td>맥미니 Hermes cron</td></tr>
+  <tr><td>07:00</td><td>아침 1통: feed + 밤 goal 결과</td><td>맥미니 Hermes cron</td></tr>
+  <tr><td>20:00</td><td><code>dream</code> (오늘분, 주 1회 주간 수렴) → Journal → Telegram</td><td>맥미니 Hermes cron</td></tr>
+  <tr><td>20:30</td><td><code>memory consolidate</code></td><td>맥미니 Hermes cron</td></tr>
+  <tr><td>21:00</td><td>"오늘 밤 돌릴 질문" 받기 (후보 + 자유 입력)</td><td>맥미니 Hermes cron + Telegram</td></tr>
+  <tr><td>01:00~</td><td>밤 goal 실행 (최대 3개)</td><td>맥미니 Hermes cron</td></tr>
+  <tr><td>상시</td><td>Telegram Quest 토픽 → <code>quest</code> 자동 로드</td><td>맥미니 Hermes</td></tr>
+</table>
+
+<h3>예산 상한</h3>
+<p>자동 작업에는 스스로 멈출 지점이 없다. 실제 위험은 비용보다 <b>구독 사용량 한도</b>다. 밤사이 자동 작업이 한도를 써버리면 낮의 업무용 에이전트가 멈춘다. 토큰 계산 대신 개수로 제한한다.</p>
+<table>
+  <tr><th>자동 작업</th><th>상한</th></tr>
+  <tr><td>feed</td><td>아침 30분 분량</td></tr>
+  <tr><td>긴 작업 시작 시 선생성</td><td>작업당 1개</td></tr>
+  <tr><td>밤 goal</td><td>최대 3개 (Aside 프로필 사용 goal은 순서대로)</td></tr>
+  <tr><td>change (Task 단위)</td><td>상한 없음. 업무 이해가 최우선</td></tr>
+  <tr><td>내가 시작한 quest, spec</td><td>상한 없음</td></tr>
+</table>
+<p>무거운 자동 작업은 밤에만 돌린다. 2주 운영 후 숫자를 조정한다. 우선순위: 지금 작업(spec, change, recall) &gt; 내가 던진 quest와 밤 goal &gt; feed.</p>
+
+<!-- ================================================= -->
+<h2 id="s10"><span class="n">10.</span>Rooms 접점</h2>
+<p>astack과 Rooms의 접점은 두 개뿐이다. astack은 Rooms API(<code>/v1/*</code>)를 쓰지 않는다. dream, recall, 알림, 원격 보기는 전부 Rooms 없이 동작한다.</p>
+<table>
+  <tr><th>접점</th><th>성격</th><th>Rooms가 없으면</th></tr>
+  <tr><td>HTML 메타: 표준 <code>description</code> + <code>rooms:created</code>, <code>rooms:machine</code></td><td>데이터</td><td>무시되는 태그</td></tr>
+  <tr><td><code>rooms link &lt;파일&gt; [--room &lt;이름&gt;] [--journal &lt;날짜&gt;]</code></td><td>명령 호출</td><td>명령이 없어 건너뜀</td></tr>
+</table>
+
+<h3>Alto Rooms 스펙에 추가할 것</h3>
+<ul>
+  <li><code>&lt;meta name="description"&gt;</code>를 색인하고 카드에 한 줄 설명으로 보여준다 (스펙의 "한 줄 설명" 후속 이슈 해결).</li>
+  <li><code>/v1/search</code>: FTS5로 제목, description, 본문을 검색한다. 사람이 Rooms 화면에서 쓰는 기능이며 astack은 쓰지 않는다.</li>
+  <li><code>rooms link</code> CLI: 방 선택, 확신이 없으면 inbox, <code>--journal</code> 옵션. 링크 정책(원본이 있으면 링크)은 Rooms가 소유한다.</li>
+  <li>멀티디바이스: 머신별 독립 Home. 통합은 v2 클라이언트 페더레이션.</li>
+  <li>roomsd는 launchd 상주, 앱 없이 단독 실행. 원격 리스너는 실행 플래그로 켠다.</li>
+  <li>모르는 메타는 무시한다는 규칙을 명시한다.</li>
+</ul>
+<div class="box">원격 보기는 Rooms 전용이 아니다. Rooms 원격 보기, 맥미니 정적 서버 + Tailscale, Hermes의 Telegram 파일 첨부 중 무엇이든 된다. 파일을 띄우는 건 호스트의 일이고, astack은 어디서 열어도 같은 self-contained HTML까지만 책임진다.</div>
+
+<!-- ================================================= -->
+<h2 id="s11"><span class="n">11.</span>레포 구조</h2>
+<pre><code>astack/
+  README.md            무엇, 왜, 설치. "내 코드를 바꾸려는 이해는 superpowers나 pstack에게. astack은 사람의 이해를 위해"
+  AXIOMS.md            공리 7개 (gstack ETHOS 역할)
+  .claude-plugin/  .codex-plugin/  .hermes-plugin/
+  setup                --host claude|codex|hermes|aside|auto
+  recipes/
+    claude/CLAUDE.md.snippet       4.2의 블록
+    hermes/cron.yaml               9장 스케줄
+    hermes/telegram-topics.yaml    Quest 토픽
+    aside/permissions.md           쓰기 허용, 작업 위치
+    static-server.md               선택: 맥미니 정적 서버 + Tailscale
+  bin/
+    astack-memory      add | search | prune | consolidate
+  skills/
+    astack/            입구
+    quest/  study/  recall/
+    interview/  seminar/  paper/  repo/  spec/  change/
+    feed/  dream/  map/  memory/
+    design/
+      SKILL.md                   색인
+      assets/alto.css            토큰
+      references/output.md       출력 계약
+      references/capabilities.md 능력 지도
+      references/quiz.md         내장 점검 컴포넌트
+      principles/*.md            이해 원칙
+  scripts/             transcript · pdf-figures · inline-assets · slop-scan
+  tests/               스킬별 기준 시나리오</code></pre>
+
+<!-- ================================================= -->
+<h2 id="s12"><span class="n">12.</span>마이그레이션</h2>
+<ol>
+  <li><b>학습 추출</b>: 기존 스킬에서 몇 달간 쌓인 경험을 원칙과 Gotchas로 옮긴다. 대상: Aside <code>podcast-magazine</code>, <code>seminar-report</code>, <code>paper-lossless-reader</code>, <code>html-산출물-만들기</code>, Claude Code <code>html-artifact</code>(+references). 예: AI-slop 카드 패턴, 자막 언어 명시, 섬네일 대체 프레임, Openverse 대체 이미지, 인터랙티브 흐름 가이드.</li>
+  <li><b>구현</b>: 9장 순서와 무관하게 업무 이해(spec, change, recall)를 먼저 검증한다.</li>
+  <li><b>검증</b>: 메인 맥 Claude Code와 Aside에 설치해 실제 소스로 한 번씩 돌린다.</li>
+  <li><b>삭제</b>: 위 기존 스킬, <code>results-dashboard.html</code>, <code>build-dashboard.js/.mjs</code>. 프로젝트의 "결과물 대시보드 자동 갱신" 에이전트를 정리한다. 기존 HTML 54개는 지우지 않고 Rooms 온보딩으로 방에 링크한다.</li>
+  <li><b>메모리 정리</b>: Aside 메모리에서 옛 스킬과 대시보드를 가리키는 내용을 고친다.</li>
+  <li><b>맥미니</b>: <code>./setup --host auto</code>, Hermes 레시피 적용.</li>
+</ol>
+
+<!-- ================================================= -->
+<h2 id="s13"><span class="n">13.</span>테스트</h2>
+<table>
+  <tr><th>대상</th><th>방법</th></tr>
+  <tr><td>각 스킬</td><td>superpowers writing-skills 방식. 스킬 없이 돌린 결과(기준 실패)를 먼저 보고, 스킬이 있을 때 출력 계약과 원칙을 지키는지 확인</td></tr>
+  <tr><td>출력 계약</td><td>검사 스크립트: self-contained 여부, description 존재, 세 층 존재, 외부 의존, slop 패턴</td></tr>
+  <tr><td>흐름 속 자동</td><td>실제 Plan 실행에서 Task 리뷰 통과 시 change가 생기는지, 긴 작업 시작 시 recall now가 나오는지</td></tr>
+  <tr><td>memory</td><td>동시 add, consolidate 되돌리기, 모순 해결 규칙</td></tr>
+  <tr><td>Rooms 없이</td><td>Rooms 미설치 상태에서 dream, recall이 동작하는지</td></tr>
+</table>
+
+<!-- ================================================= -->
+<h2 id="s14"><span class="n">14.</span>열린 질문</h2>
+<table>
+  <tr><th>질문</th><th>현재 기본값</th></tr>
+  <tr><td>동사 이름</td><td><code>quest</code> / <code>study</code></td></tr>
+  <tr><td>map 갱신 시점과 비용</td><td>새 이해물이 방에 들어올 때마다. 비싸면 dream 때 하루 한 번으로</td></tr>
+  <tr><td>밤 goal 성공 조건의 구체 기준</td><td>유형별 기본값으로 시작, 첫 2주 결과로 조정</td></tr>
+  <tr><td>실험의 깨끗한 프로필 관리</td><td>Aside 별도 프로필 또는 헤드리스 새 프로필. 구현 시 결정</td></tr>
+  <tr><td>interview와 seminar를 <code>video</code>로 합칠지</td><td>분리 유지 (둘 다 직접 많이 씀)</td></tr>
+  <tr><td>Aside 쪽 스킬 이름 충돌</td><td>Aside에만 <code>astack-</code> 접두어</td></tr>
+  <tr><td>Task 단위 change의 비용</td><td>상한 없이 시작, 2주 뒤 확인</td></tr>
+  <tr><td>dream이 맥미니 결과물만 본다</td><td>v1 허용. Rooms 페더레이션 때 해결</td></tr>
+  <tr><td>feed 30분 계산 방식</td><td>매거진은 본문 길이로 읽기 시간을 추정. 첫 2주 체감으로 조정</td></tr>
+  <tr><td>흐름 속 자동의 신뢰성</td><td>CLAUDE.md 지시로 시작, 실패하면 훅으로 전환</td></tr>
+  <tr><td>레포 공개 여부</td><td>개인 데이터가 없으니 public 가능. 시작은 결정 필요</td></tr>
+  <tr><td>Alto 토큰의 실제 값</td><td>alto-rooms 레포의 토큰 파일과 맞춘다</td></tr>
+</table>
+
+</main>
+</div>
+</body>
+</html>

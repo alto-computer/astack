@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.superpowers/
+docs/superpowers/specs/references/interview-reference-magazine.html
+docs/superpowers/specs/references/seminar-reference-report.html

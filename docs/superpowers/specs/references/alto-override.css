@@ -1,0 +1,81 @@
+/* ===== astack · Alto v3 디자인 디테일 (구조와 JS는 원본 그대로) ===== */
+:root{
+  --canvas:#ffffff; --surface:#f7f7f7; --surface-strong:#f2f2f2; --hairline:#dddddd;
+  --ink:#222222; --ink-2:#6a6a6a; --ink-3:#929292;
+  --thread:#ff385c; --thread-deep:#e31c5f; --thread-tint:#fff0f3;
+  --glass:rgba(255,255,255,.88); --photo:grayscale(.08) contrast(1.02); --on-ink:#ffffff;
+  --jost:"Jost","Apple SD Gothic Neo","Pretendard",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --serif:var(--jost); --sans:var(--jost); --font:var(--jost);
+  /* 강조색 자리: 원본에서 슬레이트 블루가 쓰이던 곳. 기본 = 실(Rausch) */
+  --accent:#e31c5f; --accent-ink:#c2134f; --accent-soft:#fff0f3; --accent-line:#ffc9d4; --on-accent:#ffffff;
+}
+:root[data-tone="mono"]{--accent:#222222; --accent-ink:#222222; --accent-soft:#f2f2f2; --accent-line:#dddddd; --on-accent:#ffffff}
+:root[data-tone="water"]{--accent:#3f6870; --accent-ink:#33575e; --accent-soft:#e8efee; --accent-line:#a9bcc0; --on-accent:#ffffff}
+:root[data-tone="warm"]{--canvas:#fbfaf7; --surface:#f3f1ec; --surface-strong:#ebe8e1; --hairline:#e2ded5; --glass:rgba(251,250,247,.88);
+  --accent:#e31c5f; --accent-ink:#c2134f; --accent-soft:#fdebef; --accent-line:#f6c4cf}
+
+/* A. 글꼴: Jost 하나, 굵기 400/500 */
+.cover h1,.ch h2,.partdiv h3,.sf-q,.contrib-name,.index-h .t,.glance-thesis,.pull p,.pull q,.foot-mark,.tb-mark,
+h1,h2.ch-label,h3.sh,h4.sh,.ch-label,.gnode-title,.flow-lead,.card .ct,.map-k,.cover .sub,.cover .cover-sub{font-family:var(--jost);font-weight:500;font-style:normal}
+b,strong,.sf-a b,.a-text b,.contrib-bio li b,.prose strong{font-weight:600}
+.q-text{font-weight:500}
+
+/* B. 라벨: 대문자·넓은 자간 없이 13px. 원본에서 파랗던 라벨은 강조색 */
+.cover-kicker,.sf-kicker,.contrib-eyebrow,.partdiv-label,.ch-kicker .pt,.spk,.pull cite,.kp-h,.struct-h,.glance-eyebrow,
+.gnode-label,.index-part-h .n,.viz-h,.kicker,.map-h,.scene-eyebrow,.ch-num,.clabel,.card .cn,.excerpt .by,.dgm-cap{
+  text-transform:none;letter-spacing:0;font-weight:500;font-size:13px;color:var(--ink-2)}
+.cover-kicker,.ch-kicker .pt,.struct-h,.glance-eyebrow,.gnode-label,.index-part-h .n,.ch-num,.turn.a .spk,.scene.active .scene-eyebrow{color:var(--accent)}
+.cover-kicker::after{background:var(--hairline)}
+.struct-h::before{background:var(--accent)}
+.partdiv-label::before{display:none}
+
+/* C. 숫자·시각은 Plex Mono */
+.index-item .num,.map-k .mn,.shn,.stage-cap .num,.excerpt .by .ts,.ch-num,.flow-n,.dot .dot-i,.index-h .c{font-family:var(--mono);font-weight:400}
+.ch-kicker .no{background:var(--accent-soft);color:var(--accent-ink);border:0;font-family:var(--mono);font-weight:400;font-size:13px;border-radius:8px}
+
+/* D. 메타 줄: 회색 한 줄, 원본 링크는 밑줄만 */
+.cover .meta,.cover-meta,.meta-row{font-size:13px;font-weight:400;color:var(--ink-2)}
+.cover .meta a.src,.cover-meta .csrc,.tb-src{color:var(--ink-2);font-weight:400;text-decoration:underline;text-decoration-color:var(--hairline);text-underline-offset:3px}
+.cover .sub{color:var(--ink)}
+
+/* E. 사진: 배치·덮개·캡션 위치는 원본 그대로. 모서리만 Alto 반경 */
+.cover-fig{border-radius:14px;border-color:var(--hairline)}
+.partdiv{border-radius:14px}
+.contrib-photo{border-color:var(--hairline)}
+
+/* F. 진행 막대 = 실 */
+.progress{background:var(--thread)}
+.topbar{background:var(--glass);border-bottom-color:var(--hairline)}
+.tb-mark span{color:var(--accent)}
+
+/* G. 인용과 강조 */
+.pull-mark{color:var(--accent);font-family:var(--jost)}
+.pull cite{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink-2)}
+.pull .pull-hl{color:var(--accent-ink);font-weight:500;box-shadow:inset 0 -.38em 0 var(--accent-soft)}
+.a-quote{border-left:2px solid var(--accent-line)}
+.turn.n .q-text{font-family:var(--jost);font-style:normal}
+.gnode-line{font-family:var(--jost);font-style:normal}
+.sf-a .dropcap{color:var(--accent);font-weight:500}
+.excerpt{background:var(--surface);border:0;box-shadow:none;border-radius:14px}
+.excerpt::before{color:var(--accent-line)}
+.excerpt .en{font-family:var(--jost);font-style:normal;color:var(--ink)}
+mark{background:var(--accent-soft);color:inherit;padding:0 2px;border-radius:3px}
+
+/* H. 상자: 그림자 없음, 헤어라인, 반경 14, 왼쪽 굵은 띠 없음 */
+.stage-frame,.excerpt,.card,.note,.map,.keypoints,.viz{box-shadow:none;border-color:var(--hairline)}
+.stage-frame:hover{box-shadow:none;border-color:var(--ink-3)}
+.map,.stage-frame,.keypoints,.viz,.card{border-radius:14px}
+.ch-intro{border:0;border-radius:14px;background:var(--surface)}
+.callout{border:0;border-radius:14px;background:var(--accent-soft)}
+.callout .clabel{color:var(--accent-ink)} .callout p{color:var(--ink)} .callout strong{color:var(--ink)}
+h4.sh{border-left:0;padding-left:0}
+.dot.active{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent-line)}
+.dot.active .dot-i{background:var(--accent);color:var(--on-accent)}
+.tb-part.on{background:var(--accent);color:var(--on-accent)}
+.flow-n,.gnode-dot{border-color:var(--accent);color:var(--accent)}
+.gnode-dot::after{background:var(--accent)}
+.note summary::before{background-color:var(--accent-soft);border-color:var(--accent-line)}
+table.tbl thead th{background:var(--surface)}
+table.tbl tbody td:first-child{background:var(--canvas)}
+.lb{background:rgba(0,0,0,.88)}
