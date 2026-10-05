@@ -7,6 +7,7 @@ from . import check as _check
 from . import done as _done
 from . import inline as _inline
 from . import memory
+from . import recall as _recall
 
 
 def _memory(args) -> int:
@@ -49,6 +50,17 @@ def _cmd_done(args) -> int:
     return code
 
 
+def _cmd_recall(args) -> int:
+    project = Path(args.project) if args.project else (_recall.project_root(Path.cwd()) if args.now else None)
+    items = _recall.recall(query=args.query or "", project=project, since=args.since, limit=1 if args.now else args.limit)
+    for i in items:
+        if args.json:
+            print(json.dumps({"path": str(i.path), "skill": i.skill, "ts": i.ts, "title": i.title, "description": i.description}, ensure_ascii=False))
+        else:
+            print(f"{i.path}\t{i.title}\t{i.description}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -68,6 +80,14 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--room")
     d.add_argument("--force", action="store_true")
     d.set_defaults(fn=_cmd_done)
+    r = sub.add_parser("recall", help="쌓인 이해물에서 찾기")
+    r.add_argument("--query")
+    r.add_argument("--project")
+    r.add_argument("--since")
+    r.add_argument("--limit", type=int, default=10)
+    r.add_argument("--now", action="store_true")
+    r.add_argument("--json", action="store_true")
+    r.set_defaults(fn=_cmd_recall)
     return p
 
 
