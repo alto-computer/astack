@@ -57,3 +57,44 @@ def transcript(url: str, lang: str = "en", runner=subprocess.run) -> dict:
     return {"title": info.get("title", ""), "channel": info.get("channel") or info.get("uploader", ""),
             "upload_date": info.get("upload_date", ""), "duration": info.get("duration", 0),
             "thumbnail": info.get("thumbnail", ""), "url": info.get("webpage_url", url), "lines": lines}
+
+
+def scene_times(stderr: str) -> list[float]:
+    return [float(x) for x in re.findall(r"pts_time:([\d.]+)", stderr)]
+
+
+def _download(url: str, outdir: Path, runner) -> Path:
+    cmd = ["yt-dlp", "-f", "bv*[height<=720]/b[height<=720]/b", "-o", str(outdir / "video.%(ext)s"), url]
+    r = runner(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    if r.returncode != 0:
+        raise MediaError(f"yt-dlp 실패: {(r.stderr or '').strip()[-300:]}")
+    vids = sorted(outdir.glob("video.*"))
+    if not vids:
+        raise MediaError("영상을 받지 못했습니다")
+    return vids[0]
+
+
+def slides(src: str, outdir: Path, threshold: float = 0.08, runner=subprocess.run) -> list[tuple[str, float]]:
+    """장면이 바뀌는 프레임을 slide-NNN.jpg로 뽑는다. 첫 프레임은 항상 포함."""
+    outdir = Path(outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+    if re.match(r"^https?://", src):
+        video = _download(src, outdir, runner)
+    else:
+        video = Path(src)
+        if not video.is_file():
+            raise MediaError(f"영상 파일이 없습니다: {src}")
+    vf = f"select='eq(n\\,0)+gt(scene\\,{threshold})',showinfo"
+    cmd = ["ffmpeg", "-hide_banner", "-nostdin", "-i", str(video), "-vf", vf, "-vsync", "vfr", "-q:v", "3",
+           str(outdir / "slide-%03d.jpg")]
+    try:
+        r = runner(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    except FileNotFoundError:
+        raise MediaError("ffmpeg가 없습니다. `brew install ffmpeg`")
+    if r.returncode != 0:
+        raise MediaError(f"ffmpeg 실패: {(r.stderr or '').strip()[-300:]}")
+    times = scene_times(r.stderr or "")
+    files = sorted(p.name for p in outdir.glob("slide-*.jpg"))
+    pairs = list(zip(files, times))
+    (outdir / "slides.tsv").write_text("".join(f"{f}\t{t:g}\n" for f, t in pairs), encoding="utf-8")
+    return pairs

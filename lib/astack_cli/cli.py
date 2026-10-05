@@ -83,6 +83,17 @@ def _cmd_transcript(args) -> int:
     return 0
 
 
+def _cmd_slides(args) -> int:
+    try:
+        pairs = _media.slides(args.src, Path(args.outdir), threshold=args.threshold)
+    except _media.MediaError as e:
+        print(f"astack slides: {e}", file=sys.stderr)
+        return 2
+    for f, t in pairs:
+        print(f"{f}\t{_media.fmt_ts(t)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -115,6 +126,11 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("--lang", default="en")
     t.add_argument("--json", action="store_true")
     t.set_defaults(fn=_cmd_transcript)
+    s = sub.add_parser("slides", help="발표 영상에서 슬라이드가 바뀌는 프레임 뽑기 (ffmpeg)")
+    s.add_argument("src")
+    s.add_argument("outdir")
+    s.add_argument("--threshold", type=float, default=0.08)
+    s.set_defaults(fn=_cmd_slides)
     return p
 
 

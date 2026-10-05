@@ -92,5 +92,41 @@ if {write_vtt!r}:
         self.assertEqual(cli.main(["transcript", "https://youtu.be/x", "--lang", "ko"]), 2)
 
 
+SHOWINFO = """[Parsed_showinfo_1 @ 0x1] n:   0 pts:      0 pts_time:0       duration:1
+[Parsed_showinfo_1 @ 0x1] n:   1 pts:  12345 pts_time:12.345  duration:1
+[Parsed_showinfo_1 @ 0x1] n:   2 pts:  99000 pts_time:99      duration:1
+"""
+
+
+class SlidesTest(unittest.TestCase):
+    def test_scene_times_reads_pts_time(self):
+        self.assertEqual(media.scene_times(SHOWINFO), [0.0, 12.345, 99.0])
+
+    def test_slides_writes_frames_and_tsv(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "slides"
+            video = Path(d) / "talk.mp4"
+            video.write_bytes(b"x")
+
+            class R:
+                returncode = 0
+                stderr = SHOWINFO
+
+            def runner(cmd, **kw):
+                pattern = cmd[-1]
+                for i in range(3):
+                    Path(pattern % (i + 1)).write_bytes(b"jpg")
+                return R()
+
+            got = media.slides(str(video), out, runner=runner)
+            self.assertEqual(got, [("slide-001.jpg", 0.0), ("slide-002.jpg", 12.345), ("slide-003.jpg", 99.0)])
+            self.assertEqual((out / "slides.tsv").read_text().splitlines()[1], "slide-002.jpg\t12.345")
+
+    def test_missing_video_file_is_error(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(media.MediaError):
+                media.slides(str(Path(d) / "nope.mp4"), Path(d) / "o")
+
+
 if __name__ == "__main__":
     unittest.main()
