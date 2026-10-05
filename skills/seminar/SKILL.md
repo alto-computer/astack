@@ -16,10 +16,10 @@ description: Use when 사용자가 슬라이드 발표, 세미나, 강연, 컨�
 
 ## 입력과 출력
 - 입력: 발표 영상 링크(또는 파일).
-- 출력: `docs/astack/seminar/<날짜>-<slug>.html` + 같은 이름의 `-slides/` 폴더(내장 전 원본).
+- 출력: `docs/astack/seminar/<날짜>-<slug>.html` + 같은 폴더의 `<날짜>-<slug>-slides/`(내장 전 원본).
 
 ## 워크플로
-1. 슬라이드: `astack slides <url> <slug>-slides/`. `slides.tsv`의 시각을 기억한다. 비슷한 슬라이드가 합쳐졌거나(문턱 낮추기 `--threshold 0.05`) 빌드 애니메이션 중간 프레임이 섞였으면(마지막 완성 프레임만 남김) 손으로 고른다. 방송 화면 테두리(행사 로고, 화자 작은 화면)는 `astack pdf crop`으로 슬라이드 영역만 자른다.
+1. 슬라이드: `astack slides <url> docs/astack/seminar/<날짜>-<slug>-slides/`. `slides.tsv`의 시각을 기억한다. stderr의 '슬라이드 없는 구간'을 자막과 대조해, 슬라이드를 말하는 구간이면 문턱을 낮춰 다시 돌린다(`--threshold 0.05`/`0.03`, 같은 폴더에 다시 돌려도 된다). 비슷한 슬라이드가 합쳐졌거나 빌드 애니메이션 중간 프레임이 섞였으면(마지막 완성 프레임만 남김) 손으로 고른다. 방송 화면 테두리(행사 로고, 화자 작은 화면)가 있으면 `--crop W:H:X:Y`(첫 프레임에서 잰 슬라이드 영역 픽셀)로 다시 돌린다. 그러면 장면 감지도 슬라이드만 보고, 프레임도 잘려 나온다. 손으로 따로 자른 프레임은 `docs/astack/seminar/<날짜>-<slug>-slides/crop/`에 둔다.
 2. 자막: `astack transcript <url>`. 슬라이드 시각 사이의 가운데를 경계로 자막을 장면에 나눈다.
 3. 화자: 웹에서 약력을 찾아 3~4줄(현재 역할, 배경, 이전 일, 커리어를 꿰는 질문). 사진은 출처가 깨끗할 때만.
 4. 쓰기: 챕터 = 논증의 뼈대, 슬라이드 하나 = 장면 하나(`<section class="scene" data-img="<slug>-slides/slide-NNN.jpg">`). 장면마다 제목, 통찰 먼저인 본문, 화자 원문 인용(`.excerpt`, 타임스탬프). 맨 위에 논증 지도.

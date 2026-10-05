@@ -19,7 +19,7 @@ description: Use when 사용자가 팟캐스트, 인터뷰, 대담 영상이나 
 - **one-name-per-concept**, 20.2 글쓰기 지침.
 
 ## 워크플로
-1. 자막: `astack transcript <url> --lang <언어>`. 첫 줄을 확인한다(자동 자막은 언어가 틀리기 쉽다). 실패하면 `--lang en-orig`, `--lang ko`를 시도한다.
+1. 자막: `astack transcript <url> --lang <언어>`. 원 자막(`-orig`)을 먼저 고른다. 출력 머리의 `# lang`과 첫 줄을 확인한다(자동 자막은 언어가 틀리기 쉽다). 자막이 없으면 `--lang ko` 등 다른 언어를 시도한다.
 2. 파트(3~6)와 챕터(질문 하나 = 챕터 하나)로 나눈다. 파트마다 짧은 제목 + 게스트의 대표 한 문장.
 3. 챕터마다: 앞 챕터와 잇는 리드(`.ch-deck`) 2~3문장, "구조 한눈에"(3~5 노드), 대화 턴(`turn q` 진행자 질문, `turn a` 게스트 답, `turn n` 내레이션), 풀쿼트 하나.
 4. `assets/template.html`을 복사해 채운다. `<style>`과 `<script>`는 고치지 않는다. 블록 패턴은 복제한다(`data-pnav` id = `.partdiv id`).
@@ -38,5 +38,6 @@ description: Use when 사용자가 팟캐스트, 인터뷰, 대담 영상이나 
 ## Gotchas
 - 유튜브 자동 자막만 있으면 언어 코드를 명시해야 한다. 첫 줄이 엉뚱한 언어면 다시 받는다.
 - 화자 표시가 없으면 맥락으로 정한다(묻는 쪽이 진행자). 애매한 턴은 내레이션으로 두지 말고 화자를 정한다.
+- `>>`는 자동 자막의 화자 바뀜 표시다. 화자를 정하는 단서로 쓴다.
 - 이미지 검색이 막히면 Openverse(`https://api.openverse.org/v1/images/?q=<검색어>&page_size=6&aspect_ratio=wide`)를 쓴다. 그래도 없으면 비운다.
 - 결과물에는 제3자 발언과 사진이 들어간다. 공개 레포에 커밋하지 않는다.

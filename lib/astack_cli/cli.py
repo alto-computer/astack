@@ -86,14 +86,14 @@ def _cmd_recall(args) -> int:
 
 def _cmd_transcript(args) -> int:
     try:
-        t = _media.transcript(args.url, lang=args.lang)
+        t = _media.transcript(args.url, lang=args.lang, cookies=args.cookies_from_browser)
     except _media.MediaError as e:
         print(f"astack transcript: {e}", file=sys.stderr)
         return 2
     if args.json:
         print(json.dumps({**t, "lines": [[s, l] for s, l in t["lines"]]}, ensure_ascii=False))
         return 0
-    print(f"# {t['title']}\n# {t['channel']} · {t['upload_date']} · {t['duration']}s\n# {t['url']}\n# thumbnail {t['thumbnail']}")
+    print(f"# {t['title']}\n# {t['channel']} · {t['upload_date']} · {t['duration']}s\n# {t['url']}\n# thumbnail {t['thumbnail']}\n# lang {t['lang']}")
     for s, line in t["lines"]:
         print(f"[{_media.fmt_ts(s)}] {line}")
     return 0
@@ -101,13 +101,22 @@ def _cmd_transcript(args) -> int:
 
 def _cmd_slides(args) -> int:
     try:
-        pairs = _media.slides(args.src, Path(args.outdir), threshold=args.threshold)
+        pairs, gaps = _media.slides(args.src, Path(args.outdir), threshold=args.threshold, crop=args.crop,
+                                    cookies=args.cookies_from_browser)
     except _media.MediaError as e:
         print(f"astack slides: {e}", file=sys.stderr)
         return 2
     for f, t in pairs:
         print(f"{f}\t{_media.fmt_ts(t)}")
+    for a, b in gaps:
+        print(f"astack slides: 슬라이드 없는 구간 {_mmss(a)}–{_mmss(b)} ({round((b - a) / 60)}분). "
+              "--threshold를 낮추거나(0.05/0.03) 그 구간을 직접 확인하세요", file=sys.stderr)
     return 0
+
+
+def _mmss(sec: float) -> str:
+    s = int(sec)
+    return f"{s // 3600}:{s % 3600 // 60:02d}:{s % 60:02d}" if s >= 3600 else f"{s // 60:02d}:{s % 60:02d}"
 
 
 def _cmd_pdf(args) -> int:
@@ -184,11 +193,14 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("url")
     t.add_argument("--lang", default="en")
     t.add_argument("--json", action="store_true")
+    t.add_argument("--cookies-from-browser", metavar="BROWSER", help="429·403이면 chrome 등 브라우저 쿠키로")
     t.set_defaults(fn=_cmd_transcript)
     s = sub.add_parser("slides", help="발표 영상에서 슬라이드가 바뀌는 프레임 뽑기 (ffmpeg)")
     s.add_argument("src")
     s.add_argument("outdir")
     s.add_argument("--threshold", type=float, default=0.08)
+    s.add_argument("--crop", metavar="W:H:X:Y", help="슬라이드 영역만 보고 잘라 낸다 (픽셀)")
+    s.add_argument("--cookies-from-browser", metavar="BROWSER", help="429·403이면 chrome 등 브라우저 쿠키로")
     s.set_defaults(fn=_cmd_slides)
     pd = sub.add_parser("pdf", help="PDF 쪽을 PNG로 렌더(pages), 그림 영역 자르기(crop)")
     pd.add_argument("action", choices=["pages", "crop"])
