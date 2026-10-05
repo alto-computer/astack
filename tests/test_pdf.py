@@ -1,5 +1,7 @@
+import re
 import shutil
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -61,6 +63,25 @@ class CropTest(unittest.TestCase):
             src.write_bytes(tiny_png(40, 30))
             out = pdf.crop(src, 5, 4, 20, 10, Path(d) / "fig.png")
             self.assertEqual(png_size(out), (20, 10))
+
+    def test_crop_jpg_cuts_requested_box(self):
+        with tempfile.TemporaryDirectory() as d:
+            # Create JPG from PNG using sips
+            src_png = Path(d) / "p.png"
+            src_png.write_bytes(tiny_png(40, 30))
+            src_jpg = Path(d) / "p.jpg"
+            subprocess.run(["sips", "-s", "format", "jpeg", str(src_png), "--out", str(src_jpg)], check=True)
+            # Crop the JPG
+            out = pdf.crop(src_jpg, 5, 4, 20, 10, Path(d) / "fig.jpg")
+            self.assertTrue(out.exists())
+            # Verify dimensions using sips
+            r = subprocess.run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", str(out)], capture_output=True, text=True, check=True)
+            w_match = re.search(r"pixelWidth:\s*(\d+)", r.stdout)
+            h_match = re.search(r"pixelHeight:\s*(\d+)", r.stdout)
+            self.assertIsNotNone(w_match)
+            self.assertIsNotNone(h_match)
+            self.assertEqual(int(w_match.group(1)), 20)
+            self.assertEqual(int(h_match.group(1)), 10)
 
     def test_crop_outside_image_is_error(self):
         with tempfile.TemporaryDirectory() as d:

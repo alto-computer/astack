@@ -23,7 +23,7 @@ description: Use when 사용자가 슬라이드 발표, 세미나, 강연, 컨�
 2. 자막: `astack transcript <url>`. 슬라이드 시각 사이의 가운데를 경계로 자막을 장면에 나눈다.
 3. 화자: 웹에서 약력을 찾아 3~4줄(현재 역할, 배경, 이전 일, 커리어를 꿰는 질문). 사진은 출처가 깨끗할 때만.
 4. 쓰기: 챕터 = 논증의 뼈대, 슬라이드 하나 = 장면 하나(`<section class="scene" data-img="<slug>-slides/slide-NNN.jpg">`). 장면마다 제목, 통찰 먼저인 본문, 화자 원문 인용(`.excerpt`, 타임스탬프). 맨 위에 논증 지도.
-5. `assets/template.html`을 복사해 채운다. `<style>`과 `<script>`는 고치지 않는다. `{{…}}` 자리표시를 모두 채운다(원본 링크는 `{{SRC_URL}}`)(남으면 check가 막는다).
+5. `assets/template.html`을 복사해 채운다. `<style>`과 `<script>`는 고치지 않는다. `{{…}}` 자리표시를 모두 채운다(원본 링크는 `{{SRC_URL}}`). 남으면 check가 막는다.
 6. 메타 세 개 → `astack inline <f>`(슬라이드가 data URI로 들어간다) → `astack check <f>` → `astack done <f> --skill seminar`.
 
 ## 글쓰기 (원본에서 옮김)
@@ -36,6 +36,7 @@ description: Use when 사용자가 슬라이드 발표, 세미나, 강연, 컨�
 - [ ] 스크롤하면 장면마다 자기 슬라이드가 뜨는가(세 군데 확인)
 - [ ] 제목만 읽어도 논증이 이어지는가
 - [ ] 화자 원문 인용에 타임스탬프가 있는가
+- [ ] 출처 줄에 원본 링크, 요청 원문, "Claude Code가 썼습니다"
 - [ ] `astack check` 에러 0, `{{` 없음
 
 ## Gotchas

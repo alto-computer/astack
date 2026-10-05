@@ -1,4 +1,5 @@
 """논문 능력: PDF 쪽 렌더(swift PDFKit)와 figure 크롭(sips). macOS 전용."""
+import re
 import struct
 import subprocess
 from pathlib import Path
@@ -28,16 +29,21 @@ def pages(pdf_path: Path, outdir: Path, max_dim: int = 2200, runner=subprocess.r
     return [outdir / n for n in r.stdout.split()]
 
 
-def _png_size(p: Path) -> tuple[int, int]:
-    head = p.read_bytes()[:24]
-    if head[:8] != b"\x89PNG\r\n\x1a\n":
-        raise PdfError(f"PNG가 아닙니다: {p}")
-    return struct.unpack(">II", head[16:24])
+def _image_size(img: Path, runner=subprocess.run) -> tuple[int, int]:
+    """sips를 통해 이미지 크기를 읽는다. PNG와 JPG 모두 지원."""
+    r = _run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", str(img)], runner)
+    if r.returncode != 0:
+        raise PdfError(f"이미지 크기를 읽지 못했습니다: {img}")
+    w_match = re.search(r"pixelWidth:\s*(\d+)", r.stdout)
+    h_match = re.search(r"pixelHeight:\s*(\d+)", r.stdout)
+    if not w_match or not h_match:
+        raise PdfError(f"이미지 크기를 읽지 못했습니다: {img}")
+    return int(w_match.group(1)), int(h_match.group(1))
 
 
 def crop(png: Path, x: int, y: int, w: int, h: int, out: Path, runner=subprocess.run) -> Path:
     png, out = Path(png), Path(out)
-    W, H = _png_size(png)
+    W, H = _image_size(png, runner)
     if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > W or y + h > H:
         raise PdfError(f"크롭 상자({x},{y},{w},{h})가 이미지({W}x{H}) 밖입니다")
     r = _run(["sips", "-c", str(h), str(w), "--cropOffset", str(y), str(x), str(png), "--out", str(out)], runner)
