@@ -10,6 +10,7 @@ from . import media as _media
 from . import memory
 from . import pdf as _pdf
 from . import recall as _recall
+from . import route as _route
 
 
 def _memory(args) -> int:
@@ -109,6 +110,12 @@ def _cmd_pdf(args) -> int:
     return 0
 
 
+def _cmd_route(args) -> int:
+    r = _route.route(args.text, Path.cwd())
+    print(json.dumps({"skill": r.skill, "reason": r.reason, "needs_judgment": r.needs_judgment}, ensure_ascii=False))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -153,6 +160,9 @@ def build_parser() -> argparse.ArgumentParser:
     pd.add_argument("b", help="pages: 출력 폴더 / crop: 출력 PNG")
     pd.add_argument("--max", type=int, default=2200)
     pd.set_defaults(fn=_cmd_pdf)
+    ro = sub.add_parser("route", help="입력(링크, 파일, 질문)을 어느 스킬로 보낼지")
+    ro.add_argument("text")
+    ro.set_defaults(fn=_cmd_route)
     return p
 
 
