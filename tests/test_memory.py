@@ -45,6 +45,10 @@ class MemoryTest(unittest.TestCase):
             memory.add('not json')
         with self.assertRaises(memory.InvalidRecord):
             memory.add('{"type":"taste","key":"a","insight":"b","source":"observed","confidence":3}')
+        with self.assertRaises(memory.InvalidRecord):
+            memory.add('{"type":["x"],"key":"a","insight":"b","source":"told"}')
+        with self.assertRaises(memory.InvalidRecord):
+            memory.add('{"type":"feedback","key":"a","insight":"b","source":{"a":1}}')
 
     def test_search_by_key_prefix_and_insight_text(self):
         memory.add('{"type":"whitelist","key":"feed:youtube:Latent Space","insight":"아침 feed","source":"told"}')

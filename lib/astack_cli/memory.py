@@ -23,6 +23,10 @@ def add(raw: str, host: str | None = None, today: datetime.date | None = None) -
     missing = [k for k in REQUIRED if not str(rec.get(k, "")).strip()]
     if missing:
         raise InvalidRecord("빠진 칸: " + ", ".join(missing))
+    if not isinstance(rec["type"], str):
+        raise InvalidRecord("type은 텍스트여야 합니다")
+    if not isinstance(rec["source"], str):
+        raise InvalidRecord("source는 텍스트여야 합니다")
     if rec["type"] not in TYPES:
         raise InvalidRecord(f"모르는 type: {rec['type']} (가능: {', '.join(sorted(TYPES))})")
     if rec["source"] not in SOURCES:
