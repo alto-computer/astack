@@ -5,6 +5,7 @@ from html import unescape
 from pathlib import Path
 
 from . import paths
+from .check import _meta
 
 HEAD = 64 * 1024
 SKIP_DIRS = {"node_modules", "target", "dist", "build", ".git", ".next", "coverage"}
@@ -32,11 +33,11 @@ def _head(p: Path) -> tuple[str, str, str]:
     with open(p, "rb") as f:
         t = f.read(HEAD).decode("utf-8", "ignore")
     title = re.search(r"<title[^>]*>(.*?)</title>", t, re.S | re.I)
-    desc = re.search(r"""<meta\s+[^>]*name=["']description["'][^>]*content=["']([^"']*)""", t, re.I)
-    created = re.search(r"""<meta\s+[^>]*name=["']rooms:created["'][^>]*content=["']([^"']*)""", t, re.I)
+    desc = _meta(t, "description")
+    created = _meta(t, "rooms:created")
     return (unescape(title.group(1).strip()) if title else p.stem,
-            unescape(desc.group(1).strip()) if desc else "",
-            created.group(1) if created else "")
+            unescape(desc) if desc else "",
+            created or "")
 
 
 def _from_log() -> dict[Path, tuple[str, str]]:
@@ -75,7 +76,9 @@ def _from_roots() -> dict[Path, tuple[str, str]]:
 
 
 def recall(query: str = "", project: Path | None = None, since: str | None = None, limit: int = 10) -> list[Item]:
-    entries = _from_log() or _from_roots()
+    entries = _from_log()
+    if not any(p.is_file() for p in entries):
+        entries = _from_roots()  # 로그가 없거나, 로그의 파일이 모두 사라졌다(레포 이동·다른 머신)
     terms = [t.lower() for t in query.split() if t]
     items: list[Item] = []
     for p, (ts, skill) in entries.items():

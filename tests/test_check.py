@@ -1,3 +1,4 @@
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -19,6 +20,12 @@ class CheckTest(unittest.TestCase):
     def test_missing_meta_fails(self):
         html = GOOD.replace('<meta name="rooms:machine" content="MacBook-Pro">', "")
         self.assertIn("meta", codes(html))
+
+    def test_placeholder_metas_fail(self):
+        for name, val in (("description", "[한 줄]"), ("rooms:created", "[RFC3339 지금 시각]"), ("rooms:machine", "[머신 이름]")):
+            html = re.sub(rf'(<meta name="{name}" content=")[^"]*', rf"\g<1>{val}", GOOD)
+            self.assertNotEqual(html, GOOD, name)
+            self.assertIn("meta", codes(html), name)
 
     def test_created_must_be_rfc3339(self):
         html = GOOD.replace("2026-10-05T14:12:09+09:00", "yesterday")

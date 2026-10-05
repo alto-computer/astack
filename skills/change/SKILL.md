@@ -11,7 +11,7 @@ description: Use when an implementation step has just finished and the user shou
 
 ## 입력
 - Task 모드: 커밋 범위(`base..head`), Plan 파일, Task 번호, 리뷰 결과(있으면).
-- Plan 모드: 브랜치 또는 PR, Plan 파일, 그 Plan의 Task 모드 이해물 경로들(`astack recall --project . --query "Task"`).
+- Plan 모드: 브랜치 또는 PR, Plan 파일, 그 Plan의 Task 모드 이해물 경로들(`astack recall --project . --since <Plan 시작일> --limit 100 --json`을 실행하고, 줄(JSONL, 한 줄에 객체 하나) 중 `"skill"`이 `"change"`인 것만 남긴다).
 
 ## 구성 (`assets/template.html`) — 사용자가 실제로 묻는 순서
 0. 30초: 이 변경이 만든 것 한 줄 + 배지 줄("스펙과 다름 n · 에이전트가 정한 것 n · 위험 n"). 전부 0이면 "스펙대로, 볼 것 없음"으로 끝.

@@ -78,6 +78,21 @@ class RecallTest(unittest.TestCase):
                                        f"2026-10-05T10:00:00+09:00\tchange\t{self.root}/gone.html\n", encoding="utf-8")
         self.assertEqual([i.path for i in recall.recall()], [self.a.resolve()])
 
+    def test_log_with_only_dead_paths_falls_back_to_roots(self):
+        self._log(("2026-10-05T10:00:00+09:00", "change", f"{self.root}/moved/gone.html"))
+        paths.roots_file().write_text(str(self.root / "work") + "\n", encoding="utf-8")
+        found = {i.path for i in recall.recall(limit=10)}
+        self.assertIn(self.a.resolve(), found)
+
+    def test_head_reads_apostrophe_and_content_before_name(self):
+        f = self.proj / "docs/astack/change/2026-10-05-odd.html"
+        f.write_text('<html><head><meta content="Rooms\'s meta, 끝까지" name="description">'
+                     '<meta content="2026-10-05T10:00:00+09:00" name="rooms:created">'
+                     "<title>odd</title></head></html>", encoding="utf-8")
+        title, desc, created = recall._head(f)
+        self.assertEqual(desc, "Rooms's meta, 끝까지")
+        self.assertEqual(created, "2026-10-05T10:00:00+09:00")
+
 
 if __name__ == "__main__":
     unittest.main()

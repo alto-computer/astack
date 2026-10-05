@@ -30,7 +30,8 @@ def done(path, skill: str, room: str | None = None, force: bool = False,
     if rooms:
         cmd = [rooms, "link", str(p)] + (["--room", room] if room else [])
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=20,
+                               stdin=subprocess.DEVNULL)
             if r.returncode != 0:
                 notes.append(f"rooms link 실패({r.returncode}): {r.stderr.strip()[:200]}")
         except (OSError, subprocess.TimeoutExpired) as e:

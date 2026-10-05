@@ -27,10 +27,16 @@ def _memory(args) -> int:
 def _cmd_check(args) -> int:
     worst = 0
     for f in args.files:
-        for i in _check.check_file(f):
+        try:
+            issues = _check.check_file(f)
+        except (OSError, UnicodeDecodeError) as e:
+            print(f"{f}: error io: {e}")
+            worst = 2
+            continue
+        for i in issues:
             print(f"{f}: {i.level} {i.code}: {i.message}")
             if i.level == "error":
-                worst = 1
+                worst = max(worst, 1)
     return worst
 
 

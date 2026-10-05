@@ -41,7 +41,9 @@ def _image(m, base_dir: Path) -> str:
         return m.group(0)  # Outside base_dir, check will flag as external
     if not f.is_file():
         return m.group(0)  # check가 external로 잡는다
-    mime = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
+    mime = mimetypes.guess_type(f.name)[0] or ""
+    if not mime.startswith("image/"):
+        return m.group(0)  # 이미지가 아니면 내장하지 않는다
     data = base64.b64encode(f.read_bytes()).decode("ascii")
     return f'{m.group(1)}"data:{mime};base64,{data}"'
 

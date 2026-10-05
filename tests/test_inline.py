@@ -47,6 +47,12 @@ class InlineTest(unittest.TestCase):
             self.assertIn('class="linenos"', out)
             self.assertIn(">271<", out)
 
+    def test_non_image_file_not_inlined(self):
+        (self.dir / "notes.txt").write_text("secret", encoding="utf-8")
+        out = inline.inline_html(GOOD.replace("</body>", '<img src="notes.txt" alt=""></body>'), self.dir)
+        self.assertIn('src="notes.txt"', out)
+        self.assertNotIn("data:", out.split("<body", 1)[1])
+
     def test_parent_directory_image_not_inlined(self):
         # Create file outside base_dir
         (self.dir.parent / "secret.png").write_bytes(PNG)
