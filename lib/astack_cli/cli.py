@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import sys
 from pathlib import Path
@@ -6,6 +7,7 @@ from pathlib import Path
 from . import check as _check
 from . import course as _course
 from . import done as _done
+from . import dream as _dream
 from . import inline as _inline
 from . import media as _media
 from . import memory
@@ -137,6 +139,16 @@ def _cmd_course(args) -> int:
     return worst
 
 
+def _cmd_dream(args) -> int:
+    try:
+        day = datetime.date.fromisoformat(args.date) if args.date else datetime.date.today()
+    except ValueError:
+        print(f"astack dream: 날짜는 YYYY-MM-DD: {args.date}", file=sys.stderr)
+        return 2
+    print(json.dumps(_dream.collect(day), ensure_ascii=False))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -192,6 +204,10 @@ def build_parser() -> argparse.ArgumentParser:
     co.add_argument("action", choices=["check"])
     co.add_argument("folder")
     co.set_defaults(fn=_cmd_course)
+    dr = sub.add_parser("dream", help="dream 재료 모으기")
+    dr.add_argument("action", choices=["collect"])
+    dr.add_argument("--date")
+    dr.set_defaults(fn=_cmd_dream)
     return p
 
 
