@@ -29,3 +29,6 @@ details.quiz .opts li.ok{background:#e7f5ec}
 details.quiz .opts li.no{background:var(--accent-soft)}
 details.quiz .verdict{margin:8px 0 0;font-size:14px}
 details.quiz .ans{margin:8px 0 0;padding:8px 12px;background:var(--surface);border-radius:8px}
+.chnav{margin:28px 0 8px;font-size:14px;color:var(--ink-2)}
+.chnav a{color:var(--ink)}
+.tome{margin:32px 0 0}
