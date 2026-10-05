@@ -77,11 +77,13 @@ def inline_html(html: str, base_dir: Path, kit_dir: Path | None = None) -> str:
     if ext.exists():
         css += "\n" + ext.read_text(encoding="utf-8")
     js = (kit / "reader.js").read_text(encoding="utf-8")
+    script_tag = f"<script>{js}</script>"
     quiz = kit / "quiz.js"
     if quiz.exists():
-        js += "\n" + quiz.read_text(encoding="utf-8")
+        quiz_js = quiz.read_text(encoding="utf-8")
+        script_tag += f"<script>{quiz_js}</script>"
     html = html.replace("<!--astack:css-->", f"<style>{css}</style>")
-    html = html.replace("<!--astack:js-->", f"<script>{js}</script>")
+    html = html.replace("<!--astack:js-->", script_tag)
     html = re.sub(r"""(<img\b[^>]*\bsrc=)["']([^"']+)["']""", lambda m: _image(m, base_dir), html, flags=re.I)
     html = re.sub(r"""(<[a-zA-Z][^>]*\bdata-img=)["']([^"']+)["']""", lambda m: _image(m, base_dir), html)
     html = re.sub(r"<pre(\s[^>]*data-lang=[^>]*)><code>(.*?)</code></pre>", _code, html, flags=re.S)

@@ -105,6 +105,17 @@ class InlineTest(unittest.TestCase):
         out = inline.inline_html(GOOD.replace("</body>", "<!--astack:js--></body>"), self.dir)
         self.assertIn("details.quiz", out)
 
+    def test_quiz_js_in_separate_script_element(self):
+        out = inline.inline_html(GOOD.replace("</body>", "<!--astack:js--></body>"), self.dir)
+        # quiz.js must be in its own <script> element, not concatenated with reader.js
+        # Verify that </script><script> appears between reader code and quiz code
+        self.assertIn("addEventListener('scroll'", out)  # reader.js code
+        self.assertIn("details.quiz", out)  # quiz.js code
+        reader_pos = out.index("addEventListener('scroll'")
+        quiz_pos = out.index("details.quiz")
+        between = out[reader_pos:quiz_pos]
+        self.assertIn("</script><script>", between, "quiz.js must be in its own script element")
+
 
 if __name__ == "__main__":
     unittest.main()
