@@ -126,6 +126,20 @@ class TemplateTest(unittest.TestCase):
         css = (ROOT / "skills/design/assets/alto-ext.css").read_text(encoding="utf-8")
         self.assertIn(".report figure img{max-width:100%;height:auto}", css)
 
+    def test_quest_map_has_terms_between_chapters_and_sources(self):
+        html = (ROOT / "skills/quest/assets/map-template.html").read_text(encoding="utf-8")
+        i = html.index('<section class="terms" id="terms">')
+        self.assertLess(html.index('<section class="chapters">'), i)
+        self.assertLess(i, html.index('<section class="sources">'))
+        skill = (ROOT / "skills/quest/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("`#terms`", skill)
+
+    def test_quest_skill_subagent_fallback_and_topic_query(self):
+        skill = (ROOT / "skills/quest/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("topic:<주제어>", skill)
+        self.assertNotIn("`astack memory search topic:`", skill)
+        self.assertIn("채팅이 없으면", skill)
+
     def test_map_template_has_converge_sections(self):
         html = (ROOT / "skills/map/assets/template.html").read_text(encoding="utf-8")
         for s in ('id="known"', 'id="agree"', 'id="conflict"', 'id="open"', 'id="decided"'):
