@@ -1462,16 +1462,16 @@ git commit -m "feat(skills): repo atom with evidence-tiered why (provisional tem
 | build-up-diagrams | 부품 3개 이상 | 한 장에 다 그리지 말고 하나씩 쌓는다 |
 ```
 
-- [ ] **Step 3: README** — "지금 있는 것" 제목을 `## 지금 있는 것 (P0~P2)`로 바꾸고 목록에 추가:
+- [ ] **Step 3: README** — README is English and very short. Add rows to the `## Skills` table and update the CLI line:
 
 ```markdown
-- `astack:interview` 팟캐스트·인터뷰 → 대화를 보존한 매거진
-- `astack:seminar` 슬라이드 발표 → 슬라이드가 따라오는 리포트
-- `astack:paper` 논문 → 무손실 리더 (템플릿 잠정)
-- `astack:repo` 남의 레포 → 구조·루프·영리한 부분·왜·약점 (템플릿 잠정)
-- `bin/astack` transcript · slides · pdf (원자용 능력, `skills/design/references/capabilities.md`)
-- 외부 도구: `yt-dlp`, `ffmpeg` (brew), macOS `swift`·`sips`
+| `interview` | A podcast or interview video | A magazine that keeps the full conversation |
+| `seminar` | A slide talk video | A report where slides follow your scroll |
+| `paper` | A paper PDF or arXiv link | A lossless reader with every figure |
+| `repo` | A GitHub repo | Structure, core loop, clever parts, why, weak spots |
 ```
+
+CLI line becomes: `astack check | inline | done | memory | recall | transcript | slides | pdf`. Add one line under it: `Needs yt-dlp and ffmpeg (brew). PDF tools need macOS.`
 
 - [ ] **Step 4: `.gitignore`** — 원자 결과물(제3자 내용)을 막는다:
 
