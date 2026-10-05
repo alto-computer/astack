@@ -271,13 +271,23 @@ h4.sh{border-left:0;padding-left:0}
 table.tbl thead th{background:var(--surface)}
 table.tbl tbody td:first-child{background:var(--canvas)}
 .lb{background:rgba(0,0,0,.88)}
+
+/* I. 그림이 없을 때(C8): 어두운 덮개·빈 상자 대신 밝은 면, 한 칸 배치 */
+.partdiv:not(:has(img)){min-height:0;background:var(--surface)}
+.partdiv:not(:has(img))::after{display:none}
+.partdiv:not(:has(img)) .partdiv-copy{color:var(--ink)}
+.partdiv:not(:has(img)) .partdiv-sig{color:var(--ink);border-left-color:var(--hairline)}
+.partdiv:has(img) .partdiv-label{color:rgba(255,255,255,.86)}
+.cover-fig:not(:has(img)),.cover-fig:has(img[src=""]){display:none}
+.contrib:not(:has(.contrib-photo)),.contrib:has(.contrib-photo[src=""]){grid-template-columns:1fr}
+.contrib-photo[src=""]{display:none}
 </style></head>
 <body>
 <!-- ============================================================
   SEMINAR SCROLLYTELLING REPORT TEMPLATE
   Fill {{TOKENS}}. Duplicate <section class="scene"> per slide.
   - Cover(magazine) -> Standfirst(hook, dropcap) -> Speaker(contrib) -> 논증 지도 -> Reader(scenes+sticky slide)
-  - Each scene: data-img/data-cap/data-ch + h3/h4 heading + prose(+callout/table/cards) + verbatim .excerpt + optional .note
+  - Each scene: data-cap/data-ch (슬라이드 경로는 .scene-fig img의 src) + h3/h4 heading + prose(+callout/table/cards) + verbatim .excerpt + optional .note
   - Embed slide images + speaker photo as base64 data URIs. Keep ONE accent. Body sans, cover serif.
 ============================================================ -->
 
@@ -328,7 +338,7 @@ table.tbl tbody td:first-child{background:var(--canvas)}
 <div class="reader"><div class="scenes" id="scenes">
 
   <!-- ===== SCENE (chapter-first: adds CHAPTER divider) ===== -->
-  <section class="scene chfirst" data-gi="0" data-img="" data-cap="{{슬라이드 캡션}}" data-ch="0">
+  <section class="scene chfirst" data-gi="0" data-cap="{{슬라이드 캡션}}" data-ch="0">
     <div class="chapter-head"><div class="ch-num">CHAPTER 01</div><h2 class="ch-label">{{챕터 제목}}</h2></div>
     <div class="scene-inner">
       <h3 class="sh"><span class="shn">01</span><span>{{씬 논지(H3)}}</span></h3>
@@ -348,7 +358,7 @@ table.tbl tbody td:first-child{background:var(--canvas)}
   </section>
 
   <!-- ===== SCENE (sub-point uses h4.sh; no chapter-head) ===== -->
-  <section class="scene" data-gi="1" data-img="" data-cap="{{캡션}}" data-ch="0">
+  <section class="scene" data-gi="1" data-cap="{{캡션}}" data-ch="0">
     <div class="scene-inner">
       <h4 class="sh"><span class="shn">02</span><span>{{하위 논지(H4)}}</span></h4>
       <figure class="scene-fig"><img loading="lazy" src="" alt="{{캡션}}"><figcaption>{{캡션}}</figcaption></figure>

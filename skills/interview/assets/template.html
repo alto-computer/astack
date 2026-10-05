@@ -309,6 +309,16 @@ h4.sh{border-left:0;padding-left:0}
 table.tbl thead th{background:var(--surface)}
 table.tbl tbody td:first-child{background:var(--canvas)}
 .lb{background:rgba(0,0,0,.88)}
+
+/* I. 그림이 없을 때(C8): 어두운 덮개·빈 상자 대신 밝은 면, 한 칸 배치 */
+.partdiv:not(:has(img)){min-height:0;background:var(--surface)}
+.partdiv:not(:has(img))::after{display:none}
+.partdiv:not(:has(img)) .partdiv-copy{color:var(--ink)}
+.partdiv:not(:has(img)) .partdiv-sig{color:var(--ink);border-left-color:var(--hairline)}
+.partdiv:has(img) .partdiv-label{color:rgba(255,255,255,.86)}
+.cover-fig:not(:has(img)),.cover-fig:has(img[src=""]){display:none}
+.contrib:not(:has(.contrib-photo)),.contrib:has(.contrib-photo[src=""]){grid-template-columns:1fr}
+.contrib-photo[src=""]{display:none}
 </style>
 </head>
 <body>
@@ -322,7 +332,7 @@ table.tbl tbody td:first-child{background:var(--canvas)}
   <span class="tb-mark">SHOW <span>NAME</span></span>
   <nav class="tb-parts"><a class="tb-part" href="#part1" data-pnav="part1">Part 1</a><a class="tb-part" href="#part2" data-pnav="part2">Part 2</a><a class="tb-part" href="#part3" data-pnav="part3">Part 3</a></nav>
   <span class="tb-spacer"></span>
-  <a class="tb-src" href="SOURCE_URL" target="_blank" rel="noopener">원본 영상 ↗</a>
+  <a class="tb-src" href="{{SRC_URL}}" target="_blank" rel="noopener">원본 영상 ↗</a>
 </div></div>
 <div class="progress" id="progress"></div>
 
@@ -332,7 +342,7 @@ table.tbl tbody td:first-child{background:var(--canvas)}
     <div class="cover-kicker">Interview · SHOW NAME</div>
     <h1>메인 제목을<br>두 줄로</h1>
     <div class="sub">게스트 이름 — 직함</div>
-    <div class="meta"><span>진행 진행자이름</span><span class="dot">·</span><span>OO분 대화</span><span class="dot">·</span><span>YYYY-MM-DD</span><span class="dot">·</span><a class="src" href="SOURCE_URL" target="_blank" rel="noopener">원본 영상 ↗</a></div>
+    <div class="meta"><span>진행 진행자이름</span><span class="dot">·</span><span>OO분 대화</span><span class="dot">·</span><span>YYYY-MM-DD</span><span class="dot">·</span><a class="src" href="{{SRC_URL}}" target="_blank" rel="noopener">원본 영상 ↗</a></div>
   </div>
   <figure class="cover-fig"><!-- 그림 자리: images/masthead.jpg (있으면 img 태그로 넣고, 없으면 비워 둔다) -->
     <figcaption>진행자이름 · 게스트이름 — SHOW NAME</figcaption></figure>
@@ -392,7 +402,7 @@ table.tbl tbody td:first-child{background:var(--canvas)}
 
 <div class="wrap"><footer class="foot" data-astack="source">
   <div class="foot-mark">SHOW <span>NAME</span> · 매거진 에디션</div>
-  화자 표기 — <b>Q</b>: 진행자이름(진행) · <b>A</b>: 게스트이름(게스트) · <b>N</b>: 내레이션.<br>구어체 필러·중복·광고 낭독은 가독성을 위해 정제했고, 발언의 내용·순서·논지는 원본 트랜스크립트를 그대로 따릅니다. 고유명사는 표준 표기로 교정.<br>출처: <a href="SOURCE_URL" target="_blank" rel="noopener">에피소드 제목 — SHOW NAME</a>
+  화자 표기 — <b>Q</b>: 진행자이름(진행) · <b>A</b>: 게스트이름(게스트) · <b>N</b>: 내레이션.<br>구어체 필러·중복·광고 낭독은 가독성을 위해 정제했고, 발언의 내용·순서·논지는 원본 트랜스크립트를 그대로 따릅니다. 고유명사는 표준 표기로 교정.<br>출처: <a href="{{SRC_URL}}" target="_blank" rel="noopener">에피소드 제목 — SHOW NAME</a><br>요청 "{{요청 원문}}" · Claude Code가 썼습니다
 </footer></div>
 
 

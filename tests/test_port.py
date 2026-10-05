@@ -50,7 +50,7 @@ class PortTest(unittest.TestCase):
         self.assertNotIn('src="images/', self.out)
         self.assertIn("그림 자리: images/masthead.jpg", self.out)
         self.assertNotIn('src="{{', self.out)
-        self.assertIn('data-img=""', self.out)
+        self.assertNotIn('data-img', self.out)
 
     def test_script_untouched(self):
         self.assertIn("<script>var x=1</script>", self.out)
@@ -64,6 +64,16 @@ class PortTest(unittest.TestCase):
                                  [('<header class="cover">', "30s"), ('<section class="standfirst">', "3m")],
                                  source_footer='<footer class="astack-source" data-astack="source">원본</footer>')
         self.assertIn('data-astack="source">원본</footer>\n</body>', out)
+
+
+class ReplacementsTest(unittest.TestCase):
+    def test_replacements_are_applied(self):
+        out = port_template.port(SRC, "", "t", [], "", replacements=[("화자</footer>", "화자 · Claude Code가 썼습니다</footer>")])
+        self.assertIn("화자 · Claude Code가 썼습니다</footer>", out)
+
+    def test_missing_replacement_target_is_error(self):
+        with self.assertRaises(ValueError):
+            port_template.port(SRC, "", "t", [], "", replacements=[("없는 글", "x")])
 
 
 class RootTest(unittest.TestCase):
@@ -92,6 +102,11 @@ class GeneratedTemplatesTest(unittest.TestCase):
                 self.assertIn("#e31c5f", html)  # Alto 실이 덮였다
                 self.assertNotIn("#f6f4ef", html.split("</style>", 1)[0].split(":root", 1)[1].split("}", 1)[0])
                 self.assertNotIn("감시가", html)
+                self.assertIn("Claude Code가 썼습니다", html)
+                self.assertNotIn("data-img", html)
+                self.assertNotIn("SOURCE_URL", html)
+                self.assertIn(".partdiv:not(:has(img))", html)
+                self.assertIn(".contrib:not(:has(.contrib-photo))", html)
 
 
 if __name__ == "__main__":

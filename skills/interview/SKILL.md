@@ -22,9 +22,9 @@ description: Use when 사용자가 팟캐스트, 인터뷰, 대담 영상이나 
 1. 자막: `astack transcript <url> --lang <언어>`. 원 자막(`-orig`)을 먼저 고른다. 출력 머리의 `# lang`과 첫 줄을 확인한다(자동 자막은 언어가 틀리기 쉽다). 자막이 없으면 `--lang ko` 등 다른 언어를 시도한다.
 2. 파트(3~6)와 챕터(질문 하나 = 챕터 하나)로 나눈다. 파트마다 짧은 제목 + 게스트의 대표 한 문장.
 3. 챕터마다: 앞 챕터와 잇는 리드(`.ch-deck`) 2~3문장, "구조 한눈에"(3~5 노드), 대화 턴(`turn q` 진행자 질문, `turn a` 게스트 답, `turn n` 내레이션), 풀쿼트 하나.
-4. `assets/template.html`을 복사해 채운다. `<style>`과 `<script>`는 고치지 않는다. 블록 패턴은 복제한다(`data-pnav` id = `.partdiv id`).
-5. 그림: 마스트헤드는 영상 썸네일(`transcript` 출력의 thumbnail)을 내려받아 문서 옆 폴더에 둔다. 게스트 사진은 깨끗한 출처가 있을 때만. 없으면 그림 자리를 비운다(C8). 의미 없는 그림·캐릭터 금지.
-6. `<head>` 메타 세 개를 채운다(`rooms:created`는 `date -Iseconds`, `rooms:machine`은 `scutil --get ComputerName`).
+4. `assets/template.html`을 복사해 채운다. `<style>`과 `<script>`는 고치지 않는다. 블록 패턴은 복제한다(`data-pnav` id = `.partdiv id`). 원본 링크는 `{{SRC_URL}}`, 출처 줄(`foot`)의 요청은 `{{요청 원문}}`. 남으면 check가 막는다.
+5. 그림: 마스트헤드는 영상 썸네일(`transcript` 출력의 thumbnail)을 내려받아 문서 옆 폴더에 둔다. 게스트 사진은 깨끗한 출처가 있을 때만. 없으면 그림 자리를 비운다(C8): 주석 그대로 두거나 `src=""`. 템플릿이 빈 자리를 밝게 접는다. 의미 없는 그림·캐릭터 금지.
+6. `<head>` 메타 세 개를 채운다(`rooms:created`는 `date -Iseconds`, `rooms:machine`은 `scutil --get LocalHostName`, 실패하면 `hostname -s`).
 7. `astack inline <f>` → `astack check <f>`(에러 0) → `astack done <f> --skill interview` → 채팅에 경로 한 줄.
 
 ## 완료 전 체크

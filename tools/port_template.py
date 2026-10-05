@@ -45,6 +45,10 @@ JOBS = {
         "markers": [('<header class="cover">', "30s"), ('<section class="standfirst">', "3m"), ('<footer class="foot">', "source")],
         "footer": "",
         "root": ROOT_INTERVIEW,
+        "replacements": [
+            ('href="SOURCE_URL"', 'href="{{SRC_URL}}"'),
+            ('SHOW NAME</a>\n</footer>', 'SHOW NAME</a><br>요청 "{{요청 원문}}" · Claude Code가 썼습니다\n</footer>'),
+        ],
     },
     "seminar": {
         "src": ASIDE / "seminar-report/assets/report-template.html",
@@ -52,11 +56,15 @@ JOBS = {
         "markers": [('<header class="cover">', "30s"), ('<section class="mapwrap">', "3m")],
         "footer": '<footer class="astack-source" data-astack="source">원본 영상 {{SRC_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>',
         "root": ROOT_SEMINAR,
+        "replacements": [
+            ("data-img/data-cap/data-ch", "data-cap/data-ch (슬라이드 경로는 .scene-fig img의 src)"),
+        ],
     },
 }
 
 
-def port(src: str, override: str, title: str, markers: list[tuple[str, str]], source_footer: str, root: str = "") -> str:
+def port(src: str, override: str, title: str, markers: list[tuple[str, str]], source_footer: str, root: str = "",
+         replacements: list[tuple[str, str]] = ()) -> str:
     s, n = re.subn(r'<meta charset="utf-8">\s*', lambda m: HEAD, src, count=1, flags=re.I)
     if n != 1:
         raise ValueError('<meta charset="utf-8">가 없습니다')
@@ -72,8 +80,12 @@ def port(src: str, override: str, title: str, markers: list[tuple[str, str]], so
     s = re.sub(r'<img\b[^>]*\bsrc="(images/[^"]+)"[^>]*>',
                lambda m: f"<!-- 그림 자리: {m.group(1)} (있으면 img 태그로 넣고, 없으면 비워 둔다) -->", s)
     s = re.sub(r'src="\{\{[^"]*\}\}"', 'src=""', s)
-    s = re.sub(r'data-img="[^"]*"', 'data-img=""', s)
+    s = re.sub(r'\s*data-img="[^"]*"', '', s)  # 무대는 .scene-fig img의 src만 읽는다 (C1)
     s = s.replace("감시가 아니라 X", "A가 아니라 X")
+    for old, new in replacements:
+        if old not in s:
+            raise ValueError(f"바꿀 자리가 없습니다: {old}")
+        s = s.replace(old, new)
     if source_footer:
         j = s.rindex("</body>")
         s = s[:j] + source_footer + "\n" + s[j:]
@@ -85,7 +97,7 @@ def main(name: str) -> None:
     out = ROOT / f"skills/{name}/assets/template.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     html = port(job["src"].read_text(encoding="utf-8"), OVERRIDE.read_text(encoding="utf-8"),
-                job["title"], job["markers"], job["footer"], job["root"])
+                job["title"], job["markers"], job["footer"], job["root"], job["replacements"])
     out.write_text(html, encoding="utf-8")
     print(out)
 

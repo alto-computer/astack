@@ -41,6 +41,16 @@ class TemplateTest(unittest.TestCase):
                 errors = [f"{i.code}: {i.message}" for i in check.check_html(html) if i.level == "error" and i.code != "placeholder"]
                 self.assertEqual(errors, [])
 
+    def test_every_template_signs_the_source_line(self):
+        for t in TEMPLATES:
+            with self.subTest(t=t.relative_to(ROOT)):
+                self.assertIn("Claude Code가 썼습니다", t.read_text(encoding="utf-8"))
+
+    def test_seminar_stage_reads_scene_img_src(self):
+        html = (ROOT / "skills/seminar/assets/template.html").read_text(encoding="utf-8")
+        self.assertIn("s.querySelector('.scene-fig img').src", html)
+        self.assertNotIn("data-img", html)
+
     def test_flow_scenes_have_design_reason(self):
         t = ROOT / "skills/spec/assets/template.html"
         html = t.read_text(encoding="utf-8")
