@@ -66,6 +66,20 @@ class PortTest(unittest.TestCase):
         self.assertIn('data-astack="source">원본</footer>\n</body>', out)
 
 
+class RootTest(unittest.TestCase):
+    def test_first_root_block_is_replaced(self):
+        src = SRC.replace(":root{--accent:#3a5a7c}", ":root{--bg:#f6f4ef}\n.a{}\n:root{--z:1}")
+        out = port_template.port(src, "", "t", [], "", root=":root{--bg:var(--canvas)}")
+        self.assertIn(":root{--bg:var(--canvas)}", out)
+        self.assertNotIn("#f6f4ef", out)
+        self.assertIn(":root{--z:1}", out)
+
+    def test_thesis_fragment_is_neutralized(self):
+        out = port_template.port(SRC.replace("리드", "감시가 아니라 X"), "", "t", [], "")
+        self.assertIn("A가 아니라 X", out)
+        self.assertNotIn("감시가", out)
+
+
 class GeneratedTemplatesTest(unittest.TestCase):
     def test_generated_templates_keep_one_title_and_markers(self):
         for name in ("interview", "seminar"):
@@ -76,6 +90,8 @@ class GeneratedTemplatesTest(unittest.TestCase):
                 for layer in ("30s", "3m", "source"):
                     self.assertIn(f'data-astack="{layer}"', html)
                 self.assertIn("#e31c5f", html)  # Alto 실이 덮였다
+                self.assertNotIn("#f6f4ef", html.split("</style>", 1)[0].split(":root", 1)[1].split("}", 1)[0])
+                self.assertNotIn("감시가", html)
 
 
 if __name__ == "__main__":

@@ -18,27 +18,51 @@ HEAD = ('<meta charset="utf-8">\n'
         '<meta name="rooms:created" content="[RFC3339 지금 시각]">\n'
         '<meta name="rooms:machine" content="[머신 이름]">\n')
 
+ROOT_INTERVIEW = """:root{
+  --bg:var(--canvas); --surface:var(--canvas); --panel:var(--surface); --tint:var(--accent-soft);
+  --ink:var(--ink); --ink2:var(--ink); --muted:var(--ink-2); --faint:var(--ink-3);
+  --line:var(--hairline); --line2:var(--hairline); --qborder:var(--accent-line);
+  --accent:var(--accent); --accent-ink:var(--accent-ink); --accent-soft:var(--accent-soft);
+  --serif:"Georgia","Noto Serif KR",serif;
+  --sans:-apple-system,"Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
+  --measure:720px; --wide:1120px;
+}"""
+
+ROOT_SEMINAR = """:root{
+  --bg:var(--canvas); --surface:var(--canvas); --border:var(--hairline); --border-strong:var(--hairline);
+  --ink:var(--ink); --muted:var(--ink-2); --faint:var(--ink-3); --accent:var(--accent);
+  --tag-blue-fg:var(--accent); --tag-blue-bg:var(--accent-soft);
+  --tag-green-fg:var(--accent-ink); --tag-green-bg:var(--accent-soft);
+  --r:13px;
+  --font:-apple-system,"Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
+  --serif:"Iowan Old Style","Apple Garamond","Times New Roman",Georgia,serif;
+}"""
+
 JOBS = {
     "interview": {
         "src": ASIDE / "podcast-magazine/assets/template.html",
         "title": "[메인 제목] — 인터뷰",
         "markers": [('<header class="cover">', "30s"), ('<section class="standfirst">', "3m"), ('<footer class="foot">', "source")],
         "footer": "",
+        "root": ROOT_INTERVIEW,
     },
     "seminar": {
         "src": ASIDE / "seminar-report/assets/report-template.html",
         "title": "{{TITLE}} — 세미나",
         "markers": [('<header class="cover">', "30s"), ('<section class="mapwrap">', "3m")],
-        "footer": '<footer class="astack-source" data-astack="source">원본 영상 {{SOURCE_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>',
+        "footer": '<footer class="astack-source" data-astack="source">원본 영상 {{SRC_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>',
+        "root": ROOT_SEMINAR,
     },
 }
 
 
-def port(src: str, override: str, title: str, markers: list[tuple[str, str]], source_footer: str) -> str:
+def port(src: str, override: str, title: str, markers: list[tuple[str, str]], source_footer: str, root: str = "") -> str:
     s, n = re.subn(r'<meta charset="utf-8">\s*', lambda m: HEAD, src, count=1, flags=re.I)
     if n != 1:
         raise ValueError('<meta charset="utf-8">가 없습니다')
     s = re.sub(r"<title>.*?</title>", lambda m: f"<title>{title}</title>", s, count=1, flags=re.S)
+    if root:
+        s = re.sub(r":root\{.*?\}", lambda m: root, s, count=1, flags=re.S)
     i = s.index("</style>")
     s = s[:i] + "\n" + override.strip() + "\n" + s[i:]
     for tag, layer in markers:
@@ -49,6 +73,7 @@ def port(src: str, override: str, title: str, markers: list[tuple[str, str]], so
                lambda m: f"<!-- 그림 자리: {m.group(1)} (있으면 img 태그로 넣고, 없으면 비워 둔다) -->", s)
     s = re.sub(r'src="\{\{[^"]*\}\}"', 'src=""', s)
     s = re.sub(r'data-img="[^"]*"', 'data-img=""', s)
+    s = s.replace("감시가 아니라 X", "A가 아니라 X")
     if source_footer:
         j = s.rindex("</body>")
         s = s[:j] + source_footer + "\n" + s[j:]
@@ -60,7 +85,7 @@ def main(name: str) -> None:
     out = ROOT / f"skills/{name}/assets/template.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     html = port(job["src"].read_text(encoding="utf-8"), OVERRIDE.read_text(encoding="utf-8"),
-                job["title"], job["markers"], job["footer"])
+                job["title"], job["markers"], job["footer"], job["root"])
     out.write_text(html, encoding="utf-8")
     print(out)
 

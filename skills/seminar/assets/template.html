@@ -6,10 +6,10 @@
 <title>{{TITLE}} — 세미나</title>
 <style>
 :root{
-  --bg:#f7f6f3; --surface:#fff; --border:#eae7e0; --border-strong:#e6e3dc;
-  --ink:#1f2328; --muted:#73757b; --faint:#a3a39d; --accent:#3a5a7c;
-  --tag-blue-fg:#3a5a7c; --tag-blue-bg:#eef2f8;
-  --tag-green-fg:#3f6b4f; --tag-green-bg:#edf3ed;
+  --bg:var(--canvas); --surface:var(--canvas); --border:var(--hairline); --border-strong:var(--hairline);
+  --ink:var(--ink); --muted:var(--ink-2); --faint:var(--ink-3); --accent:var(--accent);
+  --tag-blue-fg:var(--accent); --tag-blue-bg:var(--accent-soft);
+  --tag-green-fg:var(--accent-ink); --tag-green-bg:var(--accent-soft);
   --r:13px;
   --font:-apple-system,"Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
   --serif:"Iowan Old Style","Apple Garamond","Times New Roman",Georgia,serif;
@@ -300,7 +300,7 @@ table.tbl tbody td:first-child{background:var(--canvas)}
 <section class="standfirst measure">
   <div class="sf-kicker">Intro</div>
   <p class="sf-q">{{HOOK_QUESTION — 강연을 관통하는 질문 한 문장}}</p>
-  <p class="sf-a"><span class="dropcap">{{첫글자}}</span>{{짧은 답 3~4문장. 감시가 아니라 X, ... <b>핵심 볼드</b>. 티저로 끝내 기대 유발.}}</p>
+  <p class="sf-a"><span class="dropcap">{{첫글자}}</span>{{짧은 답 3~4문장. A가 아니라 X, ... <b>핵심 볼드</b>. 티저로 끝내 기대 유발.}}</p>
 </section>
 
 <section class="contrib measure">
@@ -411,5 +411,5 @@ table.tbl tbody td:first-child{background:var(--canvas)}
   setActive(0);
 })();
 </script>
-<footer class="astack-source" data-astack="source">원본 영상 {{SOURCE_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>
+<footer class="astack-source" data-astack="source">원본 영상 {{SRC_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>
 </body></html>
