@@ -14,7 +14,7 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper", "repo", "quest"} <= names, names)
+        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper", "repo", "quest", "map"} <= names, names)
 
     def test_atom_skills_respond_only_on_request(self):
         for name in ("interview", "seminar", "paper", "repo"):
@@ -70,6 +70,11 @@ class TemplateTest(unittest.TestCase):
         self.assertIn('<details class="quiz" data-kind="mc">', html)
         self.assertIn('href="00-지도.html"', html)
         self.assertIn("그래서 나한테는?", html)
+
+    def test_map_template_has_converge_sections(self):
+        html = (ROOT / "skills/map/assets/template.html").read_text(encoding="utf-8")
+        for s in ('id="known"', 'id="agree"', 'id="conflict"', 'id="open"', 'id="decided"'):
+            self.assertIn(s, html)
 
 
 if __name__ == "__main__":

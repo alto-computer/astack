@@ -1,0 +1,36 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="description" content="[방 이름]: 지금까지 알게 된 것 한 줄">
+<meta name="rooms:created" content="[RFC3339 처음 만든 시각 — 갱신해도 바꾸지 않는다]">
+<meta name="rooms:machine" content="[머신 이름]">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>[방 이름] 지도</title>
+<!--astack:css-->
+</head><body data-depth="all">
+<div class="top"><div class="top-in"><span class="mark">[방 이름] <span>map</span></span><span class="where" id="where"></span><span class="sp"></span></div><div class="prog" id="prog"></div></div>
+<div class="wrap">
+<header class="cover" data-astack="30s">
+  <div class="kick">Map · [방 이름] · 이해물 [N]개에서</div>
+  <h1>[이 주제에 대해 지금 말할 수 있는 것 한 문장]</h1>
+  <div class="meta">map · [마지막 갱신 날짜] · [읽는 시간]분</div>
+  <p class="l30">[가장 최근에 바뀐 것 두 줄]</p>
+</header>
+<section class="overview" data-astack="3m">
+  <div><div class="kick">3분 · 구조</div><p>[개념들의 관계 두세 줄]</p></div>
+  <div>[개념 지도 SVG]</div>
+</section>
+<section id="known"><div class="secHead"><div class="n">1</div><h2>알게 된 것</h2></div>
+  <ul><li>[사실] <span class="ev ev-ok">확인</span> <a href="[이해물 경로]">[출처]</a></li></ul></section>
+<section id="agree"><div class="secHead"><div class="n">2</div><h2>소스들이 합의하는 것</h2></div>
+  <ul><li>[합의] — <a href="[a]">[a]</a>, <a href="[b]">[b]</a></li></ul></section>
+<section id="conflict"><div class="secHead"><div class="n">3</div><h2>부딪히는 주장</h2></div>
+  <table class="ustab"><thead><tr><th>주장 A</th><th>주장 B</th><th>왜 다른가</th></tr></thead><tbody><tr><td>[A + 출처]</td><td>[B + 출처]</td><td>[조건·시점·정의 차이]</td></tr></tbody></table></section>
+<section id="open"><div class="secHead"><div class="n">4</div><h2>남은 질문</h2></div>
+  <ul><li>[질문] — quest 후보</li></ul></section>
+<section id="decided"><div class="secHead"><div class="n">5</div><h2>내가 내린 결정</h2></div>
+  <ul><li>[결정] ([날짜], [근거])</li></ul></section>
+<section id="changes"><div class="secHead"><div class="n">기록</div><h2>바뀐 것</h2></div>
+  <ul><li>[날짜]: [무엇이 바뀌었나, 어떤 이해물이 들어와서]</li></ul></section>
+<footer data-astack="source">이해물 [N]개 · 방 [경로] · Claude Code가 썼습니다</footer>
+</div>
+<!--astack:js-->
+</body></html>
