@@ -1,0 +1,8 @@
+{
+  "name": "astack-dev",
+  "description": "astack 로컬 개발 마켓플레이스",
+  "owner": { "name": "Junseon Yoon", "email": "wnstjsy@gmail.com" },
+  "plugins": [
+    { "name": "astack", "description": "사람이 이해하게 만드는 스킬 묶음", "version": "0.1.0", "source": "./" }
+  ]
+}
