@@ -14,7 +14,12 @@ TEMPLATES = sorted(ROOT.glob("skills/*/assets/*template*.html"))
 class TemplateTest(unittest.TestCase):
     def test_templates_exist(self):
         names = {p.parent.parent.name for p in TEMPLATES}
-        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper", "repo", "quest", "map", "dream"} <= names, names)
+        self.assertTrue({"spec", "change", "recall", "interview", "seminar", "paper", "repo", "quest", "map", "dream", "feed"} <= names, names)
+
+    def test_feed_template_has_order_and_cards(self):
+        html = (ROOT / "skills/feed/assets/template.html").read_text(encoding="utf-8")
+        for s in ('id="deep"', 'id="cards"', 'class="card"', "읽는 순서"):
+            self.assertIn(s, html)
 
     def test_atom_skills_respond_only_on_request(self):
         for name in ("interview", "seminar", "paper", "repo"):
