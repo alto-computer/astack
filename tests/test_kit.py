@@ -27,6 +27,10 @@ class KitTest(unittest.TestCase):
         for s in ["addEventListener('scroll'", ".toc a", ".rfilter button", ".st span:last-child"]:
             self.assertIn(s, js, s)
 
+    def test_ext_css_has_postit(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        self.assertIn("details.postit", css)
+
 
 if __name__ == "__main__":
     unittest.main()

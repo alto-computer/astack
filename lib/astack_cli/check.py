@@ -88,6 +88,10 @@ def check_html(html: str) -> list[Issue]:
         if re.search(r"""rel=["'][^"']*(stylesheet|preload|preconnect|icon)""", m.group(0), re.I):
             issues.append(Issue("error", "external", f"{m.group(0)[:80]}가 파일을 불러옵니다"))
 
+    for m in re.finditer(r"""\bdata-img=["']([^"']+)["']""", html, re.I):
+        if not m.group(1).startswith(("data:", "#")):
+            issues.append(Issue("error", "external", f'data-img="{m.group(1)[:80]}"가 파일을 불러옵니다. astack inline으로 내장하세요'))
+
     # Scan url() only in <style> blocks and style attributes
     style_content = ""
     # Extract <style>...</style> blocks
@@ -110,6 +114,9 @@ def check_html(html: str) -> list[Issue]:
         issues.append(Issue("error", "source", 'data-astack="source" 요소(원문, 요청, "Claude Code가 썼습니다")가 없습니다'))
 
     text = prose_text(html)
+    for m in re.finditer(r"\{\{[^{}\n]{1,80}\}\}", text):
+        issues.append(Issue("error", "placeholder", f"채우지 않은 자리표시: {m.group(0)}"))
+
     for p in SLOP:
         if p in text:
             issues.append(Issue("warn", "slop", f'AI 말투: "{p.strip()}"'))

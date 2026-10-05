@@ -30,7 +30,7 @@ class TemplateTest(unittest.TestCase):
                 for name, val in real.items():
                     html, n = re.subn(rf'(<meta name="{name}" content=")[^"]*', rf"\g<1>{val}", html)
                     self.assertEqual(n, 1, name)
-                errors = [f"{i.code}: {i.message}" for i in check.check_html(html) if i.level == "error"]
+                errors = [f"{i.code}: {i.message}" for i in check.check_html(html) if i.level == "error" and i.code != "placeholder"]
                 self.assertEqual(errors, [])
 
     def test_flow_scenes_have_design_reason(self):

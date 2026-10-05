@@ -96,6 +96,11 @@ class InlineTest(unittest.TestCase):
         self.assertIn("test.rs:1", out)
         self.assertIn('class="cx"', out)
 
+    def test_data_img_becomes_data_uri(self):
+        (self.dir / "s1.png").write_bytes(PNG)
+        out = inline.inline_html(GOOD.replace("</body>", '<section class="scene" data-img="s1.png"></section></body>'), self.dir)
+        self.assertIn('data-img="data:image/png;base64,', out)
+
 
 if __name__ == "__main__":
     unittest.main()

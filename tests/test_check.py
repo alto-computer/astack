@@ -156,6 +156,18 @@ class CheckTest(unittest.TestCase):
         html = GOOD.replace("</body>", '<div style="background:url(\'b.png\')"/></body>')
         self.assertIn("external", codes(html), "url() in double-quoted style with single-quote should error")
 
+    def test_unfilled_braces_fail(self):
+        html = GOOD.replace("</body>", "<p>{{SPEAKER}}의 발표</p></body>")
+        self.assertIn("placeholder", codes(html))
+
+    def test_braces_inside_code_are_fine(self):
+        html = GOOD.replace("</body>", "<pre><code>{{ value }}</code></pre></body>")
+        self.assertNotIn("placeholder", codes(html))
+
+    def test_data_img_file_is_external(self):
+        html = GOOD.replace("</body>", '<section data-img="slides/s1.jpg"></section></body>')
+        self.assertIn("external", codes(html))
+
 
 if __name__ == "__main__":
     unittest.main()

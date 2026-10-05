@@ -80,6 +80,7 @@ def inline_html(html: str, base_dir: Path, kit_dir: Path | None = None) -> str:
     html = html.replace("<!--astack:css-->", f"<style>{css}</style>")
     html = html.replace("<!--astack:js-->", f"<script>{js}</script>")
     html = re.sub(r"""(<img\b[^>]*\bsrc=)["']([^"']+)["']""", lambda m: _image(m, base_dir), html, flags=re.I)
+    html = re.sub(r"""(<[a-zA-Z][^>]*\bdata-img=)["']([^"']+)["']""", lambda m: _image(m, base_dir), html)
     html = re.sub(r"<pre(\s[^>]*data-lang=[^>]*)><code>(.*?)</code></pre>", _code, html, flags=re.S)
     return html
 

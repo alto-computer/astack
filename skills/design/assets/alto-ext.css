@@ -10,3 +10,9 @@ p.why b{font-weight:600}
   .hl pre code{overflow-wrap:normal}
   table.rv,table.ustab{display:block;max-width:100%;min-width:0!important;overflow-x:auto}
 }
+/* 포스트잇: 에이전트가 덧댄 조사. 기본 접힘, 본문과 구분되는 바탕 */
+details.postit{display:inline-block;vertical-align:baseline;margin:0 2px}
+details.postit>summary{list-style:none;cursor:pointer;font-size:12px;color:var(--ink-2);border:1px solid var(--hairline);border-radius:999px;padding:0 8px}
+details.postit>summary::-webkit-details-marker{display:none}
+details.postit[open]{display:block;margin:10px 0;padding:12px 14px;background:#fff8c5;border-radius:10px}
+details.postit[open]>summary{margin-bottom:6px}
