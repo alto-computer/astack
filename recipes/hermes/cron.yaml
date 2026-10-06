@@ -5,7 +5,7 @@ jobs:
     prompt: "astack:feed 스킬로 오늘 30분을 만들어. 끝나면 30초 층 두 줄과 경로만 남겨."
   - name: astack-morning
     schedule: "0 7 * * *"
-    script: "astack goal report --date yesterday --text"   # stdout이 비면 보내지 않음
+    script: "astack goal report --date today --text"   # stdout이 비면 보내지 않음
   - name: astack-dream
     schedule: "0 20 * * *"
     prompt: "astack:dream 스킬로 오늘 Journal을 만들어. 일요일이면 주간 수렴까지. 30초 층 두 줄과 경로만 남겨."

@@ -359,7 +359,7 @@ def build_parser() -> argparse.ArgumentParser:
     gr.add_argument("--host", choices=["claude", "codex"], default="claude")
     gr.set_defaults(fn=_goal_run)
     gp = gs.add_parser("report", help="그날 끝난 goal 보고")
-    gp.add_argument("--date", default="yesterday", help="YYYY-MM-DD, yesterday, today")
+    gp.add_argument("--date", default="today", help="YYYY-MM-DD, yesterday, today")
     gp.add_argument("--text", action="store_true", help="Telegram용 짧은 글")
     gp.set_defaults(fn=_goal_report)
     ga = sub.add_parser("gate", help="무손실 검사")

@@ -1,5 +1,6 @@
 """밤 goal 큐와 실행기. 상태는 ~/.astack/goals/<id>/ 아래 파일에만 둔다."""
 import datetime
+import fcntl
 import json
 import os
 import re
@@ -44,10 +45,12 @@ def list_goals() -> list[dict]:
     out = []
     for f in paths.goals_dir().glob("*/goal.json"):
         try:
-            out.append(json.loads(f.read_text(encoding="utf-8")))
+            g = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-    return sorted(out, key=lambda g: (g.get("added", ""), g.get("id", "")))
+        if isinstance(g, dict) and g.get("id"):
+            out.append(g)
+    return sorted(out, key=lambda g: (str(g.get("added", "")), str(g.get("id", ""))))
 
 
 def _alive(pid) -> bool:
@@ -89,11 +92,11 @@ def _judge(d: Path) -> tuple[bool, str | None]:
 
 def _run_one(g: dict, host, runner, now, timeout) -> dict:
     d = paths.goals_dir() / g["id"]
-    g.update(status="running", host=host, attempts=g["attempts"] + 1, pid=os.getpid(),
+    g.update(status="running", host=host, attempts=g.get("attempts", 0) + 1, pid=os.getpid(),
              started=now.isoformat(timespec="seconds"), finished=None, reason=None)
     _save(g)
     (d / "result.json").unlink(missing_ok=True)  # 이전 시도의 결과가 이번 성공으로 읽히지 않게
-    prompt = PROMPT.format(q=g["question"], d=d)
+    prompt = PROMPT.format(q=g.get("question", ""), d=d)
     reason = None
     try:
         with open(d / "run.log", "ab") as log:
@@ -107,28 +110,56 @@ def _run_one(g: dict, host, runner, now, timeout) -> dict:
     except OSError as e:
         ok, reason = False, f"실행 실패: {e}"
     g.update(status="done" if ok else "failed", pid=None, reason=reason,
-             finished=now.isoformat(timespec="seconds"))
+             finished=datetime.datetime.now().isoformat(timespec="seconds"))
     _save(g)
     return g
 
 
+def _fresh(g: dict) -> dict | None:
+    """고른 뒤 다른 실행이 상태를 바꿨으면 None."""
+    try:
+        cur = json.loads((paths.goals_dir() / g["id"] / "goal.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, KeyError):
+        return None
+    if cur.get("status") != g.get("status") or cur.get("pid") != g.get("pid"):
+        return None
+    return cur
+
+
 def run(max_goals: int = 3, host: str = "claude", runner=subprocess.run, now=None,
         timeout: int = 3 * 3600) -> list[dict]:
-    goals = list_goals()
-    live = sum(1 for g in goals if g["status"] == "running" and _alive(g.get("pid")))
-    resume = [g for g in goals if g["status"] == "running" and not _alive(g.get("pid"))]
-    queued = [g for g in goals if g["status"] == "queued"]
-    todo = (resume + queued)[:max(0, max_goals - live)]
-    out = []
-    for g in todo:
-        out.append(_run_one(g, host, runner, now or datetime.datetime.now(), timeout))
-    return out
+    paths.goals_dir().mkdir(parents=True, exist_ok=True)
+    with open(paths.goals_dir() / ".run.lock", "a") as lk:
+        try:
+            fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            return []
+        goals = list_goals()
+        live = sum(1 for g in goals if g.get("status") == "running" and _alive(g.get("pid")))
+        resume = [g for g in goals if g.get("status") == "running" and not _alive(g.get("pid"))]
+        queued = [g for g in goals if g.get("status") == "queued"]
+        out = []
+        for g in (resume + queued)[:max(0, max_goals - live)]:
+            cur = _fresh(g)
+            if cur is None:
+                continue
+            try:
+                out.append(_run_one(cur, host, runner, now or datetime.datetime.now(), timeout))
+            except Exception as e:  # 한 goal의 오류가 나머지를 막지 않게
+                cur.update(status="failed", pid=None, reason=f"오류: {type(e).__name__}: {e}",
+                           finished=datetime.datetime.now().isoformat(timespec="seconds"))
+                try:
+                    _save(cur)
+                except OSError:
+                    pass
+                out.append(cur)
+        return out
 
 
 def report(day: datetime.date) -> list[dict]:
     out = []
     for g in list_goals():
-        if g["status"] not in ("done", "failed") or not (g.get("finished") or "").startswith(day.isoformat()):
+        if g.get("status") not in ("done", "failed") or not (g.get("finished") or "").startswith(day.isoformat()):
             continue
         r = {}
         try:
@@ -137,7 +168,9 @@ def report(day: datetime.date) -> list[dict]:
             pass
         if not isinstance(r, dict):
             r = {}
-        out.append({"question": g["question"], "status": g["status"], "summary": r.get("summary") or [],
+        sm = r.get("summary") or []
+        sm = sm if isinstance(sm, list) else [str(sm)]
+        out.append({"question": g.get("question", ""), "status": g["status"], "summary": [str(x) for x in sm][:3],
                     "map": r.get("map"), "reason": g.get("reason")})
     return out
 

@@ -1,4 +1,5 @@
 import contextlib
+import fcntl
 import datetime
 import io
 import json
@@ -65,7 +66,7 @@ class GoalTest(unittest.TestCase):
         saved = goal.list_goals()[0]
         self.assertEqual(saved["status"], "done")
         self.assertTrue(saved["finished"])
-        self.assertEqual(goal.report(T0.date())[0]["summary"], ["a", "b", "c"])
+        self.assertEqual(goal.report(datetime.date.today())[0]["summary"], ["a", "b", "c"])
 
     def test_missing_result_is_failure(self):
         self._add("q")
@@ -99,10 +100,71 @@ class GoalTest(unittest.TestCase):
         gf.write_text(json.dumps(d))
         order = []
         goal.run(max_goals=1, runner=lambda c, **k: (order.append(c), writer(OK)(c, **k))[1], now=T0)
+        self.assertEqual(len(order), 1)
+        self.assertIn("old", order[0][2])
         got = {g["id"]: g for g in goal.list_goals()}
         self.assertEqual(got[a["id"]]["attempts"], 2)
         self.assertEqual(got[a["id"]]["status"], "done")
         self.assertEqual(got[b["id"]]["status"], "queued")
+
+    def test_resume_and_queued_share_cap(self):
+        a = self._add("old")
+        for i in range(3):
+            self._add(f"q{i}", i + 1)
+        gf = paths.goals_dir() / a["id"] / "goal.json"
+        d = json.loads(gf.read_text())
+        d.update(status="running", pid=999999, attempts=1)
+        gf.write_text(json.dumps(d))
+        order = []
+        goal.run(runner=lambda c, **k: (order.append(c[2]), writer(OK)(c, **k))[1], now=T0)
+        self.assertEqual(len(order), 3)
+        self.assertIn("old", order[0])
+        self.assertEqual([g["status"] for g in goal.list_goals()], ["done"] * 3 + ["queued"])
+
+    def test_empty_queue_runs_nothing(self):
+        self.assertEqual(goal.run(runner=writer(OK), now=T0), [])
+
+    def test_locked_run_does_nothing(self):
+        self._add("q")
+        with open(paths.goals_dir() / ".run.lock", "a") as lk:
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            calls = []
+            self.assertEqual(goal.run(runner=writer(OK, calls=calls), now=T0), [])
+        self.assertEqual(calls, [])
+        self.assertEqual(goal.list_goals()[0]["status"], "queued")
+
+    def test_exception_isolated_per_goal(self):
+        self._add("q1")
+        self._add("q2", 1)
+        n = []
+
+        def run(cmd, **kw):
+            n.append(1)
+            if len(n) == 1:
+                raise ValueError("boom")
+            return writer(OK)(cmd, **kw)
+        out = goal.run(runner=run, now=T0)
+        self.assertEqual([g["status"] for g in out], ["failed", "done"])
+        self.assertEqual(out[0]["reason"], "오류: ValueError: boom")
+
+    def test_hand_edited_goal_missing_keys(self):
+        d = paths.goals_dir() / "x"
+        d.mkdir(parents=True)
+        (d / "goal.json").write_text(json.dumps({"id": "x", "status": "queued"}))
+        self.assertEqual(len(goal.list_goals()), 1)
+        self.assertEqual(goal.run(runner=writer(OK), now=T0)[0]["status"], "done")
+
+    def test_non_list_summary_wrapped(self):
+        self._add("q")
+        goal.run(runner=writer({"success": True, "summary": "한 줄"}), now=T0)
+        self.assertEqual(goal.report(datetime.date.today())[0]["summary"], ["한 줄"])
+
+    def test_finished_is_real_end_time(self):
+        self._add("q")
+        goal.run(runner=writer(OK), now=datetime.datetime(2000, 1, 1))
+        g = goal.list_goals()[0]
+        self.assertEqual(g["started"][:4], "2000")
+        self.assertEqual(g["finished"][:10], datetime.date.today().isoformat())
 
     def test_live_running_goal_counts_against_cap(self):
         a = self._add("live")
@@ -156,7 +218,7 @@ class GoalTest(unittest.TestCase):
         goal.run(runner=writer(None), now=T0)
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            self.assertEqual(cli.main(["goal", "report", "--text", "--date", "2026-10-06"]), 0)
+            self.assertEqual(cli.main(["goal", "report", "--text", "--date", "today"]), 0)
         out = buf.getvalue()
         self.assertIn("✓ 성공한 질문", out)
         self.assertIn("/tmp/map.html", out)
