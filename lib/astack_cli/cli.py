@@ -9,12 +9,15 @@ from . import course as _course
 from . import done as _done
 from . import dream as _dream
 from . import feed as _feed
+from . import gate as _gate
+from . import goal as _goal
 from . import inline as _inline
 from . import media as _media
 from . import memory
 from . import pdf as _pdf
 from . import recall as _recall
 from . import route as _route
+from . import setup as _setup
 
 
 def _memory(args) -> int:
@@ -55,8 +58,39 @@ def _restore(args) -> int:
 
 
 def _consolidate(args) -> int:
-    print(json.dumps(memory.consolidate(dry_run=args.dry_run), ensure_ascii=False))
+    rep = memory.consolidate(dry_run=args.dry_run)
+    if not args.html:
+        print(json.dumps(rep, ensure_ascii=False))
+        return 0
+    if args.quiet_if_unchanged and not memory.changed(rep):
+        return 0
+    out = Path(args.html)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(memory.render_report(rep, datetime.date.today(), dry_run=args.dry_run), encoding="utf-8")
+    _inline.inline_file(out)
+    print(out)
     return 0
+
+
+def _cmd_gate(args) -> int:
+    nums = []
+    cur = args.numbers or args.out
+    try:
+        if args.numbers:
+            nums = [l.strip() for l in Path(args.numbers).read_text(encoding="utf-8").splitlines() if l.strip()]
+        cur = args.out
+        out_text = Path(args.out).read_text(encoding="utf-8")
+        cur = args.source
+        src_text = _gate.source_text(args.source)
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"astack gate: {cur}: {e}", file=sys.stderr)
+        return 2
+    miss = _gate.paper(out_text, src_text, nums)
+    for m in miss:
+        print(f"빠짐: {m}")
+    if not miss:
+        print("gate: 통과")
+    return 1 if miss else 0
 
 
 def _cmd_check(args) -> int:
@@ -78,20 +112,37 @@ def _cmd_check(args) -> int:
     return worst
 
 
+def _expand(items) -> list:
+    """폴더면 그 안의 *.html(정렬), 아니면 그대로."""
+    out: list = []
+    for it in items:
+        p = Path(it)
+        out.extend(sorted(p.glob("*.html")) if p.is_dir() else [it])
+    return out
+
+
 def _cmd_inline(args) -> int:
-    for f in args.files:
+    for f in _expand(args.files):
         _inline.inline_file(f)
         print(f)
     return 0
 
 
 def _cmd_done(args) -> int:
-    code, notes = _done.done(args.file, args.skill, room=args.room, force=args.force)
-    for n in notes:
-        print(n, file=sys.stderr)
-    if code == 0:
-        print(Path(args.file).resolve())
-    return code
+    worst = 0
+    for it in args.files:
+        if Path(it).is_dir() and not any(Path(it).glob("*.html")):
+            print(f"astack done: {it}: html 없음", file=sys.stderr)
+            worst = 1
+    for f in _expand(args.files):
+        code, notes = _done.done(f, args.skill, room=args.room, force=args.force)
+        for n in notes:
+            named = str(f) in n or str(Path(f).resolve()) in n
+            print(f"{f}: {n}" if code and not named else n, file=sys.stderr)
+        if code == 0:
+            print(Path(f).resolve())
+        worst = max(worst, code)
+    return worst
 
 
 def _cmd_recall(args) -> int:
@@ -205,6 +256,57 @@ def _cmd_feed(args) -> int:
     return 0
 
 
+def _goal_day(text: str) -> datetime.date:
+    today = datetime.date.today()
+    if text == "today":
+        return today
+    if text == "yesterday":
+        return today - datetime.timedelta(days=1)
+    return datetime.date.fromisoformat(text)
+
+
+def _goal_add(args) -> int:
+    print(json.dumps(_goal.add(args.question), ensure_ascii=False))
+    return 0
+
+
+def _goal_list(args) -> int:
+    for g in _goal.list_goals():
+        print(json.dumps(g, ensure_ascii=False) if args.json else f"{g['id']}\t{g['status']}\t{g['question']}")
+    return 0
+
+
+def _goal_run(args) -> int:
+    try:
+        until = None if args.until == "none" else datetime.datetime.strptime(args.until, "%H:%M").time()
+    except ValueError:
+        print(f"astack goal: --until은 HH:MM 또는 none: {args.until}", file=sys.stderr)
+        return 2
+    for g in _goal.run(max_goals=args.max, host=args.host, until=until):
+        print(f"{g['id']}\t{g['status']}\t{g['reason'] or ''}")
+    return 0
+
+
+def _goal_report(args) -> int:
+    try:
+        day = _goal_day(args.date)
+    except ValueError:
+        print(f"astack goal: 날짜는 YYYY-MM-DD, yesterday, today: {args.date}", file=sys.stderr)
+        return 2
+    items = _goal.report(None if args.new else day, new=args.new)
+    if not items:
+        return 0
+    print(_goal.report_text(items) if args.text else json.dumps(items, ensure_ascii=False))
+    if args.new:
+        sys.stdout.flush()
+        _goal.mark_reported(items)
+    return 0
+
+
+def _cmd_setup(args) -> int:
+    return _setup.main(args.rest)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -215,16 +317,18 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--type")
     m.add_argument("--before")
     m.add_argument("--dry-run", action="store_true")
+    m.add_argument("--html", help="consolidate: 변화 보고서를 이 경로에 쓴다")
+    m.add_argument("--quiet-if-unchanged", action="store_true", help="consolidate --html: 변화가 없으면 아무것도 쓰지 않는다")
     m.add_argument("--list", action="store_true", help="restore: archive 이름, 최신 먼저")
     m.set_defaults(fn=_memory)
     c = sub.add_parser("check", help="이해물 HTML이 출력 계약을 지키는지 검사")
     c.add_argument("files", nargs="+")
     c.set_defaults(fn=_cmd_check)
     i = sub.add_parser("inline", help="키트 CSS/JS, 이미지, 코드 강조를 HTML 안에 넣는다")
-    i.add_argument("files", nargs="+")
+    i.add_argument("files", nargs="+", metavar="file_or_dir")
     i.set_defaults(fn=_cmd_inline)
     d = sub.add_parser("done", help="검사 후 outputs.log에 기록하고 rooms link를 부른다")
-    d.add_argument("file")
+    d.add_argument("files", nargs="+", metavar="file_or_dir")
     d.add_argument("--skill", required=True)
     d.add_argument("--room")
     d.add_argument("--force", action="store_true")
@@ -276,9 +380,40 @@ def build_parser() -> argparse.ArgumentParser:
     fe.add_argument("--per-channel", type=int, default=5)
     fe.add_argument("--cookies-from-browser", metavar="BROWSER", help="429·403이면 chrome 등 브라우저 쿠키로")
     fe.set_defaults(fn=_cmd_feed)
+    go = sub.add_parser("goal", help="밤 goal 큐: add, list, run(하룻밤 3개까지, 이어서), report")
+    gs = go.add_subparsers(dest="action", required=True)
+    ga = gs.add_parser("add", help="질문을 큐에 넣는다")
+    ga.add_argument("question")
+    ga.set_defaults(fn=_goal_add)
+    gl = gs.add_parser("list", help="큐 보기")
+    gl.add_argument("--json", action="store_true")
+    gl.set_defaults(fn=_goal_list)
+    gr = gs.add_parser("run", help="이어서 할 것과 큐의 것을 실행")
+    gr.add_argument("--max", type=int, default=3)
+    gr.add_argument("--host", choices=["claude", "codex"], default="claude")
+    gr.add_argument("--until", default="06:30", help="이 시각 뒤로는 새 goal을 시작하지 않음(HH:MM, none)")
+    gr.set_defaults(fn=_goal_run)
+    gp = gs.add_parser("report", help="그날 끝난 goal 보고")
+    gp.add_argument("--date", default="today", help="YYYY-MM-DD, yesterday, today")
+    gp.add_argument("--text", action="store_true", help="Telegram용 짧은 글")
+    gp.add_argument("--new", action="store_true", help="아직 보고하지 않은 끝난 goal 전부, 출력 후 보고됨 표시(--date 무시)")
+    gp.set_defaults(fn=_goal_report)
+    ga = sub.add_parser("gate", help="무손실 검사")
+    gas = ga.add_subparsers(dest="gate_cmd", required=True)
+    gp2 = gas.add_parser("paper", help="논문 리더가 원문의 figure·table·수치를 다 담았는지")
+    gp2.add_argument("out")
+    gp2.add_argument("--source", required=True)
+    gp2.add_argument("--numbers", help="한 줄에 수치 하나인 파일")
+    gp2.set_defaults(fn=_cmd_gate)
+    se = sub.add_parser("setup", help="호스트별 설치 (./setup과 같다)")
+    se.add_argument("rest", nargs=argparse.REMAINDER)
+    se.set_defaults(fn=_cmd_setup)
     return p
 
 
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv[:1] == ["setup"]:  # REMAINDER는 맨 앞 --옵션을 못 받아서 직접 넘긴다
+        return _setup.main(argv[1:])
     args = build_parser().parse_args(argv)
     return args.fn(args)

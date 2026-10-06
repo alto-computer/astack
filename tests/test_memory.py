@@ -61,6 +61,12 @@ class MemoryTest(unittest.TestCase):
         paths.memory_file().write_text('{"type":"feedback","key":"a","insight":"ok","source":"told"}\n{broken\n', encoding="utf-8")
         self.assertEqual(len(memory.search("a")), 1)
 
+    def test_search_tolerates_invalid_utf8(self):
+        paths.memory_file().parent.mkdir(parents=True, exist_ok=True)
+        good = '{"type":"feedback","key":"a","insight":"ok","source":"told"}\n'.encode()
+        paths.memory_file().write_bytes(b'{"type":"feedback","key":"b","insight":"\xff\xfe","source":"told"}\n' + good)
+        self.assertEqual([r["key"] for r in memory.search("a")], ["a"])
+
     def test_concurrent_appends_keep_whole_lines(self):
         ctx = multiprocessing.get_context("spawn")
         with ctx.Pool(2) as pool:

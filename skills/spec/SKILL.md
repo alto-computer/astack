@@ -7,7 +7,7 @@ description: Use when a spec, design doc or PR-sized plan has just been saved or
 
 **약속:** 스펙 원문을 열지 않고 ① 변경을 자기 말로 설명하고 ② 가정·결정을 리뷰하고 ③ go 또는 수정을 판단할 수 있다.
 
-먼저 `astack:design`을 읽는다. 레퍼런스: `../../docs/superpowers/specs/references/spec-reference-rooms-v1.html`(이 SKILL.md 기준. astack 플러그인 레포에 있다). 막히면 레퍼런스의 같은 장을 연다.
+먼저 `astack:design`을 읽는다. 레퍼런스: `../../docs/superpowers/specs/references/spec-reference-rooms-v1.html`(이 SKILL.md 기준. astack 플러그인 레포에 있다). 복사본(Aside 등)이라 열리지 않으면 `"$(dirname "$(readlink ~/.local/bin/astack)")/../docs/superpowers/specs/references/spec-reference-rooms-v1.html"`. 막히면 레퍼런스의 같은 장을 연다.
 
 ## 입력
 - 스펙 파일(필수). 구현 코드가 있으면 그 레포(선택). 코드가 있으면 실제 호출부를, 없으면 "스펙 기준"이라고 적는다.

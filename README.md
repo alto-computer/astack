@@ -7,18 +7,13 @@ superpowers decides what to build. astack helps you understand it.
 ## Install
 
 ```bash
-ln -sf ~/personal/astack/bin/astack ~/.local/bin/astack
-mkdir -p ~/.astack && echo "$HOME/personal" > ~/.astack/roots
+git clone https://github.com/alto-computer/astack ~/personal/astack
+~/personal/astack/setup        # auto: cli, claude, codex, aside if present
 ```
 
-In Claude Code:
+Then in Claude Code: `/plugin marketplace add ~/personal/astack` and `/plugin install astack@astack-dev`.
 
-```
-/plugin marketplace add ~/personal/astack
-/plugin install astack@astack-dev
-```
-
-Then add `recipes/claude/CLAUDE.md.snippet` to `~/.claude/CLAUDE.md`.
+Undo: `~/personal/astack/setup --uninstall`. Mac mini scheduling: `recipes/hermes/README.md`.
 
 ## Skills
 
@@ -40,7 +35,7 @@ Then add `recipes/claude/CLAUDE.md.snippet` to `~/.claude/CLAUDE.md`.
 
 ## CLI
 
-`astack route | course | check | inline | done | memory | recall | transcript | slides | pdf | dream | feed`
+`astack route | course | check | inline | done | memory | recall | transcript | slides | pdf | dream | feed | goal | gate | setup`
 
 Needs yt-dlp and ffmpeg (brew). PDF tools need macOS.
 
