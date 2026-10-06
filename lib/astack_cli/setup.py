@@ -1,5 +1,6 @@
 """호스트별 설치와 되돌리기. 링크·복사·스니펫만 한다. 사용자 것은 건드리지 않는다."""
 import os
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -81,6 +82,29 @@ def _marker_state(text: str) -> str:
     return "broken"
 
 
+def _unmarked_block(text: str, heading: str) -> tuple[int, int] | None | str:
+    """표식 없이 손으로 넣은 astack 블록의 (시작, 끝) 글자 위치.
+    블록은 스니펫 첫 줄(`## astack`)과 똑같은 줄부터 다음 #/## 제목 전까지(끝 빈 줄 제외).
+    없으면 None, 여럿이면 "many"."""
+    lines = text.splitlines(keepends=True)
+    starts = [i for i, l in enumerate(lines) if l.rstrip() == heading]
+    if not starts:
+        return None
+    if len(starts) > 1:
+        return "many"
+    i = starts[0]
+    j = i + 1
+    while j < len(lines) and not re.match(r"#{1,2}\s", lines[j]):
+        j += 1
+    while j > i + 1 and not lines[j - 1].strip():
+        j -= 1
+    a = sum(len(l) for l in lines[:i])
+    b = a + sum(len(l) for l in lines[i:j])
+    if text[:b].endswith("\n"):
+        b -= 1  # 블록 끝 개행은 바깥에 남겨 둔다
+    return a, b
+
+
 def _put_snippet(file: Path, snippet: str, dry: bool, out: list[str]) -> None:
     text = _read(file) if file.exists() else ""
     state = _marker_state(text)
@@ -88,6 +112,16 @@ def _put_snippet(file: Path, snippet: str, dry: bool, out: list[str]) -> None:
         out.append(f"건너뜀: {file} (표식이 깨짐)")
         return
     inner = f"{BEGIN}\n{snippet.strip()}\n{END}"
+    found = _unmarked_block(text, snippet.strip().splitlines()[0].rstrip()) if state == "none" else None
+    if found == "many":
+        out.append(f"건너뜀: {file} (표식 없는 astack 블록이 여럿 — 하나만 남기거나 <!-- astack:begin/end -->로 감싸고 다시 실행)")
+        return
+    if found:
+        a, b = found
+        out.append(f"표식 없는 astack 블록을 표식으로 감싸 바꿈: {file}")
+        if not dry:
+            _write_atomic(file, text[:a] + inner + text[b:])
+        return
     if state == "ok":
         a, rest = text.split(BEGIN, 1)
         _, b = rest.split(END, 1)

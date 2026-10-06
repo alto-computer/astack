@@ -1,0 +1,6 @@
+## astack
+- subagent-driven-development에서 Task가 리뷰를 통과할 때마다, 그 Task 커밋 범위로
+  astack:change를 백그라운드 서브에이전트로 실행하고 경로를 한 줄로 알려줘. 작업은 멈추지 마.
+- Plan이 끝나거나 PR을 열면 astack:change로 Plan 전체 요약을 만들어줘.
+- 5분 넘게 걸릴 작업을 시작할 때 astack:recall now로 지금 읽을 것 하나를 알려줘.
+- 스펙·설계 문서를 저장하면 astack:spec으로 이해물을 만들어줘.

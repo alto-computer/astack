@@ -141,6 +141,63 @@ class SetupTest(unittest.TestCase):
         setup.uninstall(["claude"], self.env)
         self.assertEqual(md.read_text(), "top\n\n\nafter  \n")
 
+    def _snippet(self):
+        return (ROOT / "recipes/claude/CLAUDE.md.snippet").read_text().strip()
+
+    def test_unmarked_existing_block_not_duplicated(self):
+        """P1 README가 손으로 넣게 했던, 표식 없는 실제 파일 모양(스니펫 6줄뿐)."""
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text((ROOT / "tests/fixtures/setup/claude-unmarked-p1.md").read_text())
+        out = setup.install(["claude"], self.env)
+        text = md.read_text()
+        self.assertEqual(text, f"{BEGIN}\n{self._snippet()}\n{END}\n")
+        self.assertEqual(text.count("## astack"), 1)
+        self.assertTrue(any("표식 없는 astack 블록" in l for l in out), out)
+        self.assertTrue(any(l.startswith("그대로") for l in setup.install(["claude"], self.env)))
+        setup.uninstall(["claude"], self.env)
+        self.assertEqual(md.read_text(), "")
+
+    def test_unmarked_block_between_user_text_adopted_in_place(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text("# mine\n\n## astack\n- old line\n  more\n\n## other\nkeep\n")
+        setup.install(["claude"], self.env)
+        self.assertEqual(md.read_text(),
+                         f"# mine\n\n{BEGIN}\n{self._snippet()}\n{END}\n\n## other\nkeep\n")
+        setup.uninstall(["claude"], self.env)
+        self.assertEqual(md.read_text(), "# mine\n\n## other\nkeep\n")
+
+    def test_unmarked_block_at_eof_without_newline(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text("top\n\n## astack\n- old")
+        setup.install(["claude"], self.env)
+        self.assertEqual(md.read_text(), f"top\n\n{BEGIN}\n{self._snippet()}\n{END}")
+
+    def test_two_unmarked_blocks_untouched(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        content = "## astack\n- a\n\n## astack\n- b\n"
+        md.write_text(content)
+        out = setup.install(["claude"], self.env)
+        self.assertEqual(md.read_text(), content)
+        self.assertTrue(any(l.startswith("건너뜀") for l in out), out)
+
+    def test_astack_subheading_is_not_a_block(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text("### astack notes\n## astack-ish\n")
+        setup.install(["claude"], self.env)
+        self.assertTrue(md.read_text().startswith("### astack notes\n## astack-ish\n\n" + BEGIN))
+
+    def test_codex_unmarked_block_adopted(self):
+        md = self.home / ".codex/AGENTS.md"
+        md.write_text("## astack\n- old\n")
+        setup.install(["codex"], self.env)
+        self.assertEqual(md.read_text().count("## astack"), 1)
+        self.assertEqual(md.read_text().count(BEGIN), 1)
+
     def test_symlinked_file_followed(self):
         real = self.home / "dotfiles/CLAUDE.md"
         real.parent.mkdir()
