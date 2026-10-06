@@ -102,7 +102,8 @@ def lock():
 
 def _split(data: bytes) -> list[str]:
     # "\n"으로만 자른다. splitlines()는 U+2028 같은 문자에서도 잘라 기록을 깨뜨린다
-    parts = data.decode("utf-8", "replace").split("\n")
+    # surrogateescape: 손으로 고친 깨진 바이트도 다시 쓸 때 원래 바이트로 돌아간다
+    parts = data.decode("utf-8", "surrogateescape").split("\n")
     if parts and parts[-1] == "":
         parts.pop()
     return parts
@@ -205,7 +206,7 @@ def archives(date: str | None = None) -> list[str]:
 
 
 def replace_lines(lines: list[str], since_size: int) -> None:
-    body = "".join(l + "\n" for l in lines).encode("utf-8")
+    body = "".join(l + "\n" for l in lines).encode("utf-8", "surrogateescape")
     _write_atomic(_live(), body + _tail(since_size))
 
 
@@ -294,6 +295,15 @@ def _decay(r: dict, today: datetime.date) -> dict:
     return {**r, "confidence0": c0, "confidence": round(c0 * 0.5 ** (max(age, 0) / 30), 3)}
 
 
+def _count(r: dict) -> int:
+    c = r.get("count", 1)
+    return c if isinstance(c, int) and not isinstance(c, bool) and c >= 1 else 1
+
+
+def _unparsed(lines: list[str]) -> list[str]:
+    return [l for l in lines if not parse([l])]
+
+
 def consolidate(today=None, dry_run: bool = False) -> dict:
     today = today or datetime.date.today()
     with lock():
@@ -301,8 +311,9 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
         size = len(data)
         lines = [l for l in lines if l.strip()]
         recs = parse(lines)
+        broken = _unparsed(lines)  # 읽을 수 없는 줄은 손대지 않고 그대로 남긴다
         rep = {"before": len(lines), "after": 0, "kept_unreadable": 0, "merged": 0, "superseded": [], "decayed": [], "dropped": [],
-               "promoted": [], "patch_suggestions": [], "broken": len(lines) - len(recs)}
+               "promoted": [], "patch_suggestions": [], "broken": len(broken)}
         odd = [r for r in recs if not _plain(r)]
         rep["kept_unreadable"] = len(odd)
         recs = [r for r in recs if _plain(r)]
@@ -311,8 +322,10 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
             k = (r.get("type"), r.get("key"), r.get("insight"), r.get("source"))
             if k in latest:
                 rep["merged"] += 1
+                n = _count(latest[k]) + _count(r)  # 같은 교정이 몇 번 나왔는지는 합쳐도 남긴다
                 if str(r.get("date", "")) < str(latest[k].get("date", "")):
-                    continue
+                    r = latest[k]
+                r = {**r, "count": n}
             latest[k] = r
         recs = list(latest.values())
         told_date: dict[str, str] = {}
@@ -337,24 +350,26 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
                 r = d
             out.append(r)
         groups: dict[str, list[dict]] = {}
-        for r in out:
-            if r.get("type") == "correction":
+        for r in out:  # told만 센다. observed 교정은 사용자가 말한 게 아니라서 규칙이 되지 않는다
+            if r.get("type") == "correction" and r.get("source") == "told":
                 groups.setdefault(r["key"], []).append(r)
         promoted_keys = {r["key"] for r in out if r.get("type") == "preference" and "promoted_from" in r}
         for key, rs in sorted(groups.items()):
-            if len(rs) < 3:
+            n = sum(_count(r) for r in rs)
+            if n < 3:
                 continue
             rs.sort(key=lambda r: str(r.get("date", "")))
+            insights = list(dict.fromkeys(r["insight"] for r in rs))
             if key.startswith("skill:"):
-                rep["patch_suggestions"].append({"key": key, "count": len(rs), "insights": [r["insight"] for r in rs]})
+                rep["patch_suggestions"].append({"key": key, "count": n, "insights": insights})
             if key in promoted_keys:
                 continue
-            out.append({"type": "preference", "key": key, "insight": "규칙: " + " / ".join(r["insight"] for r in rs[-3:]),
-                        "source": "told", "date": today.isoformat(), "host": paths.host(), "promoted_from": len(rs)})
+            out.append({"type": "preference", "key": key, "insight": "규칙: " + " / ".join(insights[-3:]),
+                        "source": "told", "date": today.isoformat(), "host": paths.host(), "promoted_from": n})
             rep["promoted"].append(key)
         out += odd
-        rep["after"] = len(out)
+        rep["after"] = len(out) + len(broken)
         if not dry_run:
             snapshot_archive(today, data)
-            replace_lines([_dump(r) for r in out], size)
+            replace_lines([_dump(r) for r in out] + broken, size)
         return rep

@@ -228,6 +228,59 @@ class ConsolidateTest(MemoryOpsBase):
         rep = memory.consolidate(today=D)
         self.assertEqual(rep["broken"], 1)
         self.assertIn("{not json", (paths.archive_dir() / "2026-10-05.jsonl").read_text())
+        self.assertIn("{not json", memory.read_lines())
+
+    def test_broken_and_non_dict_lines_stay_in_live_file(self):
+        hand = '{"type":"taste","key":"k","insight":"x","source":"told",}'
+        self.write(rec(key="ok"), hand, "[1,2]", '"str"')
+        rep = memory.consolidate(today=D)
+        self.assertEqual((rep["broken"], rep["after"]), (3, 4))
+        lines = memory.read_lines()
+        for raw in (hand, "[1,2]", '"str"'):
+            self.assertIn(raw, lines)
+
+    def test_invalid_utf8_bytes_survive_rewrite(self):
+        good = rec(type="taste", key="topic:z", source="observed", date="2026-09-05", confidence=0.8).encode()
+        bad_rec = good.replace(b'"x"', b'"x\xff"')
+        self.assertNotEqual(bad_rec, good)
+        paths.memory_file().write_bytes(bad_rec + b"\n" + b"{broken \xfe\n")
+        memory.consolidate(today=D)
+        data = paths.memory_file().read_bytes()
+        self.assertIn(b"x\xff", data)
+        self.assertIn(b"{broken \xfe", data)
+        self.assertNotIn("\ufffd".encode(), data)
+
+    def test_identical_corrections_promote(self):
+        self.write(*(rec(insight="짧게", date=f"2026-10-0{i}") for i in (1, 2, 3)))
+        rep = memory.consolidate(today=D)
+        self.assertEqual(rep["promoted"], ["skill:interview"])
+        self.assertEqual(rep["patch_suggestions"][0]["count"], 3)
+        pref = [r for r in memory.parse(memory.read_lines()) if r["type"] == "preference"]
+        self.assertEqual(pref[0]["promoted_from"], 3)
+        self.assertEqual(pref[0]["insight"], "규칙: 짧게")
+
+    def test_identical_corrections_promote_across_daily_runs(self):
+        for i in (1, 2, 3):
+            with open(paths.memory_file(), "a", encoding="utf-8") as f:
+                f.write(rec(insight="짧게", date=f"2026-10-0{i}") + "\n")
+            rep = memory.consolidate(today=datetime.date(2026, 10, i))
+        self.assertEqual(rep["promoted"], ["skill:interview"])
+        corr = [r for r in memory.parse(memory.read_lines()) if r["type"] == "correction"]
+        self.assertEqual(len(corr), 1)
+
+    def test_observed_corrections_are_not_promoted(self):
+        self.write(*(rec(insight=n, source="observed", date="2026-10-0" + str(i), confidence=0.6)
+                     for i, n in ((1, "a"), (2, "b"), (3, "c"))))
+        rep = memory.consolidate(today=D)
+        self.assertEqual((rep["promoted"], rep["patch_suggestions"]), ([], []))
+        out = memory.parse(memory.read_lines())
+        self.assertFalse([r for r in out if r["type"] == "preference"])
+        self.assertTrue(all(r["confidence"] < 0.6 for r in out))
+
+    def test_observed_corrections_do_not_count_toward_told(self):
+        self.write(rec(insight="a", date="2026-10-01"), rec(insight="b", date="2026-10-02"),
+                   rec(insight="c", source="observed", date="2026-10-03", confidence=0.9))
+        self.assertEqual(memory.consolidate(today=D)["promoted"], [])
 
     def test_dry_run_changes_nothing(self):
         self.write(rec(date="2026-10-01"), rec(date="2026-10-03"))
