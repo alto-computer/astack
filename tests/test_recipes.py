@@ -47,6 +47,19 @@ class TestRecipes(unittest.TestCase):
             "AGENTS.md.snippet should contain 'astack-spec'",
         )
 
+    def test_agents_snippet_names_skills_by_frontmatter_name(self):
+        """Codex는 폴더 이름(astack-spec)이 아니라 SKILL.md의 name(spec)으로 스킬을 부른다."""
+        import re
+        with open(os.path.join(self.recipe_dir, "codex", "AGENTS.md.snippet"), encoding="utf-8") as f:
+            content = f.read()
+        skills = os.path.join(self.recipe_dir, "..", "skills")
+        for folder in re.findall(r"~/\.codex/skills/astack-([a-z]+)", content):
+            with open(os.path.join(skills, folder, "SKILL.md"), encoding="utf-8") as f:
+                name = re.search(r"^name:\s*(\S+)", f.read(), re.M).group(1)
+            self.assertIn(f"`{name}` 스킬(~/.codex/skills/astack-{folder})", content)
+        self.assertNotIn("astack-spec 스킬", content)
+        self.assertNotIn("스킬 이름은 `astack-", content)
+
     def test_agents_snippet_contains_astack_recall_now(self):
         """Test that AGENTS.md.snippet contains astack recall --now"""
         path = os.path.join(self.recipe_dir, "codex", "AGENTS.md.snippet")
