@@ -91,10 +91,20 @@ def _marker_state(text: str) -> str:
     return "broken"
 
 
-def _unmarked_block(text: str, heading: str) -> tuple[int, int] | None | str:
+# P1 README가 손으로 넣게 했던 Claude 스니펫(tests/fixtures/setup/claude-unmarked-p1.md와 같아야 한다).
+P1_CLAUDE_SNIPPET = """\
+## astack
+- subagent-driven-development에서 Task가 리뷰를 통과할 때마다, 그 Task 커밋 범위로
+  astack:change를 백그라운드 서브에이전트로 실행하고 경로를 한 줄로 알려줘. 작업은 멈추지 마.
+- Plan이 끝나거나 PR을 열면 astack:change로 Plan 전체 요약을 만들어줘.
+- 5분 넘게 걸릴 작업을 시작할 때 astack:recall now로 지금 읽을 것 하나를 알려줘.
+- 스펙·설계 문서를 저장하면 astack:spec으로 이해물을 만들어줘.
+"""
+
+def _unmarked_block(text: str, heading: str, known: tuple[str, ...] = ()) -> tuple[int, int] | None | str:
     """표식 없이 손으로 넣은 astack 블록의 (시작, 끝) 글자 위치.
     블록은 스니펫 첫 줄(`## astack`)과 똑같은 줄부터 다음 #/## 제목 전까지(끝 빈 줄 제외).
-    없으면 None, 여럿이면 "many"."""
+    없으면 None, 여럿이면 "many". 블록 전체가 known 중 하나와(끝 공백·줄바꿈 무시) 다르면 "mismatch"."""
     lines = text.splitlines(keepends=True)
     starts = [i for i, l in enumerate(lines) if l.rstrip() == heading]
     if not starts:
@@ -107,6 +117,9 @@ def _unmarked_block(text: str, heading: str) -> tuple[int, int] | None | str:
         j += 1
     while j > i + 1 and not lines[j - 1].strip():
         j -= 1
+    norm = lambda t: t.replace("\r\n", "\n").rstrip()
+    if norm("".join(lines[i:j])) not in {norm(k) for k in known}:
+        return "mismatch"
     a = sum(len(l) for l in lines[:i])
     b = a + sum(len(l) for l in lines[i:j])
     if text[:b].endswith("\n"):
@@ -114,16 +127,20 @@ def _unmarked_block(text: str, heading: str) -> tuple[int, int] | None | str:
     return a, b
 
 
-def _put_snippet(file: Path, snippet: str, dry: bool, out: list[str]) -> None:
+def _put_snippet(file: Path, snippet: str, dry: bool, out: list[str], known: tuple[str, ...] = ()) -> None:
     text = _read(file) if file.exists() else ""
     state = _marker_state(text)
     if state == "broken":
         out.append(f"건너뜀: {file} (표식이 깨짐)")
         return
     inner = f"{BEGIN}\n{snippet.strip()}\n{END}"
-    found = _unmarked_block(text, snippet.strip().splitlines()[0].rstrip()) if state == "none" else None
+    found = _unmarked_block(text, snippet.strip().splitlines()[0].rstrip(),
+                           (snippet, *known)) if state == "none" else None
     if found == "many":
         out.append(f"건너뜀: {file} (표식 없는 astack 블록이 여럿 — 하나만 남기거나 <!-- astack:begin/end -->로 감싸고 다시 실행)")
+        return
+    if found == "mismatch":
+        out.append(f"건너뜀: {file} (표식 없는 astack 블록이 알려진 내용과 다름 — 직접 표식으로 감싸 주세요)")
         return
     if found:
         a, b = found
@@ -200,7 +217,8 @@ def install(hosts: list[str], env: Env, dry_run: bool = False) -> list[str]:
                     roots.write_text(f"{env.home / 'personal'}\n", encoding="utf-8")
         elif h == "claude":
             _put_snippet(env.home / ".claude/CLAUDE.md",
-                         (env.repo / "recipes/claude/CLAUDE.md.snippet").read_text(encoding="utf-8"), dry_run, out)
+                         (env.repo / "recipes/claude/CLAUDE.md.snippet").read_text(encoding="utf-8"), dry_run, out,
+                         (P1_CLAUDE_SNIPPET,))
             out.append(f"직접 실행 (Claude Code 프롬프트): /plugin marketplace add {env.repo}")
             out.append("직접 실행 (Claude Code 프롬프트): /plugin install astack@astack-dev")
         elif h == "codex":

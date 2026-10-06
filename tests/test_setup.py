@@ -173,6 +173,39 @@ class SetupTest(unittest.TestCase):
     def _snippet(self):
         return (ROOT / "recipes/claude/CLAUDE.md.snippet").read_text().strip()
 
+    def _p1(self):
+        return (ROOT / "tests/fixtures/setup/claude-unmarked-p1.md").read_text()
+
+    def test_unmarked_block_with_user_text_below_untouched(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        content = "## astack\n- old line\n\nMy own note, not astack.\nAnother line I wrote.\n"
+        md.write_bytes(content.encode())
+        out = setup.install(["claude"], self.env)
+        self.assertEqual(md.read_bytes(), content.encode())
+        self.assertIn(f"건너뜀: {md} (표식 없는 astack 블록이 알려진 내용과 다름 — 직접 표식으로 감싸 주세요)", out)
+        setup.uninstall(["claude"], self.env)
+        self.assertEqual(md.read_bytes(), content.encode())
+
+    def test_real_p1_fixture_adopted_once(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text(self._p1())
+        setup.install(["claude"], self.env)
+        self.assertEqual(md.read_text().count(BEGIN), 1)
+        self.assertEqual(md.read_text().count("## astack"), 1)
+
+    def test_text_before_exact_p1_block_preserved(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        before = "my notes\nline two  \n\n"
+        md.write_bytes((before + self._p1()).encode())
+        setup.install(["claude"], self.env)
+        data = md.read_bytes()
+        self.assertTrue(data.startswith(before.encode()))
+        self.assertEqual(data.decode().count(BEGIN), 1)
+        self.assertEqual(data.decode(), f"{before}{BEGIN}\n{self._snippet()}\n{END}\n")
+
     def test_unmarked_existing_block_not_duplicated(self):
         """P1 README가 손으로 넣게 했던, 표식 없는 실제 파일 모양(스니펫 6줄뿐)."""
         md = self.home / ".claude/CLAUDE.md"
@@ -190,7 +223,7 @@ class SetupTest(unittest.TestCase):
     def test_unmarked_block_between_user_text_adopted_in_place(self):
         md = self.home / ".claude/CLAUDE.md"
         md.parent.mkdir(parents=True)
-        md.write_text("# mine\n\n## astack\n- old line\n  more\n\n## other\nkeep\n")
+        md.write_text(f"# mine\n\n{self._p1().rstrip()}\n\n## other\nkeep\n")
         setup.install(["claude"], self.env)
         self.assertEqual(md.read_text(),
                          f"# mine\n\n{BEGIN}\n{self._snippet()}\n{END}\n\n## other\nkeep\n")
@@ -200,7 +233,7 @@ class SetupTest(unittest.TestCase):
     def test_unmarked_block_at_eof_without_newline(self):
         md = self.home / ".claude/CLAUDE.md"
         md.parent.mkdir(parents=True)
-        md.write_text("top\n\n## astack\n- old")
+        md.write_text("top\n\n" + self._p1().rstrip())
         setup.install(["claude"], self.env)
         self.assertEqual(md.read_text(), f"top\n\n{BEGIN}\n{self._snippet()}\n{END}")
 
@@ -222,7 +255,7 @@ class SetupTest(unittest.TestCase):
 
     def test_codex_unmarked_block_adopted(self):
         md = self.home / ".codex/AGENTS.md"
-        md.write_text("## astack\n- old\n")
+        md.write_text((ROOT / "recipes/codex/AGENTS.md.snippet").read_text())
         setup.install(["codex"], self.env)
         self.assertEqual(md.read_text().count("## astack"), 1)
         self.assertEqual(md.read_text().count(BEGIN), 1)
