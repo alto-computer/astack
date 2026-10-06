@@ -42,6 +42,7 @@ description: Use when 사용자가 논문 PDF나 arXiv 링크를 읽기 쉬운 �
 - [ ] `astack check` 에러 0
 
 ## Gotchas
+- 그림은 오른쪽 칸(`.vis`)과 장면 안 모바일 칸(`.vis-inl`)에 둘 다 넣는다. 복사한 SVG의 id는 바꾼다(check가 dup-id로 잡는다).
 - 수식이 많으면 KaTeX를 쓰고 싶어지지만 외부 스크립트는 check가 막는다. 수식은 HTML로 조판하거나 원문 쪽 이미지를 잘라 넣는다.
 - `astack pdf pages`는 첫 실행에 swift 컴파일로 10초쯤 걸린다.
 - 결과물에는 논문 figure가 들어간다. 공개 레포에 커밋하지 않는다.

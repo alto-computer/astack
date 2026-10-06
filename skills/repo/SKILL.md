@@ -31,6 +31,7 @@ description: Use when 사용자가 외부 GitHub 레포를 학습 자료로 읽�
 - [ ] `astack check` 에러 0
 
 ## Gotchas
+- 그림은 오른쪽 칸(`.vis`)과 장면 안 모바일 칸(`.vis-inl`)에 둘 다 넣는다. 복사한 SVG의 id는 바꾼다(check가 dup-id로 잡는다).
 - 큰 레포는 `--depth 200`으로도 무겁다. 루프와 흐름에 필요한 경로만 읽는다.
 - `--depth 200`은 활발한 레포에서 며칠치뿐이다. 이유를 찾을 때는 5번의 deepen/`gh api`를 쓴다.
 - 스타 수는 참고만. 실사용·최근 활동·신뢰하는 사람의 언급이 더 낫다.

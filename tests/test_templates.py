@@ -129,6 +129,16 @@ class TemplateTest(unittest.TestCase):
         for sc in scenes:
             self.assertIn("inl vis-inl", sc)
 
+    def test_paper_repo_scenes_have_mobile_figure_slot(self):
+        for n in ("paper", "repo"):
+            html = (ROOT / f"skills/{n}/assets/template.html").read_text(encoding="utf-8")
+            scenes = re.findall(r'<section class="scene[^>]*data-i=.*?</section>', html, re.S)
+            self.assertTrue(scenes, n)
+            for sc in scenes:
+                self.assertIn("inl vis-inl", sc, n)
+            skill = (ROOT / f"skills/{n}/SKILL.md").read_text(encoding="utf-8")
+            self.assertIn(".vis-inl", skill)
+
     def test_quest_chapter_has_experiment_report_block(self):
         html = (ROOT / "skills/quest/assets/chapter-template.html").read_text(encoding="utf-8")
         block = re.search(r"<!-- 실험 보고서 장이면 tome 앞에:.*?-->", html, re.S)
