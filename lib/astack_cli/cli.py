@@ -57,7 +57,17 @@ def _restore(args) -> int:
 
 
 def _consolidate(args) -> int:
-    print(json.dumps(memory.consolidate(dry_run=args.dry_run), ensure_ascii=False))
+    rep = memory.consolidate(dry_run=args.dry_run)
+    if not args.html:
+        print(json.dumps(rep, ensure_ascii=False))
+        return 0
+    if args.quiet_if_unchanged and not memory.changed(rep):
+        return 0
+    out = Path(args.html)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(memory.render_report(rep, datetime.date.today()), encoding="utf-8")
+    _inline.inline_file(out)
+    print(out)
     return 0
 
 
@@ -260,6 +270,8 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--type")
     m.add_argument("--before")
     m.add_argument("--dry-run", action="store_true")
+    m.add_argument("--html", help="consolidate: 변화 보고서를 이 경로에 쓴다")
+    m.add_argument("--quiet-if-unchanged", action="store_true", help="consolidate --html: 변화가 없으면 아무것도 쓰지 않는다")
     m.add_argument("--list", action="store_true", help="restore: archive 이름, 최신 먼저")
     m.set_defaults(fn=_memory)
     c = sub.add_parser("check", help="이해물 HTML이 출력 계약을 지키는지 검사")

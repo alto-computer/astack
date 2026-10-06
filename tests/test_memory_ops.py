@@ -490,3 +490,53 @@ class DurableWriteTest(MemoryOpsBase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReportTest(MemoryOpsBase):
+    def _rep(self, **kw):
+        base = {"before": 5, "after": 3, "merged": 1, "superseded": ["a:x"], "decayed": [["b:y", 0.8, 0.5]],
+                "dropped": ["c:z"], "promoted": ["skill:p"],
+                "patch_suggestions": [{"key": "skill:p", "count": 3, "insights": ["i1", "i2"]}],
+                "broken": 0, "kept_unreadable": 0}
+        base.update(kw)
+        return base
+
+    def test_report_passes_check(self):
+        from astack_cli import check, inline
+        html = memory.render_report(self._rep(), D)
+        html = inline.inline_html(html, Path(self.tmp.name))
+        errs = [i for i in check.check_html(html) if i.level == "error"]
+        self.assertEqual(errs, [])
+        self.assertIn("기록 5→3, 합침 1, 대체 1, 감쇠 1, 지움 1, 승격 1", html)
+        self.assertIn("제안", html)
+        self.assertIn("자동 적용", html)
+
+    def test_report_unchanged(self):
+        rep = self._rep(before=2, after=2, merged=0, superseded=[], decayed=[], dropped=[], promoted=[], patch_suggestions=[])
+        self.assertIn("바뀐 것 없음", memory.render_report(rep, D))
+
+    def test_report_escapes(self):
+        html = memory.render_report(self._rep(dropped=["<b>x</b>"]), D)
+        self.assertNotIn("<b>x</b>", html)
+
+    def test_cli_html_writes_file(self):
+        self.write(rec(), rec(insight="y"))
+        out = Path(self.tmp.name) / "r.html"
+        import io, contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = cli.main(["memory", "consolidate", "--html", str(out)])
+        self.assertEqual(code, 0)
+        self.assertEqual(buf.getvalue().strip(), str(out))
+        self.assertIn("<style>", out.read_text(encoding="utf-8"))
+
+    def test_cli_quiet_if_unchanged(self):
+        self.write(rec())
+        out = Path(self.tmp.name) / "r.html"
+        import io, contextlib
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = cli.main(["memory", "consolidate", "--html", str(out), "--quiet-if-unchanged"])
+        self.assertEqual(code, 0)
+        self.assertEqual(buf.getvalue(), "")
+        self.assertFalse(out.exists())

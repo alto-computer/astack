@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import time
+from html import escape as html_escape
 from pathlib import Path
 
 from . import paths
@@ -373,3 +374,60 @@ def consolidate(today=None, dry_run: bool = False) -> dict:
             snapshot_archive(today, data)
             replace_lines([_dump(r) for r in out] + broken, size)
         return rep
+
+
+def changed(rep: dict) -> bool:
+    return bool(rep["merged"] or rep["superseded"] or rep["decayed"] or rep["dropped"] or rep["promoted"]
+                or rep["before"] != rep["after"])
+
+
+def _li(items) -> str:
+    return "<ul>" + "".join(f"<li>{html_escape(str(i))}</li>" for i in items) + "</ul>" if items else "<p>없음</p>"
+
+
+def render_report(rep: dict, day: datetime.date) -> str:
+    esc = html_escape
+    if changed(rep):
+        line = (f"기록 {rep['before']}→{rep['after']}, 합침 {rep['merged']}, 대체 {len(rep['superseded'])}, "
+                f"감쇠 {len(rep['decayed'])}, 지움 {len(rep['dropped'])}, 승격 {len(rep['promoted'])}")
+    else:
+        line = "바뀐 것 없음"
+    patches = "".join(
+        f"<li><b>{esc(p['key'])}</b> (교정 {p['count']}번): " + " / ".join(esc(i) for i in p["insights"]) + "</li>"
+        for p in rep["patch_suggestions"])
+    patch_html = f"<ul>{patches}</ul>" if patches else "<p>제안 없음</p>"
+    decayed = [f"{k}: {a} → {b}" for k, a, b in rep["decayed"]]
+    created = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+    return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="description" content="{esc(day.isoformat())} 기억 정리: {esc(line)}">
+<meta name="rooms:created" content="{created}">
+<meta name="rooms:machine" content="{esc(paths.host())}">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{day.isoformat()} 기억 정리</title>
+<!--astack:css-->
+</head><body>
+<div class="wrap">
+<header class="cover" data-astack="30s">
+  <div class="kick">memory · {day.isoformat()}</div>
+  <h1>기억 정리 보고</h1>
+  <p class="l30">{esc(line)}</p>
+</header>
+<section data-astack="3m">
+  <h2>승격</h2>
+  {_li(rep['promoted'])}
+  <h2>패치 제안</h2>
+  <p>제안만 합니다. 스킬 파일은 자동 적용하지 않습니다. 직접 보고 고치세요.</p>
+  {patch_html}
+</section>
+<section>
+  <h2>대체된 기록</h2>
+  {_li(rep['superseded'])}
+  <h2>감쇠된 기록</h2>
+  {_li(decayed)}
+  <h2>지운 기록</h2>
+  {_li(rep['dropped'])}
+</section>
+<footer data-astack="source">출처: memory.jsonl · 정리일 {day.isoformat()} · Claude Code가 썼습니다</footer>
+</div>
+</body></html>
+"""
