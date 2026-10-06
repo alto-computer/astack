@@ -1,0 +1,7 @@
+# 맥미니에서 검증 전. platforms.telegram.extra.dm_topics 에 붙인다.
+dm_topics:
+  - name: Quest
+    skill: astack     # 링크·질문을 던지면 입구가 판단 (quest 기본)
+    silent: true      # 완료 알림은 무음
+  - name: Journal
+    skill: dream

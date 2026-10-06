@@ -1,0 +1,20 @@
+# 맥미니에서 검증 전 (2026-10-06). 작업 위치: ~/personal/notes
+jobs:
+  - name: astack-feed
+    schedule: "0 5 * * *"
+    prompt: "astack:feed 스킬로 오늘 30분을 만들어. 끝나면 30초 층 두 줄과 경로만 남겨."
+  - name: astack-morning
+    schedule: "0 7 * * *"
+    script: "astack goal report --date yesterday --text"   # stdout이 비면 보내지 않음
+  - name: astack-dream
+    schedule: "0 20 * * *"
+    prompt: "astack:dream 스킬로 오늘 Journal을 만들어. 일요일이면 주간 수렴까지. 30초 층 두 줄과 경로만 남겨."
+  - name: astack-consolidate
+    schedule: "30 20 * * *"
+    script: "astack memory consolidate --html ~/.astack/journal/$(date +%F)-memory.html --quiet-if-unchanged"
+  - name: astack-ask-tonight
+    schedule: "0 21 * * *"
+    prompt: "오늘 이해물의 남은 질문과 dream의 새 질문에서 오늘 밤 돌릴 질문 후보 3개를 번호로 보여줘. 답이 오면 `astack goal add`로 넣는다. 답이 없으면 1번만 넣는다."
+  - name: astack-night
+    schedule: "0 1 * * *"
+    script: "astack goal run --max 3 --host claude"
