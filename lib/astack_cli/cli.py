@@ -15,6 +15,7 @@ from . import memory
 from . import pdf as _pdf
 from . import recall as _recall
 from . import route as _route
+from . import setup as _setup
 
 
 def _memory(args) -> int:
@@ -205,6 +206,10 @@ def _cmd_feed(args) -> int:
     return 0
 
 
+def _cmd_setup(args) -> int:
+    return _setup.main(args.rest)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="astack")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -276,9 +281,15 @@ def build_parser() -> argparse.ArgumentParser:
     fe.add_argument("--per-channel", type=int, default=5)
     fe.add_argument("--cookies-from-browser", metavar="BROWSER", help="429·403이면 chrome 등 브라우저 쿠키로")
     fe.set_defaults(fn=_cmd_feed)
+    se = sub.add_parser("setup", help="호스트별 설치 (./setup과 같다)")
+    se.add_argument("rest", nargs=argparse.REMAINDER)
+    se.set_defaults(fn=_cmd_setup)
     return p
 
 
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv[:1] == ["setup"]:  # REMAINDER는 맨 앞 --옵션을 못 받아서 직접 넘긴다
+        return _setup.main(argv[1:])
     args = build_parser().parse_args(argv)
     return args.fn(args)

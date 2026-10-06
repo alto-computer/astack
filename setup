@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+"""astack 설치: ./setup --host auto | claude codex aside cli hermes [--dry-run] [--uninstall]"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from astack_cli.setup import main  # noqa: E402
+
+sys.exit(main())
