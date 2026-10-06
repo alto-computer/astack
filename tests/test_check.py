@@ -230,5 +230,16 @@ class CheckTest(unittest.TestCase):
         self.assertIn("external", codes(html))
 
 
+class SignerTest(unittest.TestCase):
+    def test_any_host_signature_passes(self):
+        for who in ("Claude Code가 썼습니다", "Codex가 썼습니다", "Aside가 썼습니다", "Hermes가 썼습니다",
+                    "astack memory consolidate가 썼습니다"):
+            html = GOOD.replace("Claude Code가 썼습니다", who)
+            self.assertNotIn("source", codes(html), who)
+
+    def test_unsigned_still_fails(self):
+        self.assertIn("source", codes(GOOD.replace("Claude Code가 썼습니다", "누군가 씀")))
+
+
 if __name__ == "__main__":
     unittest.main()

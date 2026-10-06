@@ -11,6 +11,8 @@ CONTENT = re.compile(r"""content=(["'])((?:(?!\1).)*?)\1""", re.I | re.S)
 PLACEHOLDER = re.compile(r"\{\{[^{}\n]{1,80}\}\}")
 CODE_SLOT = "{{실제 코드}}"
 SIGNED = "Claude Code가 썼습니다"
+# 쓴 주체는 호스트마다 다르다(§20.2의 뜻: AI가 썼다고 밝힌다)
+SIGNERS = re.compile(r"(Claude Code|Codex|Aside|Hermes|astack [a-z ]+)(이|가) 썼습니다")
 SIGNED_SCRIPT = "astack memory consolidate가 썼습니다"  # 에이전트 없이 cron이 만드는 보고
 ABBREV = re.compile(r"\b(vs|e\.g|i\.e|etc|al|cf|Fig|Figs|Eq|No|Dr|Mr|Ms)\.$")
 SOURCE_EL = re.compile(r"""<(footer|div|p|section)\b[^>]*data-astack=["']source["'][^>]*>.*?</\1>""", re.S | re.I)
@@ -131,8 +133,8 @@ def check_html(html: str) -> list[Issue]:
             issues.append(Issue("error", "layer", f'data-astack="{layer}" 요소가 없습니다'))
     if not re.search(r"""data-astack=["']source["']""", html):
         issues.append(Issue("error", "source", 'data-astack="source" 요소(원문, 요청, "Claude Code가 썼습니다")가 없습니다'))
-    elif SIGNED not in html and SIGNED_SCRIPT not in html:
-        issues.append(Issue("error", "source", f'data-astack="source"에 "{SIGNED}"가 없습니다'))
+    elif not SIGNERS.search(html):
+        issues.append(Issue("error", "source", f'data-astack="source"에 "<호스트>가 썼습니다"(예: "{SIGNED}", "Aside가 썼습니다")가 없습니다'))
 
     # 자리표시는 속성·표·SVG까지 본다. 코드(script/style/pre/code)와 주석만 뺀다.
     ph = re.sub(r"<(script|style|pre|code)\b.*?</\1>|<!--.*?-->", " ", html, flags=re.S | re.I)
