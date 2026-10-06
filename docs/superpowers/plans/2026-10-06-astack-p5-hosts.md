@@ -532,7 +532,7 @@ Undo: `./setup --uninstall`. Mac mini scheduling: `recipes/hermes/README.md`.
 Skills 표에 `goal` 행은 넣지 않는다(스킬이 아니라 CLI). CLI 줄에 `goal | gate | setup` 추가.
 
 - [ ] **Step 2: 이 맥에 설치** (실제 실행, 컨트롤러 확인 후):
-  1. `./setup --dry-run` 출력 확인 → 2. `./setup` → 3. `ls ~/.codex/skills/astack-*`, `ls ~/.aside/u/0/skills/user/astack-*`, `grep -c "astack:begin" ~/.claude/CLAUDE.md ~/.codex/AGENTS.md` → 4. 기존 `~/.claude/CLAUDE.md`의 스니펫(P1에서 표식 없이 넣은 것)을 표식 블록으로 정리(중복 제거) → 5. `codex exec "astack-recall 스킬이 보이면 '보임'이라고만 답해"`로 Codex가 스킬을 읽는지 확인 → 6. Claude 플러그인 두 명령은 사용자가 직접.
+  1. `./setup --dry-run` 출력 확인 → 2. `./setup` → 3. `ls ~/.codex/skills/astack-*`, `ls ~/.aside/u/0/skills/user/astack-*`, `grep -c "astack:begin" ~/.claude/CLAUDE.md ~/.codex/AGENTS.md` → 4. `grep -c '^## astack' ~/.claude/CLAUDE.md`가 1인지 확인(표식 없이 넣은 기존 블록은 setup이 표식으로 감싸 바꾼다) → 5. `codex exec --skip-git-repo-check "recall 스킬이 보이면 '보임'이라고만 답해"`로 Codex가 스킬을 읽는지 확인 → 6. 밤 goal 스모크: `astack goal add "테스트"; astack goal run --max 1` 후 goal 폴더에 `result.json`이 생기고 상태가 done인지 확인 → 7. Claude 플러그인 두 명령은 사용자가 직접.
 - [ ] **Step 3:** 결과를 `2026-10-06-astack-p5-install.md`에 기록하고 커밋.
 
 ## 기본값과 열린 결정
@@ -541,5 +541,5 @@ Skills 표에 `goal` 행은 넣지 않는다(스킬이 아니라 CLI). CLI 줄�
 |---|---|---|
 | Codex 설치 방식 | `~/.codex/skills/astack-*` 심볼릭 링크 (`.codex-plugin/` 대신) | 이 맥의 Codex가 이미 그 폴더를 읽음, 플러그인 형식은 검증 불가 |
 | Hermes | 레시피만 (`.hermes-plugin/` 없음) | 이 맥에 Hermes 없음, 형식 검증 불가 |
-| 밤 goal 권한 | `claude -p --permission-mode acceptEdits` | 무인 실행이지만 위험 명령 우회는 하지 않음 |
+| 밤 goal 권한 | `goal.HOST_COMMANDS` 한 곳: claude `-p --permission-mode acceptEdits --add-dir <goal> --allowedTools Bash(astack:*) WebFetch WebSearch`, codex `exec --skip-git-repo-check -s workspace-write --add-dir <goal>` | 무인 실행이지만 위험 명령 우회는 하지 않음. goal 폴더는 cwd 밖이라 명시적으로 연다 |
 | 밤 goal 작업 위치 | `~/personal/notes` (없으면 home) | §11.2 |

@@ -70,10 +70,20 @@ def _cwd() -> str:
     return str(notes if notes.is_dir() else Path.home())
 
 
-def _command(host: str, prompt: str) -> list[str]:
-    if host == "codex":
-        return ["codex", "exec", prompt]
-    return ["claude", "-p", prompt, "--permission-mode", "acceptEdits"]
+# 밤 goal은 사람 없이 돈다. 권한은 여기 한 곳에서만 정한다(감사하기 쉽게).
+# {prompt}와 {goal_dir}만 채운다. goal 폴더(progress.md, result.json)는 cwd 밖이라 --add-dir로 연다.
+HOST_COMMANDS = {
+    "claude": ("claude", "-p", "{prompt}", "--permission-mode", "acceptEdits", "--add-dir", "{goal_dir}",
+               "--allowedTools", "Bash(astack:*)", "WebFetch", "WebSearch"),
+    "codex": ("codex", "exec", "--skip-git-repo-check", "-s", "workspace-write", "--add-dir", "{goal_dir}",
+              "{prompt}"),
+}
+
+
+def _command(host: str, prompt: str, goal_dir: Path) -> list[str]:
+    tpl = HOST_COMMANDS["codex" if host == "codex" else "claude"]
+    fill = {"{prompt}": prompt, "{goal_dir}": str(goal_dir)}
+    return [fill.get(a, a) for a in tpl]
 
 
 def _judge(d: Path) -> tuple[bool, str | None]:
@@ -100,7 +110,7 @@ def _run_one(g: dict, host, runner, now, timeout) -> dict:
     reason = None
     try:
         with open(d / "run.log", "ab") as log:
-            p = runner(_command(host, prompt), cwd=_cwd(), stdout=log, stderr=subprocess.STDOUT, timeout=timeout)
+            p = runner(_command(host, prompt, d), cwd=_cwd(), stdout=log, stderr=subprocess.STDOUT, timeout=timeout)
         code = getattr(p, "returncode", 0)
         ok, reason = _judge(d)
         if not ok and code and reason == "result.json 없음":

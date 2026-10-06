@@ -185,8 +185,9 @@ class GoalTest(unittest.TestCase):
         calls = []
         goal.run(runner=writer(OK, calls=calls), now=T0)
         cmd = calls[0][0]
-        self.assertEqual(cmd[:2], ["claude", "-p"])
-        self.assertEqual(cmd[3:], ["--permission-mode", "acceptEdits"])
+        d = str(paths.goals_dir() / goal.list_goals()[0]["id"])
+        self.assertEqual(cmd, ["claude", "-p", cmd[2], "--permission-mode", "acceptEdits", "--add-dir", d,
+                               "--allowedTools", "Bash(astack:*)", "WebFetch", "WebSearch"])
         for s in ("progress.md", "result.json", "왜 하늘은 파랗지", "astack:quest"):
             self.assertIn(s, cmd[2])
 
@@ -194,8 +195,11 @@ class GoalTest(unittest.TestCase):
         self._add("q")
         calls = []
         goal.run(host="codex", runner=writer(OK, calls=calls), now=T0)
-        self.assertEqual(calls[0][0][:2], ["codex", "exec"])
-        self.assertIn("result.json", calls[0][0][2])
+        cmd = calls[0][0]
+        d = str(paths.goals_dir() / goal.list_goals()[0]["id"])
+        self.assertEqual(cmd, ["codex", "exec", "--skip-git-repo-check", "-s", "workspace-write", "--add-dir", d,
+                               cmd[-1]])
+        self.assertIn("result.json", cmd[-1])
 
     def test_timeout_is_failure(self):
         self._add("q")
