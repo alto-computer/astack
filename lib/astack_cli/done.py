@@ -23,7 +23,7 @@ def _free_name(room_dir: Path, name: str) -> Path:
 def link_into_rooms(p: Path, room: str | None, home: Path) -> str:
     slug = room or "inbox"
     if (not slug or "/" in slug or "\\" in slug or ".." in slug
-            or slug.startswith(".") or "\0" in slug):
+            or slug.startswith(".") or "\0" in slug or slug == "journal"):
         return f"rooms 링크 건너뜀: 방 이름이 올바르지 않음: {slug}"
     try:
         rhome = Path(os.path.realpath(home))

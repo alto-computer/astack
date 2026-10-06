@@ -21,7 +21,7 @@ description: Use when 아침 스케줄(05:00)에 "오늘 30분"을 만들 때, �
 3. 깊게: 편마다 `astack:interview`(슬라이드 발표면 `astack:seminar`)로 매거진을 만든다. 출력 폴더는 `~/.astack/journal/feed/<날짜>/`로 정해 준다. 지금 레포의 `docs/astack/`에 쓰지 않는다(남의 자막이 아무 레포에 들어간다).
 4. 카드: `astack transcript <url> --lang <언어>`(영어가 아닌 채널은 `--lang`이 꼭 필요하다)로 자막을 읽고 핵심 3줄 + "그래서 나한테는?" 한 줄.
 5. `assets/template.html`을 읽는 순서대로 채운다. 모든 편에 원본 URL이 본문에 있어야 한다(다음 feed의 중복 판단에 쓰인다).
-6. 저장 `~/.astack/journal/<날짜>-feed.html` → 메타 → `astack inline` → `astack check` → `astack done <f> --skill feed`.
+6. 저장 위치 `astack dream path --name feed`(Rooms가 있으면 그날 Journal 폴더의 `feed.html`, 없으면 `~/.astack/journal/<날짜>-feed.html`) → 메타 → `astack inline` → `astack check` → `astack done <f> --skill feed`.
 7. 사용자가 "2번 별로" 같은 답을 주면: `astack memory add '{"type":"feedback","key":"feed:<날짜>#2","insight":"별로: <이유>","source":"told"}'`.
 
 ## 완료 전 체크

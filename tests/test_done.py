@@ -127,7 +127,7 @@ class DoneRoomsHomeTest(_Base):
         self.assertFalse((self.home / "other").exists())
 
     def test_bad_slug_rejected(self):
-        for slug in ("../x", ".hidden", "a/b", "a\\b", "a\0b"):
+        for slug in ("../x", ".hidden", "a/b", "a\\b", "a\0b", "journal"):
             _, notes = done.done(self.file, "spec", room=slug, now=NOW)
             self.assertEqual(notes, [f"rooms 링크 건너뜀: 방 이름이 올바르지 않음: {slug}"])
         self.assertEqual([q.name for q in self.home.iterdir()], [".rooms"])

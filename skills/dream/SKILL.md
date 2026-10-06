@@ -20,7 +20,7 @@ description: Use when 하루를 마무리하며 오늘 생긴 이해물을 엮�
    - 간격 복습: `spaced` 항목마다 짧은 점검 하나(이해형, 답 + 다시 보기 링크).
    - 내 말로 한 줄: 오늘 가장 중요한 이해물 하나.
    - `weekly`면 주간 수렴: 이번 주 방별 `map.html` 변화(있으면 `astack:map`으로 갱신 먼저) + `week` 이해물의 "그래서 나한테는?"을 모아 행동 3가지로 좁힌다(converge). 아니면 주간 섹션을 지운다.
-5. 저장: `~/.astack/journal/<날짜>.html` → 메타 → `astack inline` → `astack check` → `astack done <f> --skill dream`. `rooms`가 있으면 `rooms link --journal <날짜> <f>`.
+5. 저장 위치는 `astack dream path`가 알려준다. Rooms가 있으면 `~/rooms/journal/<날짜>/dream.html`(그날 Journal 맨 위 "Review"로 보인다. 파일 자체를 쓰고 링크하지 않는다. 이미 있으면 덮어쓰기 전에 묻는다), 없으면 `~/.astack/journal/<날짜>.html`. → 메타 → `astack inline` → `astack check` → `astack done <f> --skill dream`(Rooms 안 파일이라 링크는 건너뛰고 기록만 남는다).
 6. 관심 변화가 보이면 관찰만 남긴다: `astack memory add '{"type":"taste","key":"topic:<주제>","insight":"<무엇이 어떻게 바뀌었나>","confidence":0.6,"source":"observed"}'`. consolidate는 하지 않는다(그건 20:30 memory 몫).
 7. 알림: 30초 층 두 줄 + 경로.
 

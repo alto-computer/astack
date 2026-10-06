@@ -1,7 +1,8 @@
 """dream 재료 모으기: 오늘 생긴 이해물, 간격 복습(1·7·30일 전), 주간 모음. 상태 없이 날짜로만 고른다."""
 import datetime
+from pathlib import Path
 
-from . import recall
+from . import paths, recall
 
 SPACED = (1, 7, 30)
 OWN = {"dream", "feed"}
@@ -31,3 +32,12 @@ def collect(day: datetime.date, items=None) -> dict:
         start = (day - datetime.timedelta(days=6)).isoformat()
         week = [_entry(i) for i in sorted(items, key=lambda i: i.ts) if start <= i.ts[:10] <= day.isoformat()]
     return {"date": day.isoformat(), "weekly": weekly, "today": [_entry(i) for i in today], "spaced": spaced, "week": week}
+
+
+def journal_path(day: datetime.date, name: str = "dream") -> Path:
+    """Rooms가 있으면 그날 Journal 폴더의 파일(링크 아님), 없으면 ~/.astack/journal/."""
+    home = paths.rooms_home()
+    if home is not None:
+        return home / "journal" / day.isoformat() / f"{name}.html"
+    suffix = "" if name == "dream" else f"-{name}"
+    return paths.journal_dir() / f"{day.isoformat()}{suffix}.html"
