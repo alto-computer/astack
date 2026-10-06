@@ -2,7 +2,7 @@
 
 | Run | Source | Time | Check result | Problems | User verdict |
 |---|---|---|---|---|---|
-| Feed | 45 candidates (9 channels × 5); selected: Lenny's Podcast (37 min) + AI Engineer (21 min, 60 min); real dates from yt-dlp | 7.2 s `feed candidates`; ~12 s each for 3 `transcript` calls (one at a time) | Deep-read (415 KB) + Feed page (33 KB). `astack check` 파일 2 · 에러 0 · 경고 0. Feed page warning fixed. `astack inline`, `astack done` both 0. | 1, 2, 3 | 대기 |
+| Feed | 45 candidates (9 channels × 5); selected: 1 deep (37 min) + 2 cards (21 min, 60 min) from 2 whitelisted channels; real dates from yt-dlp | 7.2 s `feed candidates`; ~12 s each for 3 `transcript` calls (one at a time) | Deep-read (415 KB) + Feed page (33 KB). `astack check` 파일 2 · 에러 0 · 경고 0. Feed page warning fixed. `astack inline`, `astack done` both 0. | 1, 2, 3 | 대기 |
 | Dream | Dream collect: 1 today + 1 spaced; memory 10 records | Part of ~11.5 min total (09:28:56 output) | Dream Journal (31 KB). `astack check` 파일 1 · 에러 0 · 경고 0. `astack inline`, `astack done` 0. | 4 | 대기 |
 | Memory | Consolidate/restore: 10 records (memory.jsonl) | ~15 s (dry-run, consolidate, restore, re-consolidate) | Dry-run: no changes. Consolidate: archive created, `confidence0` added to file. Restore: byte-identical to pre-consolidate. Re-consolidate: byte-identical to first. No locks. | 5, 6, 7 | 대기 |
 
