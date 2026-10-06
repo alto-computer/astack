@@ -10,7 +10,7 @@ Item IDs are from the 7 problems found during steps 2–5.
 
 ## Runs
 
-**Feed (step 2):** `astack feed candidates --since 2026-10-03` returned 45 candidates (9 channels × 5). Every `upload_date` was empty; real dates confirmed per video with yt-dlp. Only 4 from 2026-10-03 or later; one from 2026-09-07 was dropped. Deep-read: Lenny's Podcast "Why most actions on the internet will soon be taken by AI" (37 min, 2026-10-04) → interview magazine, 5 parts, 22 chapters. Cards: AI Engineer (21 min, 2026-10-05) and (60 min, 2026-10-06). Deep-read magazine and images in `~/.astack/journal/feed/2026-10-06/`. Feed page in `~/.astack/journal/2026-10-06-feed.html`. No subagents.
+**Feed (step 2):** `astack feed candidates --since 2026-10-03` returned 45 candidates (9 channels × 5). Every `upload_date` was empty; real dates confirmed per video with yt-dlp. Only 4 from 2026-10-03 or later; one from 2026-09-07 was dropped. Deep-read: one whitelisted podcast episode (37 min, 2026-10-04) → interview magazine, 5 parts, 22 chapters. Cards: one whitelisted channel (21 min, 2026-10-05) and (60 min, 2026-10-06). Deep-read magazine and images in `~/.astack/journal/feed/2026-10-06/`. Feed page in `~/.astack/journal/2026-10-06-feed.html`. No subagents.
 
 **Dream (step 3):** `astack dream collect` returned 1 today (magazine; feed excluded), 1 spaced (quest, 1 day ago). Weekly section removed (Tuesday). Added 1 observed taste record (topic:agents, confidence 0.6). Memory grew from 9 to 10 records. Dream Journal in `~/.astack/journal/2026-10-06.html`. With 1 today item, cross-item themes empty; used themes repeated within the magazine.
 
