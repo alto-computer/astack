@@ -43,5 +43,39 @@ class DreamTest(unittest.TestCase):
         self.assertEqual(cli.main(["dream", "collect", "--date", "어제"]), 2)
 
 
+class JournalPathTest(unittest.TestCase):
+    def setUp(self):
+        import os, tempfile
+        self.tmp = tempfile.TemporaryDirectory()
+        self.old = {k: os.environ.get(k) for k in ("ASTACK_ROOMS_HOME", "ASTACK_HOME")}
+        os.environ["ASTACK_HOME"] = self.tmp.name + "/a"
+
+    def tearDown(self):
+        import os
+        for k, v in self.old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        self.tmp.cleanup()
+
+    def test_rooms_journal_when_home_exists(self):
+        import os
+        home = Path(self.tmp.name) / "rooms"
+        (home / ".rooms").mkdir(parents=True)
+        os.environ["ASTACK_ROOMS_HOME"] = str(home)
+        self.assertEqual(dream.journal_path(D), home / "journal/2026-10-04/dream.html")
+        self.assertEqual(dream.journal_path(D, "feed"), home / "journal/2026-10-04/feed.html")
+
+    def test_astack_journal_without_rooms(self):
+        import os
+        os.environ["ASTACK_ROOMS_HOME"] = str(Path(self.tmp.name) / "none")
+        self.assertEqual(dream.journal_path(D).name, "2026-10-04.html")
+        self.assertEqual(dream.journal_path(D, "feed").name, "2026-10-04-feed.html")
+
+    def test_cli_path_rejects_bad_name(self):
+        self.assertEqual(cli.main(["dream", "path", "--date", "2026-10-04", "--name", "../x"]), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

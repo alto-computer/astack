@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -235,6 +236,12 @@ def _cmd_dream(args) -> int:
     except ValueError:
         print(f"astack dream: 날짜는 YYYY-MM-DD: {args.date}", file=sys.stderr)
         return 2
+    if args.action == "path":
+        if not re.fullmatch(r"[a-z][a-z0-9-]{0,30}", args.name):
+            print(f"astack dream: 이름은 영문 소문자·숫자·-: {args.name}", file=sys.stderr)
+            return 2
+        print(_dream.journal_path(day, args.name))
+        return 0
     print(json.dumps(_dream.collect(day), ensure_ascii=False))
     return 0
 
@@ -370,7 +377,8 @@ def build_parser() -> argparse.ArgumentParser:
     ck.add_argument("folder")
     ck.set_defaults(fn=_cmd_course)
     dr = sub.add_parser("dream", help="dream 재료 모으기")
-    dr.add_argument("action", choices=["collect"])
+    dr.add_argument("action", choices=["collect", "path"])
+    dr.add_argument("--name", default="dream", help="path: Journal 파일 이름 (dream, feed …)")
     dr.add_argument("--date")
     dr.set_defaults(fn=_cmd_dream)
     fe = sub.add_parser("feed", help="화이트리스트 채널(seed)과 오늘 후보(candidates)")
