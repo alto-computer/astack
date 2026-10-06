@@ -1,0 +1,44 @@
+/* hand-maintained additions to alto.css (alto.css is re-extracted by tools/extract_kit.py; this file is not) */
+/* p.why: design rationale callout, neutral (no colored body text) */
+p.why{margin:12px 0;padding:10px 14px;background:var(--surface);border-left:3px solid var(--ink);border-radius:0 8px 8px 0}
+p.why b{font-weight:600}
+/* narrow screens: one column that never grows past the viewport */
+.scenes,.scene,.d2,.codes,.cx{min-width:0}
+@media (max-width:900px){
+  .reader,body[data-depth="3"] .reader{grid-template-columns:minmax(0,1fr)!important}
+  code{overflow-wrap:anywhere}
+  .hl pre code{overflow-wrap:normal}
+  table.rv,table.ustab{display:block;max-width:100%;min-width:0!important;overflow-x:auto}
+}
+/* 포스트잇: 에이전트가 덧댄 조사. 기본 접힘, 본문과 구분되는 바탕 */
+details.postit{display:inline-block;vertical-align:baseline;margin:0 2px}
+details.postit>summary{list-style:none;cursor:pointer;font-size:12px;color:var(--ink-2);border:1px solid var(--hairline);border-radius:999px;padding:0 8px}
+details.postit>summary::-webkit-details-marker{display:none}
+details.postit[open]{display:block;margin:10px 0;padding:12px 14px;background:#fff8c5;color:var(--ink);border-radius:10px}
+details.postit[open]>summary{margin-bottom:6px}
+pre.tree{font-family:var(--mono);font-size:13px;line-height:1.6;background:var(--surface);border-radius:10px;padding:10px 12px;overflow-x:auto;margin:0}
+/* 점검 퀴즈 */
+details.quiz{margin:18px 0;border:1px solid var(--hairline);border-radius:12px;padding:10px 14px;background:var(--canvas)}
+details.quiz>summary{cursor:pointer;font-size:14px;color:var(--ink-2)}
+details.quiz[open]>summary{margin-bottom:8px}
+details.quiz .q{font-weight:500;margin:0 0 8px}
+details.quiz .opts{margin:0;padding-left:22px;display:grid;gap:6px}
+details.quiz .opts li{cursor:pointer;border-radius:8px;padding:4px 8px}
+details.quiz .opts li:hover,details.quiz .opts li:focus-visible{background:var(--surface)}
+details.quiz .opts li.ok{background:#e7f5ec}
+details.quiz .opts li.no{background:var(--accent-soft)}
+details.quiz .verdict{margin:8px 0 0;font-size:14px}
+details.quiz .ans{margin:8px 0 0;padding:8px 12px;background:var(--surface);border-radius:8px}
+.chnav{margin:28px 0 8px;font-size:14px;color:var(--ink-2)}
+.chnav a{color:var(--ink)}
+.tome{margin:32px 0 0}
+/* 실험 보고서 장: 차트는 본문 폭 */
+.report figure img{max-width:100%;height:auto}
+/* 그림 칸 안의 figure: 무대 높이를 넘지 않는다 */
+.vis figure{margin:0}
+.vis img,.vis svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.stage .vis img{max-height:calc(100vh - 190px);object-fit:contain}
+.vis figcaption{font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.5}
+.card{border:1px solid var(--hairline);border-radius:14px;padding:14px 16px;margin:12px 0;background:var(--canvas)}
+.card h3{margin:0 0 4px;font-weight:500}
+.card .meta{margin:0 0 8px}

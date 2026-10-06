@@ -79,3 +79,13 @@ h4.sh{border-left:0;padding-left:0}
 table.tbl thead th{background:var(--surface)}
 table.tbl tbody td:first-child{background:var(--canvas)}
 .lb{background:rgba(0,0,0,.88)}
+
+/* I. 그림이 없을 때(C8): 어두운 덮개·빈 상자 대신 밝은 면, 한 칸 배치 */
+.partdiv:not(:has(img)){min-height:0;background:var(--surface)}
+.partdiv:not(:has(img))::after{display:none}
+.partdiv:not(:has(img)) .partdiv-copy{color:var(--ink)}
+.partdiv:not(:has(img)) .partdiv-sig{color:var(--ink);border-left-color:var(--hairline)}
+.partdiv:has(img) .partdiv-label{color:rgba(255,255,255,.86)}
+.cover-fig:not(:has(img)),.cover-fig:has(img[src=""]){display:none}
+.contrib:not(:has(.contrib-photo)),.contrib:has(.contrib-photo[src=""]){grid-template-columns:1fr}
+.contrib-photo[src=""]{display:none}

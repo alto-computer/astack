@@ -26,6 +26,12 @@ class InlineTest(unittest.TestCase):
         self.assertIn(".reader", out)
         self.assertIn("addEventListener('scroll'", out)
 
+    def test_ext_css_follows_kit_css(self):
+        html = GOOD.replace("<style>body{margin:0}</style>", "<!--astack:css-->")
+        out = inline.inline_html(html, self.dir)
+        self.assertIn("p.why{", out)
+        self.assertLess(out.index(".reader{"), out.index("p.why{"))
+
     def test_relative_image_becomes_data_uri(self):
         (self.dir / "a.png").write_bytes(PNG)
         out = inline.inline_html(GOOD.replace("</body>", '<img src="a.png" alt=""></body>'), self.dir)
@@ -46,6 +52,19 @@ class InlineTest(unittest.TestCase):
         if inline.HAS_PYGMENTS:
             self.assertIn('class="linenos"', out)
             self.assertIn(">271<", out)
+
+    @unittest.skipUnless(inline.HAS_PYGMENTS, "Pygments 없음")
+    def test_auto_lang_uses_file_extension(self):
+        html = GOOD.replace("</body>", '<pre data-lang="auto" data-start="1" data-path="src/main.rs"><code>fn main() {}</code></pre></body>')
+        out = inline.inline_html(html, self.dir)
+        self.assertIn('<span class="k">fn</span>', out)
+
+    @unittest.skipUnless(inline.HAS_PYGMENTS, "Pygments 없음")
+    def test_auto_lang_unknown_extension_is_plain(self):
+        html = GOOD.replace("</body>", '<pre data-lang="auto" data-path="notes.zzz"><code>fn main() {}</code></pre></body>')
+        out = inline.inline_html(html, self.dir)
+        self.assertIn('class="cx"', out)
+        self.assertNotIn('<span class="k">fn</span>', out)
 
     def test_non_image_file_not_inlined(self):
         (self.dir / "notes.txt").write_text("secret", encoding="utf-8")
@@ -89,6 +108,26 @@ class InlineTest(unittest.TestCase):
         # Should show path with :1 instead of crashing
         self.assertIn("test.rs:1", out)
         self.assertIn('class="cx"', out)
+
+    def test_data_img_becomes_data_uri(self):
+        (self.dir / "s1.png").write_bytes(PNG)
+        out = inline.inline_html(GOOD.replace("</body>", '<section class="scene" data-img="s1.png"></section></body>'), self.dir)
+        self.assertIn('data-img="data:image/png;base64,', out)
+
+    def test_js_marker_includes_quiz(self):
+        out = inline.inline_html(GOOD.replace("</body>", "<!--astack:js--></body>"), self.dir)
+        self.assertIn("details.quiz", out)
+
+    def test_quiz_js_in_separate_script_element(self):
+        out = inline.inline_html(GOOD.replace("</body>", "<!--astack:js--></body>"), self.dir)
+        # quiz.js must be in its own <script> element, not concatenated with reader.js
+        # Verify that </script><script> appears between reader code and quiz code
+        self.assertIn("addEventListener('scroll'", out)  # reader.js code
+        self.assertIn("details.quiz", out)  # quiz.js code
+        reader_pos = out.index("addEventListener('scroll'")
+        quiz_pos = out.index("details.quiz")
+        between = out[reader_pos:quiz_pos]
+        self.assertIn("</script><script>", between, "quiz.js must be in its own script element")
 
 
 if __name__ == "__main__":

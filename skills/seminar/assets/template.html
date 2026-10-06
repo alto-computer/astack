@@ -1,0 +1,425 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="description" content="[이 이해물이 무엇인지 한 줄]">
+<meta name="rooms:created" content="[RFC3339 지금 시각]">
+<meta name="rooms:machine" content="[머신 이름]">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}} — 세미나</title>
+<style>
+:root{
+  --bg:var(--canvas); --surface:var(--canvas); --border:var(--hairline); --border-strong:var(--hairline);
+  --ink:var(--ink); --muted:var(--ink-2); --faint:var(--ink-3); --accent:var(--accent);
+  --tag-blue-fg:var(--accent); --tag-blue-bg:var(--accent-soft);
+  --tag-green-fg:var(--accent-ink); --tag-green-bg:var(--accent-soft);
+  --r:13px;
+  --font:-apple-system,"Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;
+  --serif:"Iowan Old Style","Apple Garamond","Times New Roman",Georgia,serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.68;font-size:15px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+
+.topbar{position:sticky;top:0;z-index:40;background:rgba(247,246,243,.86);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--border)}
+.progress{height:2px;background:var(--accent);width:0%;transition:width .15s ease}
+.chapters{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;max-width:1180px;margin:0 auto;scrollbar-width:none}
+.chapters::-webkit-scrollbar{display:none}
+.dot{display:flex;align-items:center;gap:7px;border:1px solid transparent;background:none;color:var(--muted);font-family:var(--font);font-size:12.5px;padding:5px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:.18s}
+.dot .dot-i{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ecebe6;color:var(--muted);font-size:11px;font-weight:600;flex:none}
+.dot:hover{color:var(--ink)}
+.dot.active{background:var(--tag-blue-bg);color:var(--tag-blue-fg);border-color:#dbe4f0}
+.dot.active .dot-i{background:var(--accent);color:#fff}
+
+.hero{padding:60px 0 34px;border-bottom:1px solid var(--border)}
+.kicker{font-size:12.5px;letter-spacing:.03em;color:var(--muted);margin:0 0 14px;text-transform:uppercase}
+h1{font-size:40px;line-height:1.12;letter-spacing:-.025em;font-weight:650;margin:0 0 10px}
+.subtitle{font-size:17px;color:var(--muted);font-weight:500;margin:0 0 22px;letter-spacing:-.01em}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13.5px;color:var(--muted);align-items:center}
+.meta-row .who{color:var(--ink);font-weight:600}
+.intro{font-size:16px;color:#3a3d43;max-width:720px;margin:22px 0 0;line-height:1.72}
+.howto{margin-top:18px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+
+/* argument map */
+.mapwrap{padding:34px 0 12px}
+.map-h{font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:0 0 16px}
+.map{display:grid;gap:0;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.map-row{display:grid;grid-template-columns:190px 1fr;gap:18px;padding:15px 20px;border-top:1px solid var(--border);cursor:pointer;transition:background .15s}
+.map-row:first-child{border-top:none}
+.map-row:hover{background:#fafaf8}
+.map-k{display:flex;align-items:baseline;gap:9px;font-weight:600;color:var(--ink);font-size:14px}
+.map-k .mn{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700;font-size:12.5px;flex:none}
+.map-t{color:#4a4d53;font-size:14px;line-height:1.6}
+
+.reader{display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr);gap:52px;align-items:start;padding:8px 0 40px}
+.stage{position:sticky;top:104px;height:calc(100vh - 148px);display:flex;flex-direction:column;justify-content:center;gap:12px}
+.stage-frame{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px;box-shadow:0 1px 2px rgba(20,20,15,.04);cursor:zoom-in;transition:box-shadow .2s}
+.stage-frame:hover{box-shadow:0 6px 22px rgba(20,20,15,.09)}
+.stage-frame img{display:block;width:100%;border-radius:7px;transition:opacity .28s ease}
+.stage-cap{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:baseline;padding:0 4px}
+.stage-cap .num{font-variant-numeric:tabular-nums;color:var(--faint);font-weight:600;flex:none}
+
+/* chapter head */
+.chapter-head{padding:2vh 0 0}
+.ch-num{font-size:12.5px;letter-spacing:.04em;color:var(--accent);font-weight:700}
+.ch-label{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:6px 0 2px}
+.ch-role{font-size:14px;color:var(--muted);font-weight:500;margin:0 0 14px}
+.ch-intro{font-size:15px;color:#3a3d43;line-height:1.72;padding:15px 18px;background:#fbfaf7;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;margin:0}
+.ch-intro strong{color:var(--ink);font-weight:600}
+
+.scene{padding:6.5vh 0;border-top:1px solid transparent}
+.scene.chfirst{padding-top:5.5vh}
+.scene-eyebrow{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:13px}
+.scene.active .scene-eyebrow{color:var(--accent)}
+.scene-fig{display:none}
+.prose p{margin:0 0 14px}
+.prose ul,.prose ol{margin:0 0 14px;padding-left:20px}
+.prose li{margin:5px 0}
+.prose strong{font-weight:600;color:var(--ink)}
+.prose em{font-style:normal;color:var(--accent);font-weight:500}
+
+/* podcast-style verbatim excerpt */
+.excerpt{margin:22px 0 6px;padding:20px 22px 16px;background:var(--surface);border:1px solid var(--border-strong);border-radius:14px;position:relative;box-shadow:0 1px 2px rgba(20,20,15,.03)}
+.excerpt::before{content:"\201C";position:absolute;top:2px;left:16px;font-family:var(--serif);font-size:52px;line-height:1;color:#d8d3c8}
+.excerpt .en{font-family:var(--serif);font-size:18px;line-height:1.5;color:#23262b;font-style:italic;letter-spacing:.005em;padding-left:30px;margin:0 0 10px}
+.excerpt .ko{font-size:13.5px;color:#5a5d63;line-height:1.62;padding-left:30px;margin:0 0 12px}
+.excerpt .by{display:flex;align-items:center;gap:8px;padding-left:30px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.excerpt .by .dotm{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.excerpt .by .ts{color:var(--accent)}
+
+.notes{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.note{border:1px solid var(--border-strong);border-radius:10px;background:#fcfbf8;overflow:hidden}
+.note summary{cursor:pointer;list-style:none;padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+.note summary::-webkit-details-marker{display:none}
+.note summary::before{content:"";width:15px;height:15px;flex:none;border-radius:4px;background:var(--tag-blue-bg);border:1px solid #dbe4f0;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="%233a5a7c" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>');background-repeat:no-repeat;background-position:center;transition:.2s}
+.note[open] summary::before{transform:rotate(45deg)}
+.note-body{padding:0 14px 12px 37px;font-size:13.5px;color:#4a4d53;line-height:1.62}
+
+.lb{position:fixed;inset:0;z-index:80;background:rgba(20,20,17,.9);display:none;align-items:center;justify-content:center;padding:32px;cursor:zoom-out}
+.lb.on{display:flex}
+.lb img{max-width:96vw;max-height:92vh;border-radius:8px;box-shadow:0 10px 50px rgba(0,0,0,.5)}
+footer{border-top:1px solid var(--border);padding:36px 0 60px;color:var(--muted);font-size:13.5px}
+footer a{font-weight:500}
+
+@media (max-width:900px){
+  .reader{grid-template-columns:1fr;gap:0}
+  .stage{display:none}
+  .scene-fig{display:block;margin:0 0 18px}
+  .scene-fig img{width:100%;border:1px solid var(--border);border-radius:10px;display:block}
+  .scene-fig figcaption{font-size:12.5px;color:var(--muted);margin-top:7px}
+  .scene{padding:30px 0;border-top:1px solid var(--border)}
+  .map-row{grid-template-columns:1fr;gap:6px}
+  h1{font-size:30px}
+}
+
+/* ===== report layout v3: wider text + rich blocks ===== */
+.wrap{max-width:1260px}
+.reader{grid-template-columns:minmax(0,1.14fr) minmax(0,0.92fr);gap:46px}
+.stage{top:96px;height:calc(100vh - 132px)}
+.prose .lead{font-size:17px;line-height:1.6;color:var(--ink);font-weight:550;letter-spacing:-.012em;margin:0 0 14px}
+.prose .pn{color:var(--accent);font-weight:700}
+.callout{margin:18px 0;padding:13px 16px 14px;border-radius:12px;background:var(--tag-green-bg);border:1px solid #dbe6dc;border-left:3px solid var(--tag-green-fg)}
+.callout .clabel{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--tag-green-fg);font-weight:700;margin:0 0 5px}
+.callout p{margin:0;font-size:14.5px;line-height:1.62;color:#33413a}
+.callout strong{color:#22402f;font-weight:650}
+.cards{display:grid;gap:9px;margin:16px 0}
+.card{border:1px solid var(--border-strong);border-radius:12px;padding:12px 15px;background:var(--surface)}
+.card .ct{font-weight:650;font-size:14.5px;margin:0 0 3px;display:flex;gap:9px;align-items:baseline;color:var(--ink)}
+.card .cn{color:var(--accent);font-weight:700;font-size:11.5px;letter-spacing:.02em;flex:none;text-transform:uppercase}
+.card .cb{font-size:13.5px;color:#54575d;line-height:1.5;margin:0}
+table.tbl{width:100%;border-collapse:collapse;margin:16px 0;font-size:13.5px}
+table.tbl th,table.tbl td{border:1px solid var(--border-strong);padding:9px 12px;text-align:left;vertical-align:top;line-height:1.5}
+table.tbl thead th{background:#f2f0ea;font-weight:600;color:var(--ink);font-size:12.5px}
+table.tbl tbody td:first-child{background:#faf9f6;font-weight:600;color:var(--ink);white-space:nowrap}
+table.tbl td{color:#4a4d53}
+table.tbl td strong{color:var(--ink);font-weight:600}
+.aside-note{margin:16px 0;padding:2px 0 2px 15px;border-left:2px solid var(--border-strong);color:#6a6d73;font-size:13.5px;line-height:1.62}
+.ch-intro strong{color:var(--ink);font-weight:650}
+@media (max-width:900px){ .reader{grid-template-columns:1fr} }
+
+/* chapter divider (framing box removed; context now lives in prose) */
+.chapter-head{padding:0;margin:1vh 0 26px;border-top:1px solid var(--border);padding-top:22px}
+.scene.chfirst{padding-top:3vh}
+.chapter-head .ch-num{font-size:11.5px;letter-spacing:.06em;color:var(--faint);font-weight:700}
+.chapter-head .ch-label{font-size:22px;font-weight:650;letter-spacing:-.02em;margin:5px 0 0}
+
+/* ===== semantic heading hierarchy ===== */
+.chapter-head{padding:0;margin:1vh 0 24px;border-top:2px solid var(--ink);padding-top:18px}
+.chapter-head .ch-num{font-size:11px;letter-spacing:.08em;color:var(--accent);font-weight:700;text-transform:uppercase}
+h2.ch-label{font-size:23px;font-weight:650;letter-spacing:-.022em;margin:6px 0 0;color:var(--ink)}
+.sh{margin:0 0 12px;color:var(--ink);letter-spacing:-.015em;display:flex;gap:9px;align-items:baseline;scroll-margin-top:80px}
+.sh .shn{font-size:10.5px;font-weight:700;color:var(--faint);font-variant-numeric:tabular-nums;flex:none;line-height:1.9}
+h3.sh{font-size:18.5px;font-weight:650;line-height:1.35}
+h4.sh{font-size:15px;font-weight:600;line-height:1.4;color:#33373d;padding-left:13px;border-left:2px solid #dfe4ec;margin-left:1px}
+h4.sh .shn{color:var(--accent)}
+.scene.chfirst h3.sh{margin-top:4px}
+
+/* ===== magazine cover / intro / speaker (podcast-magazine style) ===== */
+:root{ --serif:"Georgia","Noto Serif KR","AppleMyungjo",serif; --measure:720px; --accent-ink:#2f4a68; }
+.measure{max-width:var(--measure);margin-left:auto;margin-right:auto}
+.cover{padding:34px 0 8px}
+.cover-head{max-width:900px}
+.cover-kicker{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:14px}
+.cover-kicker::after{content:"";flex:1;height:1px;background:var(--border-strong)}
+.cover h1{font-family:var(--serif);font-size:60px;line-height:1.1;font-weight:700;letter-spacing:-.02em;margin:0 0 18px;color:var(--ink)}
+.cover .cover-sub{font-size:19px;font-weight:600;color:var(--accent-ink);letter-spacing:-.01em;margin-bottom:16px;font-style:italic;font-family:var(--serif)}
+.cover-meta{display:flex;flex-wrap:wrap;gap:7px 13px;color:var(--muted);font-size:13.5px;align-items:center;font-weight:500}
+.cover-meta .cdot{color:var(--faint)}
+.cover-meta .csrc{color:var(--accent);font-weight:600}
+.cover-fig{margin:40px 0 0;border-radius:5px;overflow:hidden;position:relative;aspect-ratio:16/8;border:1px solid var(--border-strong);background:#fff}
+.cover-fig img{width:100%;height:100%;object-fit:cover;display:block}
+.cover-fig figcaption{position:absolute;left:0;right:0;bottom:0;padding:34px 20px 13px;font-size:11.5px;color:#fff;background:linear-gradient(to top,rgba(15,14,10,.66),transparent);letter-spacing:.01em}
+.standfirst{margin:56px auto 0;border-top:2px solid var(--ink);padding-top:28px}
+.sf-kicker{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+.sf-q{margin:0 0 22px;font-family:var(--serif);font-size:26px;line-height:1.45;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+.sf-a{margin:0;font-size:16.5px;line-height:1.9;color:#3a3f46}
+.sf-a .dropcap{float:left;font-family:var(--serif);font-size:58px;line-height:.72;font-weight:700;color:var(--accent);margin:7px 14px 0 0}
+.sf-a b{color:var(--ink);font-weight:700}
+.contrib{margin:44px auto 8px;padding:26px 0 0;border-top:1px solid var(--border-strong);display:grid;grid-template-columns:76px 1fr;gap:22px;align-items:start}
+.contrib-photo{width:76px;height:76px;border-radius:50%;object-fit:cover;border:1px solid var(--border);filter:grayscale(.05)}
+.contrib-eyebrow{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px}
+.contrib-name{font-family:var(--serif);font-size:25px;font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--ink)}
+.contrib-role{font-size:13.5px;color:var(--muted);margin:8px 0 15px}
+.contrib-bio{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+.contrib-bio li{font-size:13.5px;color:#33373d;line-height:1.62;padding-left:15px;position:relative}
+.contrib-bio li::before{content:"";position:absolute;left:0;top:9px;width:4px;height:4px;border-radius:50%;background:var(--faint)}
+.contrib-bio li b{font-weight:700;color:var(--ink)}
+.contrib-bio li i{font-style:italic;color:#4a4f57}
+.contrib-host{margin-top:15px;padding-top:12px;border-top:1px solid var(--border);font-size:12.5px;color:var(--muted)}
+.contrib-host b{color:var(--ink)}
+.mapwrap{margin-top:12px}
+@media(max-width:820px){.cover h1{font-size:38px}.sf-q{font-size:21px}.contrib{grid-template-columns:1fr}}
+
+
+/* ===== astack · Alto v3 디자인 디테일 (구조와 JS는 원본 그대로) ===== */
+:root{
+  --canvas:#ffffff; --surface:#f7f7f7; --surface-strong:#f2f2f2; --hairline:#dddddd;
+  --ink:#222222; --ink-2:#6a6a6a; --ink-3:#929292;
+  --thread:#ff385c; --thread-deep:#e31c5f; --thread-tint:#fff0f3;
+  --glass:rgba(255,255,255,.88); --photo:grayscale(.08) contrast(1.02); --on-ink:#ffffff;
+  --jost:"Jost","Apple SD Gothic Neo","Pretendard",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --serif:var(--jost); --sans:var(--jost); --font:var(--jost);
+  /* 강조색 자리: 원본에서 슬레이트 블루가 쓰이던 곳. 기본 = 실(Rausch) */
+  --accent:#e31c5f; --accent-ink:#c2134f; --accent-soft:#fff0f3; --accent-line:#ffc9d4; --on-accent:#ffffff;
+}
+:root[data-tone="mono"]{--accent:#222222; --accent-ink:#222222; --accent-soft:#f2f2f2; --accent-line:#dddddd; --on-accent:#ffffff}
+:root[data-tone="water"]{--accent:#3f6870; --accent-ink:#33575e; --accent-soft:#e8efee; --accent-line:#a9bcc0; --on-accent:#ffffff}
+:root[data-tone="warm"]{--canvas:#fbfaf7; --surface:#f3f1ec; --surface-strong:#ebe8e1; --hairline:#e2ded5; --glass:rgba(251,250,247,.88);
+  --accent:#e31c5f; --accent-ink:#c2134f; --accent-soft:#fdebef; --accent-line:#f6c4cf}
+
+/* A. 글꼴: Jost 하나, 굵기 400/500 */
+.cover h1,.ch h2,.partdiv h3,.sf-q,.contrib-name,.index-h .t,.glance-thesis,.pull p,.pull q,.foot-mark,.tb-mark,
+h1,h2.ch-label,h3.sh,h4.sh,.ch-label,.gnode-title,.flow-lead,.card .ct,.map-k,.cover .sub,.cover .cover-sub{font-family:var(--jost);font-weight:500;font-style:normal}
+b,strong,.sf-a b,.a-text b,.contrib-bio li b,.prose strong{font-weight:600}
+.q-text{font-weight:500}
+
+/* B. 라벨: 대문자·넓은 자간 없이 13px. 원본에서 파랗던 라벨은 강조색 */
+.cover-kicker,.sf-kicker,.contrib-eyebrow,.partdiv-label,.ch-kicker .pt,.spk,.pull cite,.kp-h,.struct-h,.glance-eyebrow,
+.gnode-label,.index-part-h .n,.viz-h,.kicker,.map-h,.scene-eyebrow,.ch-num,.clabel,.card .cn,.excerpt .by,.dgm-cap{
+  text-transform:none;letter-spacing:0;font-weight:500;font-size:13px;color:var(--ink-2)}
+.cover-kicker,.ch-kicker .pt,.struct-h,.glance-eyebrow,.gnode-label,.index-part-h .n,.ch-num,.turn.a .spk,.scene.active .scene-eyebrow{color:var(--accent)}
+.cover-kicker::after{background:var(--hairline)}
+.struct-h::before{background:var(--accent)}
+.partdiv-label::before{display:none}
+
+/* C. 숫자·시각은 Plex Mono */
+.index-item .num,.map-k .mn,.shn,.stage-cap .num,.excerpt .by .ts,.ch-num,.flow-n,.dot .dot-i,.index-h .c{font-family:var(--mono);font-weight:400}
+.ch-kicker .no{background:var(--accent-soft);color:var(--accent-ink);border:0;font-family:var(--mono);font-weight:400;font-size:13px;border-radius:8px}
+
+/* D. 메타 줄: 회색 한 줄, 원본 링크는 밑줄만 */
+.cover .meta,.cover-meta,.meta-row{font-size:13px;font-weight:400;color:var(--ink-2)}
+.cover .meta a.src,.cover-meta .csrc,.tb-src{color:var(--ink-2);font-weight:400;text-decoration:underline;text-decoration-color:var(--hairline);text-underline-offset:3px}
+.cover .sub{color:var(--ink)}
+
+/* E. 사진: 배치·덮개·캡션 위치는 원본 그대로. 모서리만 Alto 반경 */
+.cover-fig{border-radius:14px;border-color:var(--hairline)}
+.partdiv{border-radius:14px}
+.contrib-photo{border-color:var(--hairline)}
+
+/* F. 진행 막대 = 실 */
+.progress{background:var(--thread)}
+.topbar{background:var(--glass);border-bottom-color:var(--hairline)}
+.tb-mark span{color:var(--accent)}
+
+/* G. 인용과 강조 */
+.pull-mark{color:var(--accent);font-family:var(--jost)}
+.pull cite{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink-2)}
+.pull .pull-hl{color:var(--accent-ink);font-weight:500;box-shadow:inset 0 -.38em 0 var(--accent-soft)}
+.a-quote{border-left:2px solid var(--accent-line)}
+.turn.n .q-text{font-family:var(--jost);font-style:normal}
+.gnode-line{font-family:var(--jost);font-style:normal}
+.sf-a .dropcap{color:var(--accent);font-weight:500}
+.excerpt{background:var(--surface);border:0;box-shadow:none;border-radius:14px}
+.excerpt::before{color:var(--accent-line)}
+.excerpt .en{font-family:var(--jost);font-style:normal;color:var(--ink)}
+mark{background:var(--accent-soft);color:inherit;padding:0 2px;border-radius:3px}
+
+/* H. 상자: 그림자 없음, 헤어라인, 반경 14, 왼쪽 굵은 띠 없음 */
+.stage-frame,.excerpt,.card,.note,.map,.keypoints,.viz{box-shadow:none;border-color:var(--hairline)}
+.stage-frame:hover{box-shadow:none;border-color:var(--ink-3)}
+.map,.stage-frame,.keypoints,.viz,.card{border-radius:14px}
+.ch-intro{border:0;border-radius:14px;background:var(--surface)}
+.callout{border:0;border-radius:14px;background:var(--accent-soft)}
+.callout .clabel{color:var(--accent-ink)} .callout p{color:var(--ink)} .callout strong{color:var(--ink)}
+h4.sh{border-left:0;padding-left:0}
+.dot.active{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent-line)}
+.dot.active .dot-i{background:var(--accent);color:var(--on-accent)}
+.tb-part.on{background:var(--accent);color:var(--on-accent)}
+.flow-n,.gnode-dot{border-color:var(--accent);color:var(--accent)}
+.gnode-dot::after{background:var(--accent)}
+.note summary::before{background-color:var(--accent-soft);border-color:var(--accent-line)}
+table.tbl thead th{background:var(--surface)}
+table.tbl tbody td:first-child{background:var(--canvas)}
+.lb{background:rgba(0,0,0,.88)}
+
+/* I. 그림이 없을 때(C8): 어두운 덮개·빈 상자 대신 밝은 면, 한 칸 배치 */
+.partdiv:not(:has(img)){min-height:0;background:var(--surface)}
+.partdiv:not(:has(img))::after{display:none}
+.partdiv:not(:has(img)) .partdiv-copy{color:var(--ink)}
+.partdiv:not(:has(img)) .partdiv-sig{color:var(--ink);border-left-color:var(--hairline)}
+.partdiv:has(img) .partdiv-label{color:rgba(255,255,255,.86)}
+.cover-fig:not(:has(img)),.cover-fig:has(img[src=""]){display:none}
+.contrib:not(:has(.contrib-photo)),.contrib:has(.contrib-photo[src=""]){grid-template-columns:1fr}
+.contrib-photo[src=""]{display:none}
+</style></head>
+<body>
+<!-- ============================================================
+  SEMINAR SCROLLYTELLING REPORT TEMPLATE
+  Fill {{TOKENS}}. Duplicate <section class="scene"> per slide.
+  - Cover(magazine) -> Standfirst(hook, dropcap) -> Speaker(contrib) -> 논증 지도 -> Reader(scenes+sticky slide)
+  - Each scene: data-cap/data-ch (슬라이드 경로는 .scene-fig img의 src) + h3/h4 heading + prose(+callout/table/cards) + verbatim .excerpt + optional .note
+  - Embed slide images + speaker photo as base64 data URIs. Keep ONE accent. Body sans, cover serif.
+============================================================ -->
+
+<div class="topbar"><div class="progress" id="prog"></div><div class="chapters" id="chapters">
+  <button class="dot" data-ch="0"><span class="dot-i">1</span><span class="dot-l">{{CH1_LABEL}}</span></button>
+  <!-- one .dot per chapter -->
+</div></div>
+
+<div class="wrap">
+<header class="cover" data-astack="30s">
+  <div class="cover-head">
+    <div class="cover-kicker">{{KICKER e.g. REPORT · EVENT}}</div>
+    <h1>{{TITLE_KO}}</h1>
+    <div class="cover-sub">{{SUBTITLE_EN}}</div>
+    <div class="cover-meta"><span>{{SPEAKER · ROLE}}</span><span class="cdot">·</span><span>{{TRACK}}</span><span class="cdot">·</span><a class="csrc" href="{{SRC_URL}}" target="_blank" rel="noopener">원본 영상 ↗</a></div>
+  </div>
+  <figure class="cover-fig"><img src="" alt="{{TITLE_EN}} — 타이틀 슬라이드"><figcaption>{{SPEAKER}} · “{{TITLE_EN}}” — {{EVENT}}</figcaption></figure>
+</header>
+
+<section class="standfirst measure">
+  <div class="sf-kicker">Intro</div>
+  <p class="sf-q">{{HOOK_QUESTION — 강연을 관통하는 질문 한 문장}}</p>
+  <p class="sf-a"><span class="dropcap">{{첫글자}}</span>{{짧은 답 3~4문장. A가 아니라 X, ... <b>핵심 볼드</b>. 티저로 끝내 기대 유발.}}</p>
+</section>
+
+<section class="contrib measure">
+  <img class="contrib-photo" src="" alt="{{SPEAKER}}">
+  <div>
+    <div class="contrib-eyebrow">이 발표의 화자</div>
+    <div class="contrib-name">{{SPEAKER}}</div>
+    <div class="contrib-role">{{현직 · 이전 경력}}</div>
+    <ul class="contrib-bio">
+      <li><b>{{핵심 이력/테마 1}}.</b> {{한 줄 설명}}</li>
+      <li><b>{{학력/경력 2}}.</b> {{한 줄}}</li>
+      <li><b>{{경력 3}}.</b> {{한 줄}}</li>
+      <li><b>관통하는 질문 —</b> {{그의 커리어를 꿰는 질문. 오늘 발표와 연결}}</li>
+    </ul>
+    <div class="contrib-host">발표 · <b>{{EVENT}}</b> — {{TRACK}}</div>
+  </div>
+</section>
+
+<section class="mapwrap" data-astack="3m"><p class="map-h">논증 지도 — 한눈에</p>
+<div class="map">
+  <div class="map-row" data-ch="0"><div class="map-k"><span class="mn">01</span>{{챕터 키워드}}</div><div class="map-t">{{한 줄 요지}}</div></div>
+  <!-- one .map-row per chapter -->
+</div></section>
+
+<div class="reader"><div class="scenes" id="scenes">
+
+  <!-- ===== SCENE (chapter-first: adds CHAPTER divider) ===== -->
+  <section class="scene chfirst" data-gi="0" data-cap="{{슬라이드 캡션}}" data-ch="0">
+    <div class="chapter-head"><div class="ch-num">CHAPTER 01</div><h2 class="ch-label">{{챕터 제목}}</h2></div>
+    <div class="scene-inner">
+      <h3 class="sh"><span class="shn">01</span><span>{{씬 논지(H3)}}</span></h3>
+      <figure class="scene-fig"><img loading="lazy" src="" alt="{{캡션}}"><figcaption>{{캡션}}</figcaption></figure>
+      <div class="prose">
+        <p class="lead">{{인사이트 리드 — 단문}}</p>
+        <p>{{설명 문단. 짧은 단문을 접속사로 이음. 핵심은 <strong>bold</strong> 또는 <mark>highlight</mark>.}}</p>
+        <!-- optional blocks: -->
+        <!-- <div class="callout"><p class="clabel">핵심</p><p>{{내 인사이트 하이라이트}}</p></div> -->
+        <!-- <table class="tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody><tr><td>축</td><td>..</td><td>..</td></tr></tbody></table> -->
+        <!-- <div class="cards"><div class="card"><p class="ct"><span class="cn">01</span>제목</p><p class="cb">한 줄</p></div></div> -->
+        <div class="excerpt"><p class="en">{{발표자 원문 verbatim}}</p><p class="ko">{{한국어 뉘앙스 번역}}</p><div class="by"><span>{{SPEAKER}}</span><span class="dotm"></span><span class="ts">{{mm:ss}}</span></div></div>
+        <!-- optional background note (접이식): -->
+        <!-- <div class="notes"><details class="note"><summary>{{용어}}</summary><div class="note-body">{{배경 설명}}</div></details></div> -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SCENE (sub-point uses h4.sh; no chapter-head) ===== -->
+  <section class="scene" data-gi="1" data-cap="{{캡션}}" data-ch="0">
+    <div class="scene-inner">
+      <h4 class="sh"><span class="shn">02</span><span>{{하위 논지(H4)}}</span></h4>
+      <figure class="scene-fig"><img loading="lazy" src="" alt="{{캡션}}"><figcaption>{{캡션}}</figcaption></figure>
+      <div class="prose"><p>{{...}}</p></div>
+    </div>
+  </section>
+
+</div>
+<aside class="stage">
+  <div class="stage-frame" id="stageFrame"><img id="stageImg" src="" alt=""></div>
+  <div class="stage-cap"><span class="num" id="stageNum">01 / {{N}}</span><span id="stageCap">{{첫 캡션}}</span></div>
+</aside>
+</div></div>
+
+<footer><div class="wrap">발표: <strong>{{SPEAKER}}</strong> · <a href="{{SRC_URL}}" target="_blank">{{SRC_URL}}</a><br>슬라이드 {{N}}장을 영상에서 추출해 인사이트 중심으로 재구성한 리포트입니다. 본문은 한국어 재구성, <em>인용구는 발표자의 실제 발언 원문(verbatim)</em>입니다.</div></footer>
+<div class="lb" id="lb"><img id="lbImg" src="" alt=""></div>
+<script>
+(function(){
+  const scenes=[...document.querySelectorAll('.scene')];
+  const stageImg=document.getElementById('stageImg');
+  const stageCap=document.getElementById('stageCap');
+  const stageNum=document.getElementById('stageNum');
+  const prog=document.getElementById('prog');
+  const dots=[...document.querySelectorAll('.dot')];
+  const total=scenes.length;
+  const srcs=scenes.map(s=>s.querySelector('.scene-fig img').src);
+  let cur=-1;
+  function setActive(i){
+    if(i===cur||i<0)return; cur=i;
+    const s=scenes[i];
+    if(stageImg.getAttribute('src')!==srcs[i]){
+      stageImg.style.opacity=0;
+      requestAnimationFrame(()=>{ stageImg.src=srcs[i]; requestAnimationFrame(()=>{stageImg.style.opacity=1;}); });
+    }
+    stageCap.textContent=s.dataset.cap;
+    stageNum.textContent=String(i+1).padStart(2,'0')+' / '+total;
+    const ch=+s.dataset.ch;
+    dots.forEach(d=>d.classList.toggle('active',+d.dataset.ch===ch));
+    const ad=dots[ch]; if(ad)ad.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+    scenes.forEach((sc,k)=>sc.classList.toggle('active',k===i));
+  }
+  const visible=new Set();
+  function pick(){
+    if(!visible.size)return;
+    const mid=window.innerHeight/2; let best=-1,bd=1e9;
+    visible.forEach(i=>{const r=scenes[i].getBoundingClientRect();const c=r.top+r.height/2;const d=Math.abs(c-mid);if(d<bd){bd=d;best=i;}});
+    setActive(best);
+  }
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{const i=+e.target.dataset.gi;if(e.isIntersecting)visible.add(i);else visible.delete(i);});pick();},{rootMargin:'-30% 0px -30% 0px',threshold:0});
+  scenes.forEach(s=>io.observe(s));
+  document.addEventListener('scroll',()=>{pick();const h=document.documentElement;const p=h.scrollTop/(h.scrollHeight-h.clientHeight);prog.style.width=Math.max(0,Math.min(1,p))*100+'%';},{passive:true});
+  function jump(ch){const t=scenes.find(s=>+s.dataset.ch===ch);if(t){const y=t.getBoundingClientRect().top+window.scrollY-84;window.scrollTo({top:y,behavior:'smooth'});}}
+  dots.forEach(d=>d.addEventListener('click',()=>jump(+d.dataset.ch)));
+  document.querySelectorAll('.map-row').forEach(r=>r.addEventListener('click',()=>jump(+r.dataset.ch)));
+  const lb=document.getElementById('lb'),lbImg=document.getElementById('lbImg');
+  document.getElementById('stageFrame').addEventListener('click',()=>{lbImg.src=stageImg.src;lb.classList.add('on');});
+  document.querySelectorAll('.scene-fig img').forEach(im=>im.addEventListener('click',()=>{lbImg.src=im.src;lb.classList.add('on');}));
+  lb.addEventListener('click',()=>lb.classList.remove('on'));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('on');});
+  setActive(0);
+})();
+</script>
+<footer class="astack-source" data-astack="source">원본 영상 {{SRC_URL}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>
+</body></html>

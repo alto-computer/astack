@@ -26,6 +26,7 @@ description: Use when any astack skill is about to write an understanding HTML. 
 
 ## 시각화
 - 2단: 본문 | 그림. 그림은 스크롤에 맞춰 장면마다 바뀐다. 문서는 한 가지 모습뿐.
+- 좁은 화면은 `.stage`를 숨긴다. 장면마다 `.inl.vis-inl` 사본을 두고, 사본의 SVG id에 접두사를 붙인다.
 - 그림에는 관심사 색. 본문 글자에는 색 없음(굵게만).
 - 실선 = 우리가 만드는 것, 점선 = 바깥, 빨간 실 = 지금 단계.
 - 흐름은 관심사 레인의 시퀀스 그림. 에러는 실패 지점부터 빨간 점선.
@@ -41,7 +42,22 @@ description: Use when any astack skill is about to write an understanding HTML. 
 | evidence-tiers | 사실 주장 | 확인 / 추론 / 모름. 코드는 의도의 증거가 아니다 |
 | review-after-flow | 가정·결정 | 흐름을 보여준 뒤에 리뷰 표 |
 | anchor-to-source | 모든 주장 | 원문 위치로 바로 갈 수 있게 |
+| convert-not-summarize | 모든 원자 | 정보량은 그대로, 형식만 바꾼다. "요약해줘"여도 변환 |
+| speaker-first | interview, seminar | 화자의 논지·순서·강조가 주인공. 내 해설은 따로 |
+| lossless-gate | paper | figure·table·수치 개수를 원문과 대조해야 끝난다 |
+| build-up-diagrams | 부품 3개 이상 | 한 장에 다 그리지 말고 하나씩 쌓는다 |
+| definition-then-case | 개념 설명 | 일반 정의(통용 이름) → 지금 사례 → 깊이 |
+| retrieval-check | 장 끝 | 이해를 묻는 질문. 암기 금지. 오답 = 오해 진단 |
+| converge | map, dream | 쌓여도 두꺼워지지 않고 정확해진다 |
+| explain-the-number | 실험 | 숫자를 제한하는 요인, 엉뚱한 걸 잰 건 아닌지 |
+| build-the-lever | 실험 | 손으로 재지 말고 다시 돌릴 벤치를 만든다 |
 
 ## 시작할 때
 - `astack memory search skill:<이 스킬 이름>`으로 교정 기록을 읽는다.
 - 사용자가 선호, 제외, 교정을 말하면 `astack memory add '{"type":"correction","key":"skill:<이름>","insight":"…","source":"told"}'`. 기록에서 다시 알 수 있는 사실은 쓰지 않는다.
+
+## 기억 정리 (에이전트용, 저녁 20:30)
+- `astack memory consolidate` — 중복 합치기, 최신 told가 오래된 observed를 대체, observed는 나이로 감쇠(30일 반감), 같은 told 교정 3번이면(같은 말 반복도 센다) 규칙으로 승격, `skill:` 교정 반복은 레포 패치 **제안만**. 직전 상태는 `~/.astack/archive/<날짜>.jsonl`에 저장되며, 읽을 수 없는 레코드는 그대로 두고 모든 변경 전 스냅샷이 보관된다.
+- 되돌리기: `astack memory restore --list`로 스냅샷 이름을 본다(최신 먼저). `astack memory restore <날짜>`는 그날 첫 상태, 그 뒤 스냅샷·pre-restore 사본은 `astack memory restore <이름>`.
+- 지우기: `astack memory prune --key <접두사>`(접두사 일치라 `feed:youtube:A`는 `feed:youtube:AI…`도 지운다) · `--type <type>` · `--before YYYY-MM-DD`(날짜 없는 기록은 남는다).
+- 사람용 dream과 따로 돈다. 둘이 만나는 곳은 `memory add` 한 줄뿐.

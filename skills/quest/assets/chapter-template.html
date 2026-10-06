@@ -1,0 +1,64 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="description" content="[이 장의 질문과 답 한 줄]">
+<meta name="rooms:created" content="[RFC3339 지금 시각]">
+<meta name="rooms:machine" content="[머신 이름]">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{NN}} {{장 질문}}</title>
+<!--astack:css-->
+</head><body data-depth="all">
+<div class="top"><div class="top-in"><span class="mark"><a href="00-지도.html">{{주제}}</a> <span>{{NN}}/{{MM}}</span></span><span class="where" id="where"></span><span class="sp"></span></div><div class="prog" id="prog"></div></div>
+<div class="wrap">
+<header class="cover" data-astack="30s">
+  <div class="kick">{{NN}} · {{장 질문}}</div>
+  <h1>{{답 한 문장}}</h1>
+  <div class="meta">quest · {{읽는 시간}}분</div>
+  <p class="l30">{{왜 이 답인가 두 줄}}</p>
+</header>
+<section class="overview" data-astack="3m">
+  <div><div class="kick">3분 · 핵심 구조</div><p>{{일반 정의(통용 이름) → 이 사례 → 깊이 순서 요약}}</p></div>
+  <div>{{핵심 그림 SVG}}</div>
+</section>
+<div class="reader"><div class="scenes">
+  <section class="scene lvl2" id="s1" data-i="1">
+    <h3 class="st"><span class="no">{{NN}}.1</span><span>{{소제목}}</span></h3>
+    <div class="lead"><p>{{결론 먼저}}</p></div>
+    <div class="d2"><p>{{설명. 원문 위치 링크}}</p><p class="why"><b>왜 이렇게 만들었나.</b> {{이유}} <span class="ev ev-ok">확인</span> {{근거}}</p></div>
+    <div class="inl vis-inl">{{같은 그림 사본. SVG 안의 id와 url(#…)·href="#…"에 m- 접두사}}</div>
+  </section>
+</div><aside class="stage">
+  <div class="vis" data-v="1">{{이 장면 그림}}</div>
+</aside></div>
+<!-- 실험 보고서 장이면 tome 앞에: (주석을 풀고 채운다)
+<section class="report" id="report">
+  <div class="secHead"><div class="n">방법</div><h2>어떻게 쟀나</h2></div>
+  <p>{{환경(머신, OS), 버전, 워밍업, 교차 실행, 반복 횟수}}</p>
+  <div class="secHead"><div class="n">차트</div><h2>{{차트가 보여 주는 것 한 줄}}</h2></div>
+  <figure><img src="bench/{{차트}}.svg" alt="{{차트 설명}}"><figcaption>{{캡션: 단위, n, 조건}}</figcaption></figure>
+  <div class="secHead"><div class="n">원자료</div><h2>숫자 그대로</h2></div>
+  <table class="ustab"><thead><tr><th>{{조건}}</th><th>{{지표}}</th></tr></thead><tbody><tr><td>{{값}}</td><td>{{값}}</td></tr></tbody></table>
+  <p>원자료 파일: bench/{{results 경로}}</p>
+  <div class="secHead"><div class="n">재현</div><h2>재현 명령</h2></div>
+  <pre data-lang="bash"><code>{{명령}}</code></pre>
+  <div class="secHead"><div class="n">한계</div><h2>한계</h2></div>
+  <ul><li>{{이 숫자가 말하지 못하는 것}}</li></ul>
+</section>
+-->
+<section class="tome">
+  <div class="secHead"><div class="n">끝</div><h2>그래서 나한테는?</h2></div>
+  <p>{{지금 하는 일에 어떻게 연결되나 한두 줄}}</p>
+</section>
+<details class="quiz" data-kind="mc">
+  <summary>점검 · {{질문 한 줄}}</summary>
+  <p class="q">{{이해형 질문: 왜, 만약, 비교, 적용}}</p>
+  <ol class="opts">
+    <li data-ok="1" data-why="{{맞는 이유}}">{{보기}}</li>
+    <li data-why="{{흔한 오해: 왜 틀렸나}}">{{보기}}</li>
+    <li data-why="{{흔한 오해: 왜 틀렸나}}">{{보기}}</li>
+  </ol>
+  <p class="verdict" aria-live="polite"></p>
+</details>
+<nav class="chnav"><a href="{{이전 장}}.html">← 이전</a> · <a href="00-지도.html">지도</a> · <a href="{{다음 장}}.html">다음 →</a></nav>
+<footer data-astack="source">소스 {{URL, 타임스탬프, 파일:줄}} · 요청 "{{요청 원문}}" · Claude Code가 썼습니다</footer>
+</div>
+<!--astack:js-->
+</body></html>

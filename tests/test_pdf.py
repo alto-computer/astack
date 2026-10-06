@@ -1,0 +1,124 @@
+import re
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
+import unittest
+import zlib
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from astack_cli import pdf  # noqa: E402
+
+
+def tiny_pdf(n_pages: int) -> bytes:
+    kids = " ".join(f"{3 + i} 0 R" for i in range(n_pages))
+    objs = [b"<</Type/Catalog/Pages 2 0 R>>", f"<</Type/Pages/Kids[{kids}]/Count {n_pages}>>".encode()]
+    objs += [b"<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 300]>>"] * n_pages
+    out, offs = b"%PDF-1.4\n", []
+    for i, o in enumerate(objs, 1):
+        offs.append(len(out))
+        out += f"{i} 0 obj".encode() + o + b"endobj\n"
+    xref = len(out)
+    out += f"xref\n0 {len(objs) + 1}\n0000000000 65535 f \n".encode()
+    out += b"".join(f"{o:010d} 00000 n \n".encode() for o in offs)
+    out += f"trailer<</Size {len(objs) + 1}/Root 1 0 R>>\nstartxref\n{xref}\n%%EOF\n".encode()
+    return out
+
+
+def tiny_png(w: int, h: int) -> bytes:
+    raw = b"".join(b"\x00" + b"\xff\x00\x00" * w for _ in range(h))
+    chunk = lambda t, d: struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+
+
+def png_size(p: Path) -> tuple[int, int]:
+    return struct.unpack(">II", p.read_bytes()[16:24])
+
+
+@unittest.skipUnless(shutil.which("swift"), "swift 없음")
+class PagesTest(unittest.TestCase):
+    def test_pages_renders_each_page_in_order(self):
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d) / "논문 초안.pdf"
+            src.write_bytes(tiny_pdf(3))
+            got = pdf.pages(src, Path(d) / "out", max_dim=300)
+            self.assertEqual([p.name for p in got], ["page-001.png", "page-002.png", "page-003.png"])
+            self.assertTrue(all(p.stat().st_size > 0 for p in got))
+
+
+class PagesCliTest(unittest.TestCase):
+    def test_cli_prints_page_size_for_crop_coordinates(self):
+        import contextlib
+        import io
+        from astack_cli import cli
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d) / "a.pdf"
+            src.write_bytes(b"%PDF")
+            out = Path(d) / "pages"
+            old_pages, old_size = pdf.pages, pdf._image_size
+            pdf.pages = lambda a, b, max_dim=2200: [b / "page-001.png", b / "page-002.png"]
+            pdf._image_size = lambda img: (1700, 2200)
+            err = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                    self.assertEqual(cli.main(["pdf", "pages", str(src), str(out)]), 0)
+            finally:
+                pdf.pages, pdf._image_size = old_pages, old_size
+            self.assertIn("astack pdf: 2쪽, 쪽 크기 1700x2200px (crop 좌표 기준)", err.getvalue())
+
+
+class PagesErrorTest(unittest.TestCase):
+    def test_missing_pdf_is_error(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(pdf.PdfError):
+                pdf.pages(Path(d) / "none.pdf", Path(d) / "o")
+
+
+@unittest.skipUnless(shutil.which("sips"), "sips 없음")
+class CropTest(unittest.TestCase):
+    def test_crop_cuts_requested_box(self):
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d) / "p.png"
+            src.write_bytes(tiny_png(40, 30))
+            out = pdf.crop(src, 5, 4, 20, 10, Path(d) / "fig.png")
+            self.assertEqual(png_size(out), (20, 10))
+
+    def test_crop_jpg_cuts_requested_box(self):
+        with tempfile.TemporaryDirectory() as d:
+            # Create JPG from PNG using sips
+            src_png = Path(d) / "p.png"
+            src_png.write_bytes(tiny_png(40, 30))
+            src_jpg = Path(d) / "p.jpg"
+            subprocess.run(["sips", "-s", "format", "jpeg", str(src_png), "--out", str(src_jpg)], check=True)
+            # Crop the JPG
+            out = pdf.crop(src_jpg, 5, 4, 20, 10, Path(d) / "fig.jpg")
+            self.assertTrue(out.exists())
+            # Verify dimensions using sips
+            r = subprocess.run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", str(out)], capture_output=True, text=True, check=True)
+            w_match = re.search(r"pixelWidth:\s*(\d+)", r.stdout)
+            h_match = re.search(r"pixelHeight:\s*(\d+)", r.stdout)
+            self.assertIsNotNone(w_match)
+            self.assertIsNotNone(h_match)
+            self.assertEqual(int(w_match.group(1)), 20)
+            self.assertEqual(int(h_match.group(1)), 10)
+
+    def test_crop_outside_image_is_error(self):
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d) / "p.png"
+            src.write_bytes(tiny_png(40, 30))
+            with self.assertRaises(pdf.PdfError):
+                pdf.crop(src, 30, 0, 20, 10, Path(d) / "fig.png")
+
+    def test_cli_crop(self):
+        from astack_cli import cli
+        with tempfile.TemporaryDirectory() as d:
+            src = Path(d) / "p.png"
+            src.write_bytes(tiny_png(40, 30))
+            self.assertEqual(cli.main(["pdf", "crop", str(src), "0", "0", "10", "10", str(Path(d) / "o.png")]), 0)
+            self.assertEqual(cli.main(["pdf", "crop", str(src), "0", "0", "99", "10", str(Path(d) / "o.png")]), 2)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -243,6 +243,19 @@ table.rv td:first-child{padding-left:10px}
 .apx{border-top:1px solid var(--hairline);padding:10px 0} .apx summary{cursor:pointer;font-weight:500}
 .apx > div{padding:10px 0;font-size:14px;overflow-x:auto} .apx table{border-collapse:collapse;font-size:13px} .apx td,.apx th{border-bottom:1px solid var(--surface-strong);padding:6px 10px 6px 0;text-align:left;vertical-align:top} .apx pre{background:var(--surface);border-radius:10px;padding:10px 12px;font-size:12px}
 @media (max-width:900px){.reader{grid-template-columns:1fr!important}.inl.vis-inl{display:block}}
+
+/* hand-maintained additions to alto.css (alto.css is re-extracted by tools/extract_kit.py; this file is not) */
+/* p.why: design rationale callout, neutral (no colored body text) */
+p.why{margin:12px 0;padding:10px 14px;background:var(--surface);border-left:3px solid var(--ink);border-radius:0 8px 8px 0}
+p.why b{font-weight:600}
+/* narrow screens: one column that never grows past the viewport */
+.scenes,.scene,.d2,.codes,.cx{min-width:0}
+@media (max-width:900px){
+  .reader,body[data-depth="3"] .reader{grid-template-columns:minmax(0,1fr)!important}
+  code{overflow-wrap:anywhere}
+  .hl pre code{overflow-wrap:normal}
+  table.rv,table.ustab{display:block;max-width:100%;min-width:0!important;overflow-x:auto}
+}
 </style>
 </head><body data-depth="all">
 <div class="top"><div class="top-in"><span class="mark">alto-rooms <span>change</span></span><span class="where" id="where"></span><span class="sp"></span></div><div class="prog" id="prog"></div></div>

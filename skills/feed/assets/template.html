@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="description" content="[날짜] 오늘 30분: [가장 중요한 한 편]">
+<meta name="rooms:created" content="[RFC3339 지금 시각]">
+<meta name="rooms:machine" content="[머신 이름]">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{날짜}} 오늘 30분</title>
+<!--astack:css-->
+</head><body data-depth="all">
+<div class="top"><div class="top-in"><span class="mark">오늘 30분 <span>feed</span></span><span class="where" id="where"></span><span class="sp"></span></div><div class="prog" id="prog"></div></div>
+<div class="wrap">
+<header class="cover" data-astack="30s">
+  <div class="kick">Feed · {{날짜}} · {{N}}편 · 30분</div>
+  <h1>{{오늘 가장 읽을 만한 것 한 문장}}</h1>
+  <div class="meta">feed · {{날짜}} · 30분</div>
+  <p class="l30">{{왜 이 순서인가 두 줄}}</p>
+</header>
+<section class="overview" data-astack="3m">
+  <div><div class="kick">3분 · 읽는 순서</div>
+    <ol><li><a href="#deep">{{깊게 1}} — {{채널}} · 약 {{분}}분</a></li><li><a href="#c1">{{카드 1}} — 3분</a></li></ol></div>
+  <div>{{오늘 편들의 주제 지도 SVG, 없으면 비운다}}</div>
+</section>
+<section id="deep"><div class="secHead"><div class="n">깊게</div><h2>매거진</h2></div>
+  <div class="card"><h3>{{제목}}</h3><p class="meta">{{채널}} · {{영상 길이}} · 읽는 시간 {{분}}분</p><p>{{30초 요지 두 줄}}</p><p><a href="{{interview 이해물 경로}}">매거진 열기</a> · <a href="{{원본 URL}}">원본 영상</a></p></div>
+</section>
+<section id="cards"><div class="secHead"><div class="n">짧게</div><h2>3분 카드</h2></div>
+  <div class="card" id="c1"><h3>{{제목}}</h3><p class="meta">{{채널}} · <a href="{{원본 URL}}">원본 영상</a></p><ul><li>{{핵심 1}}</li><li>{{핵심 2}}</li><li>{{핵심 3}}</li></ul><p><b>그래서 나한테는?</b> {{한 줄}}</p></div>
+</section>
+<footer data-astack="source">화이트리스트 채널 {{N}}개 · 후보 {{M}}개 중 {{K}}편 · Claude Code가 썼습니다</footer>
+</div>
+<!--astack:js-->
+</body></html>
