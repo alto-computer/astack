@@ -195,6 +195,8 @@ def _cmd_feed(args) -> int:
                 raise ValueError('사용법: astack feed seed "<이름>" <채널 URL>')
             print("추가함" if _feed.seed(*args.rest) else "이미 있음")
         else:
+            if args.since and not memory._iso_date(args.since):
+                raise ValueError(f"--since는 YYYY-MM-DD 날짜: {args.since}")
             for c in _feed.candidates(since=args.since, per_channel=args.per_channel, cookies=args.cookies_from_browser):
                 print(json.dumps(c, ensure_ascii=False))
     except (ValueError, _media.MediaError, memory.InvalidRecord) as e:

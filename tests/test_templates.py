@@ -77,12 +77,26 @@ class TemplateTest(unittest.TestCase):
 
     def test_body_placeholders_are_braces(self):
         for name in ("paper/assets/template.html", "repo/assets/template.html", "quest/assets/chapter-template.html",
-                     "quest/assets/map-template.html", "map/assets/template.html"):
+                     "quest/assets/map-template.html", "map/assets/template.html", "dream/assets/template.html",
+                     "feed/assets/template.html"):
             html = (ROOT / f"skills/{name}").read_text(encoding="utf-8")
             with self.subTest(name=name):
                 body = re.sub(r'<meta name="[^"]+" content="[^"]*">', "", html)
                 self.assertEqual(re.findall(r"\[[^\[\]\n]{1,80}\]", body), [])
                 self.assertIn("{{", body)
+
+    def test_unfilled_dream_and_feed_fail_check(self):
+        for name in ("dream", "feed"):
+            t = ROOT / f"skills/{name}/assets/template.html"
+            html = inline.inline_html(t.read_text(encoding="utf-8"), t.parent)
+            with self.subTest(name=name):
+                self.assertIn("placeholder", [i.code for i in check.check_html(html) if i.level == "error"])
+                for m in ('name="description" content="[', 'name="rooms:created" content="[', 'name="rooms:machine" content="['):
+                    self.assertIn(m, html)
+
+    def test_dream_my_words_works_without_rooms(self):
+        html = (ROOT / "skills/dream/assets/template.html").read_text(encoding="utf-8")
+        self.assertIn("Rooms가 없으면 채팅에 답한다", html)
 
     def test_paper_postit_is_not_inside_p(self):
         html = (ROOT / "skills/paper/assets/template.html").read_text(encoding="utf-8")

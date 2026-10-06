@@ -11,7 +11,7 @@ description: Use when 사용자가 팟캐스트, 인터뷰, 대담 영상이나 
 
 ## 입력과 출력
 - 입력: 유튜브 링크, 자막 파일, 또는 녹취 텍스트. 진행자·게스트 이름.
-- 출력: `docs/astack/interview/<날짜>-<slug>.html` 한 장 (현재 레포, 없으면 `~/personal/astack-out/`). 3시간이 넘으면 파트별 장 + 지도로 나눈다.
+- 출력: `docs/astack/interview/<날짜>-<slug>.html` 한 장 (현재 레포, 없으면 `~/personal/astack-out/`). 호출한 스킬이 폴더를 주면(feed 등) 그 폴더에 쓴다. 3시간이 넘으면 파트별 장 + 지도로 나눈다.
 
 ## 원칙 (design 색인에서)
 - **convert-not-summarize**: 요약이 아니라 변환. 게스트의 주장·순서·예시·뉘앙스를 그대로. 빼는 건 군말, 반복, 광고, 겹친 말뿐. "요약해줘"라고 해도 매거진을 만든다.

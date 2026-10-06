@@ -36,14 +36,49 @@ class FeedTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_seed_is_idempotent_and_whitelist_reads_url(self):
-        self.assertTrue(feed.seed("Latent Space", "https://www.youtube.com/@LatentSpacePod"))
-        self.assertFalse(feed.seed("Latent Space", "https://www.youtube.com/@LatentSpacePod"))
-        self.assertEqual(feed.whitelist(), [{"name": "Latent Space", "url": "https://www.youtube.com/@LatentSpacePod"}])
+        self.assertTrue(feed.seed("Example Pod", "https://www.youtube.com/@ExamplePod"))
+        self.assertFalse(feed.seed("Example Pod", "https://www.youtube.com/@ExamplePod"))
+        self.assertEqual(feed.whitelist(), [{"name": "Example Pod", "url": "https://www.youtube.com/@ExamplePod"}])
 
     def test_exclude_removes_channel(self):
         feed.seed("X", "https://www.youtube.com/@x")
         memory.add('{"type":"exclude","key":"channel:X","insight":"feed에서 제외","source":"told"}')
         self.assertEqual(feed.whitelist(), [])
+
+    def test_seed_after_exclude_adds_channel_back(self):
+        feed.seed("X", "https://www.youtube.com/@x")
+        memory.add('{"type":"exclude","key":"channel:X","insight":"feed에서 제외","source":"told"}')
+        self.assertTrue(feed.seed("X", "https://www.youtube.com/@x"))
+        self.assertEqual(feed.whitelist(), [{"name": "X", "url": "https://www.youtube.com/@x"}])
+        memory.add('{"type":"exclude","key":"channel:X","insight":"다시 제외","source":"told"}')
+        self.assertEqual(feed.whitelist(), [])
+
+    def test_newer_date_wins_over_line_order(self):
+        lines = [
+            {"type": "exclude", "key": "channel:Y", "insight": "제외", "source": "told", "date": "2026-10-03"},
+            {"type": "whitelist", "key": "feed:youtube:Y", "insight": "https://www.youtube.com/@y", "source": "told", "date": "2026-10-01"},
+            {"type": "whitelist", "key": "feed:youtube:Z", "insight": "https://www.youtube.com/@z", "source": "told", "date": "2026-10-04"},
+            {"type": "exclude", "key": "channel:Z", "insight": "제외", "source": "told", "date": "2026-10-02"},
+        ]
+        paths.memory_file().write_text("".join(json.dumps(l, ensure_ascii=False) + "\n" for l in lines), encoding="utf-8")
+        self.assertEqual([w["name"] for w in feed.whitelist()], ["Z"])
+
+    def test_cli_since_must_be_a_date(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(cli.main(["feed", "candidates", "--since", "어제"]), 2)
+        self.assertIn("YYYY-MM-DD", err.getvalue())
+
+    def test_skill_documents_readd_and_magazine_folder(self):
+        skill = (Path(__file__).resolve().parents[1] / "skills/feed/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("다시 넣기", skill)
+        self.assertIn("~/.astack/journal/feed/<날짜>/", skill)
+        self.assertIn('skill == "feed"', skill)
+        self.assertIn("--lang", skill)
+        interview = (Path(__file__).resolve().parents[1] / "skills/interview/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("호출한 스킬이 폴더를 주면", interview)
+        seminar = (Path(__file__).resolve().parents[1] / "skills/seminar/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("호출한 스킬이 폴더를 주면", seminar)
 
     def test_seen_ids_from_short_links(self):
         doc = Path(self.tmp.name) / "a.html"

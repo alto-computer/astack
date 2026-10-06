@@ -14,18 +14,24 @@ PREFIX = "feed:youtube:"
 
 
 def whitelist() -> list[dict]:
-    excluded = {r["key"][len("channel:"):] for r in memory.search("channel:") if r.get("type") == "exclude"}
-    out, names = [], set()
-    for r in memory.search(PREFIX):
-        if r.get("type") != "whitelist":
+    """채널마다 가장 최근 told 기록(날짜, 같으면 줄 순서)이 이긴다. 제외 뒤 다시 seed하면 돌아온다."""
+    last: dict[str, tuple] = {}
+    for i, r in enumerate(memory.parse(memory.read_lines())):
+        if r.get("source") != "told" or not isinstance(r.get("key"), str):
             continue
-        name = r["key"][len(PREFIX):]
-        m = CHANNEL_URL.search(str(r.get("insight", "")))
-        if not m or name in excluded or name in names:
+        if r.get("type") == "whitelist" and r["key"].startswith(PREFIX):
+            m = CHANNEL_URL.search(str(r.get("insight", "")))
+            if not m:
+                continue
+            name, url = r["key"][len(PREFIX):], m.group(0).rstrip("/")
+        elif r.get("type") == "exclude" and r["key"].startswith("channel:"):
+            name, url = r["key"][len("channel:"):], None
+        else:
             continue
-        names.add(name)
-        out.append({"name": name, "url": m.group(0).rstrip("/")})
-    return out
+        rank = (str(r.get("date", "")), i)
+        if name not in last or rank >= last[name][0]:
+            last[name] = (rank, url)
+    return [{"name": n, "url": url} for n, (_, url) in sorted(last.items(), key=lambda kv: kv[1][0]) if url]
 
 
 def seed(name: str, url: str) -> bool:

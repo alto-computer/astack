@@ -16,7 +16,7 @@ description: Use when 사용자가 슬라이드 발표, 세미나, 강연, 컨�
 
 ## 입력과 출력
 - 입력: 발표 영상 링크(또는 파일).
-- 출력: `docs/astack/seminar/<날짜>-<slug>.html` + 같은 폴더의 `<날짜>-<slug>-slides/`(내장 전 원본).
+- 출력: `docs/astack/seminar/<날짜>-<slug>.html` + 같은 폴더의 `<날짜>-<slug>-slides/`(내장 전 원본). 호출한 스킬이 폴더를 주면(feed 등) 그 폴더에 쓴다.
 
 ## 워크플로
 1. 슬라이드: `astack slides <url> docs/astack/seminar/<날짜>-<slug>-slides/`. `slides.tsv`의 시각을 기억한다. stderr의 '슬라이드 없는 구간'을 자막과 대조해, 슬라이드를 말하는 구간이면 문턱을 낮춰 다시 돌린다(`--threshold 0.05`/`0.03`, 같은 폴더에 다시 돌려도 된다). 비슷한 슬라이드가 합쳐졌거나 빌드 애니메이션 중간 프레임이 섞였으면(마지막 완성 프레임만 남김) 손으로 고른다. 방송 화면 테두리(행사 로고, 화자 작은 화면)가 있으면 `--crop W:H:X:Y`(첫 프레임에서 잰 슬라이드 영역 픽셀)로 다시 돌린다. 그러면 장면 감지도 슬라이드만 보고, 프레임도 잘려 나온다. 손으로 따로 자른 프레임은 `docs/astack/seminar/<날짜>-<slug>-slides/crop/`에 둔다.
