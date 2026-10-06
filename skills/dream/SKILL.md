@@ -33,4 +33,4 @@ description: Use when 하루를 마무리하며 오늘 생긴 이해물을 엮�
 ## Gotchas
 - dream·feed 자신의 결과는 collect가 이미 뺀다. Journal이 Journal을 엮지 않게.
 - 이 머신에서 만든 이해물만 본다(v1 한계).
-- **템플릿은 잠정이다.** 첫 Journal을 사용자에게 보여 확정한다(C6).
+- **템플릿은 확정(2026-10-06)이고 쓰면서 고친다.** 사용자가 고치라고 한 점은 `astack memory add`로 교정 기록을 남기고, 같은 교정이 반복되면 템플릿을 고친다.
