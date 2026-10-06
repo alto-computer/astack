@@ -37,3 +37,7 @@ def lock_file() -> Path:
 
 def journal_dir() -> Path:
     return home() / "journal"
+
+
+def goals_dir() -> Path:
+    return home() / "goals"

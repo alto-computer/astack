@@ -9,6 +9,7 @@ from . import course as _course
 from . import done as _done
 from . import dream as _dream
 from . import feed as _feed
+from . import goal as _goal
 from . import inline as _inline
 from . import media as _media
 from . import memory
@@ -206,6 +207,45 @@ def _cmd_feed(args) -> int:
     return 0
 
 
+def _goal_day(text: str) -> datetime.date:
+    today = datetime.date.today()
+    if text == "today":
+        return today
+    if text == "yesterday":
+        return today - datetime.timedelta(days=1)
+    return datetime.date.fromisoformat(text)
+
+
+def _goal_add(args) -> int:
+    print(json.dumps(_goal.add(args.question), ensure_ascii=False))
+    return 0
+
+
+def _goal_list(args) -> int:
+    for g in _goal.list_goals():
+        print(json.dumps(g, ensure_ascii=False) if args.json else f"{g['id']}\t{g['status']}\t{g['question']}")
+    return 0
+
+
+def _goal_run(args) -> int:
+    for g in _goal.run(max_goals=args.max, host=args.host):
+        print(f"{g['id']}\t{g['status']}\t{g['reason'] or ''}")
+    return 0
+
+
+def _goal_report(args) -> int:
+    try:
+        day = _goal_day(args.date)
+    except ValueError:
+        print(f"astack goal: 날짜는 YYYY-MM-DD, yesterday, today: {args.date}", file=sys.stderr)
+        return 2
+    items = _goal.report(day)
+    if not items:
+        return 0
+    print(_goal.report_text(items) if args.text else json.dumps(items, ensure_ascii=False))
+    return 0
+
+
 def _cmd_setup(args) -> int:
     return _setup.main(args.rest)
 
@@ -281,6 +321,22 @@ def build_parser() -> argparse.ArgumentParser:
     fe.add_argument("--per-channel", type=int, default=5)
     fe.add_argument("--cookies-from-browser", metavar="BROWSER", help="429·403이면 chrome 등 브라우저 쿠키로")
     fe.set_defaults(fn=_cmd_feed)
+    go = sub.add_parser("goal", help="밤 goal 큐: add, list, run(하룻밤 3개까지, 이어서), report")
+    gs = go.add_subparsers(dest="action", required=True)
+    ga = gs.add_parser("add", help="질문을 큐에 넣는다")
+    ga.add_argument("question")
+    ga.set_defaults(fn=_goal_add)
+    gl = gs.add_parser("list", help="큐 보기")
+    gl.add_argument("--json", action="store_true")
+    gl.set_defaults(fn=_goal_list)
+    gr = gs.add_parser("run", help="이어서 할 것과 큐의 것을 실행")
+    gr.add_argument("--max", type=int, default=3)
+    gr.add_argument("--host", choices=["claude", "codex"], default="claude")
+    gr.set_defaults(fn=_goal_run)
+    gp = gs.add_parser("report", help="그날 끝난 goal 보고")
+    gp.add_argument("--date", default="yesterday", help="YYYY-MM-DD, yesterday, today")
+    gp.add_argument("--text", action="store_true", help="Telegram용 짧은 글")
+    gp.set_defaults(fn=_goal_report)
     se = sub.add_parser("setup", help="호스트별 설치 (./setup과 같다)")
     se.add_argument("rest", nargs=argparse.REMAINDER)
     se.set_defaults(fn=_cmd_setup)
