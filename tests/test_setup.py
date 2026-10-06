@@ -100,6 +100,87 @@ class SetupTest(unittest.TestCase):
         self.assertFalse((self.home / ".local/bin/astack").exists())
         self.assertEqual(list((self.home / ".codex/skills").glob("astack-*")), [])
 
+    def _broken(self, content):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True, exist_ok=True)
+        md.write_text(content)
+        out = setup.install(["claude"], self.env)
+        self.assertEqual(md.read_text(), content)
+        self.assertTrue(any("표식이 깨짐" in l for l in out), out)
+        out = setup.uninstall(["claude"], self.env)
+        self.assertEqual(md.read_text(), content)
+        self.assertTrue(any("표식이 깨짐" in l for l in out), out)
+
+    def test_broken_markers_untouched(self):
+        self._broken(f"a\n{BEGIN}\nuser text\n")
+    def test_broken_end_only(self):
+        self._broken(f"a\nuser\n{END}\nb\n")
+    def test_broken_end_before_begin(self):
+        self._broken(f"a\n{END}\nuser\n{BEGIN}\nb\n")
+    def test_broken_two_blocks(self):
+        self._broken(f"{BEGIN}\nx\n{END}\nmid\n{BEGIN}\ny\n{END}\n")
+
+    def test_no_trailing_newline_roundtrip(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text("# mine")
+        setup.install(["claude"], self.env)
+        setup.install(["claude"], self.env)
+        self.assertEqual(md.read_text().count(BEGIN), 1)
+        setup.uninstall(["claude"], self.env)
+        self.assertEqual(md.read_text(), "# mine")
+
+    def test_user_text_after_block_preserved(self):
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir(parents=True)
+        md.write_text("top\n")
+        setup.install(["claude"], self.env)
+        md.write_text(md.read_text() + "\n\nafter  \n")
+        setup.install(["claude"], self.env)
+        self.assertTrue(md.read_text().endswith(END + "\n\n\nafter  \n"))
+        setup.uninstall(["claude"], self.env)
+        self.assertEqual(md.read_text(), "top\n\n\nafter  \n")
+
+    def test_symlinked_file_followed(self):
+        real = self.home / "dotfiles/CLAUDE.md"
+        real.parent.mkdir()
+        real.write_text("x\n")
+        md = self.home / ".claude/CLAUDE.md"
+        md.parent.mkdir()
+        md.symlink_to(real)
+        setup.install(["claude"], self.env)
+        self.assertTrue(md.is_symlink())
+        self.assertIn(BEGIN, real.read_text())
+
+    def test_bogus_host_changes_nothing(self):
+        with self.assertRaises(ValueError):
+            setup.install(["codex", "bogus"], self.env)
+        self.assertEqual(list((self.home / ".codex/skills").glob("astack-*")), [])
+        with self.assertRaises(ValueError):
+            setup.uninstall(["codex", "bogus"], self.env)
+        import subprocess
+        r = subprocess.run([str(ROOT / "setup"), "--host", "codex", "bogus"], capture_output=True, text=True,
+                           env={**os.environ, "ASTACK_SETUP_HOME": str(self.home)})
+        self.assertEqual(r.returncode, 2)
+        self.assertEqual(list((self.home / ".codex/skills").glob("astack-*")), [])
+
+    def test_auto_expands_in_list(self):
+        out = setup.install(["auto", "cli"], self.env, dry_run=True)
+        self.assertTrue(any("astack-spec" in l for l in out))
+        self.assertEqual(sum(1 for l in out if ".local/bin/astack" in l), 1)
+
+    def test_aside_recopy_failure_keeps_old(self):
+        import shutil
+        from unittest import mock
+        setup.install(["aside"], self.env)
+        d = self.home / ".aside/u/0/skills/user/astack-spec"
+        with mock.patch.object(shutil, "copytree", side_effect=OSError("boom")):
+            with self.assertRaises(OSError):
+                setup.install(["aside"], self.env)
+        self.assertTrue((d / ".astack-managed").is_file())
+        self.assertTrue((d / "SKILL.md").is_file())
+        self.assertFalse((d.parent / ".astack-spec.tmp-astack").exists())
+
     def test_setup_script_runs(self):
         import subprocess
         r = subprocess.run([str(ROOT / "setup"), "--host", "codex", "--dry-run"], capture_output=True, text=True,
