@@ -11,7 +11,7 @@
 | clone | `git clone --depth 200 <url> ~/.cache/astack/repos/<owner>__<repo>` | Bash git | 작업 폴더에 클론하지 않는다. 이유 찾기가 시작 커밋에 못 닿으면 `git fetch --deepen=2000` 또는 `gh api …/commits?path=<파일>` |
 | subagent | Agent(`general-purpose`) / Codex `spawn_agent` | subagent 도구 | 없으면 순차 |
 | inline-assets | `astack inline <f>` | 같음 | `img src`, `data-img` |
-| rooms-link | `astack done`이 `rooms link` 호출 | 같음 | 없으면 건너뜀 |
+| rooms-link | `rooms` CLI가 있으면 그것, 없으면 `astack done`이 `~/rooms/<방>/`에 직접 링크(방 없으면 inbox) | 같음 | 없으면 건너뜀 |
 | memory | `astack memory add|search` | 같음 | |
 | route | `astack route "<입력>"` | 같음 | YouTube는 needs_judgment |
 | course-check | `astack course check <폴더>` | 같음 | 지도·장·퀴즈·링크 |

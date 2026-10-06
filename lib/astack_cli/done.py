@@ -1,9 +1,49 @@
 import datetime
+import os
 import shutil
 import subprocess
 from pathlib import Path
 
 from . import check, paths
+
+
+def _free_name(room_dir: Path, name: str) -> Path:
+    link = room_dir / name
+    if not os.path.lexists(link):
+        return link
+    stem, ext = os.path.splitext(name)
+    n = 2
+    while True:
+        link = room_dir / f"{stem} ({n}){ext}"
+        if not os.path.lexists(link):
+            return link
+        n += 1
+
+
+def link_into_rooms(p: Path, room: str | None, home: Path) -> str:
+    slug = room or "inbox"
+    if (not slug or "/" in slug or "\\" in slug or ".." in slug
+            or slug.startswith(".") or "\0" in slug):
+        return f"rooms 링크 건너뜀: 방 이름이 올바르지 않음: {slug}"
+    try:
+        rhome = Path(os.path.realpath(home))
+        rp = Path(os.path.realpath(p))
+        if rp == rhome or rhome in rp.parents:
+            return "rooms 링크 건너뜀: Home 안의 파일"
+        if home.is_dir():
+            for room_dir in sorted(home.iterdir()):
+                if not room_dir.is_dir() or room_dir.is_symlink():
+                    continue
+                for f in sorted(room_dir.iterdir()):
+                    if f.is_symlink() and Path(os.path.realpath(f)) == rp:
+                        return f"rooms: 이미 연결됨 {f}"
+        room_dir = home / slug
+        room_dir.mkdir(parents=True, exist_ok=True)
+        link = _free_name(room_dir, p.name)
+        os.symlink(str(p), link)
+        return f"rooms: {link}"
+    except OSError as e:
+        return f"rooms 링크 실패: {e}"
 
 
 def done(path, skill: str, room: str | None = None, force: bool = False,
@@ -36,6 +76,8 @@ def done(path, skill: str, room: str | None = None, force: bool = False,
                 notes.append(f"rooms link 실패({r.returncode}): {r.stderr.strip()[:200]}")
         except (OSError, subprocess.TimeoutExpired) as e:
             notes.append(f"rooms link 실패: {e}")
+    elif (home := paths.rooms_home()) is not None:
+        notes.append(link_into_rooms(p, room, home))
     else:
         notes.append("rooms 없음: 방 링크 건너뜀")
     return 0, notes
