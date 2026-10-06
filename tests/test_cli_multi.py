@@ -18,6 +18,7 @@ class MultiFileTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
         os.environ["ASTACK_HOME"] = str(self.dir / "home")
+        os.environ["ASTACK_ROOMS_HOME"] = str(self.dir / "no-rooms")
         self.old_path = os.environ["PATH"]
         os.environ["PATH"] = str(self.dir / "bin")  # rooms 없음
         self.folder = self.dir / "out"
@@ -31,6 +32,7 @@ class MultiFileTest(unittest.TestCase):
     def tearDown(self):
         os.environ["PATH"] = self.old_path
         os.environ.pop("ASTACK_HOME", None)
+        os.environ.pop("ASTACK_ROOMS_HOME", None)
         self.tmp.cleanup()
 
     def run_cli(self, *argv):
