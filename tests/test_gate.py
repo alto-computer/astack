@@ -59,5 +59,21 @@ class GateCliTest(unittest.TestCase):
             self.assertEqual((code, out.strip()), (0, "gate: 통과"))
 
 
+    def test_unreadable_file_exits_2(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "src.html").write_text(SRC, encoding="utf-8")
+            (d / "bin.html").write_bytes(b"\xff\xfe\x00bad")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                code = cli.main(["gate", "paper", str(d / "bin.html"), "--source", str(d / "src.html")])
+            self.assertEqual(code, 2)
+            self.assertIn(f"astack gate: {d / 'bin.html'}: ", err.getvalue())
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                code = cli.main(["gate", "paper", str(d / "nope.html"), "--source", str(d / "src.html")])
+            self.assertEqual(code, 2)
+
+
 if __name__ == "__main__":
     unittest.main()

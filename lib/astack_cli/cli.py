@@ -66,7 +66,7 @@ def _consolidate(args) -> int:
         return 0
     out = Path(args.html)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(memory.render_report(rep, datetime.date.today()), encoding="utf-8")
+    out.write_text(memory.render_report(rep, datetime.date.today(), dry_run=args.dry_run), encoding="utf-8")
     _inline.inline_file(out)
     print(out)
     return 0
@@ -74,9 +74,18 @@ def _consolidate(args) -> int:
 
 def _cmd_gate(args) -> int:
     nums = []
-    if args.numbers:
-        nums = [l.strip() for l in Path(args.numbers).read_text(encoding="utf-8").splitlines() if l.strip()]
-    miss = _gate.paper(Path(args.out).read_text(encoding="utf-8"), _gate.source_text(args.source), nums)
+    cur = args.numbers or args.out
+    try:
+        if args.numbers:
+            nums = [l.strip() for l in Path(args.numbers).read_text(encoding="utf-8").splitlines() if l.strip()]
+        cur = args.out
+        out_text = Path(args.out).read_text(encoding="utf-8")
+        cur = args.source
+        src_text = _gate.source_text(args.source)
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"astack gate: {cur}: {e}", file=sys.stderr)
+        return 2
+    miss = _gate.paper(out_text, src_text, nums)
     for m in miss:
         print(f"빠짐: {m}")
     if not miss:

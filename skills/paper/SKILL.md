@@ -35,13 +35,14 @@ description: Use when 사용자가 논문 PDF나 arXiv 링크를 읽기 쉬운 �
 - 강조(`<mark>`, `<b>`)는 아껴 쓴다.
 
 ## 완료 전 체크
-- [ ] figure·table 개수 = 원문 캡션 개수
+- [ ] figure·table 레이블이 결과물에 모두 있다(astack gate paper)
 - [ ] 수치 목록이 모두 결과물에 있다
 - [ ] 섹션 제목·순서가 원문과 같다
 - [ ] 포스트잇은 접혀 있고, 원문 내용은 하나도 접혀 있지 않다
 - [ ] `astack check` 에러 0
 
 ## Gotchas
+- `astack gate paper`는 바닥이지 증명이 아니다. 이미지 개수에는 표 이미지와 덤 이미지도 들어가므로 figure 목록을 눈으로도 맞춰 본다.
 - 그림은 오른쪽 칸(`.vis`)과 장면 안 모바일 칸(`.vis-inl`)에 둘 다 넣는다. 복사한 SVG의 id는 바꾼다(check가 dup-id로 잡는다).
 - 수식이 많으면 KaTeX를 쓰고 싶어지지만 외부 스크립트는 check가 막는다. 수식은 HTML로 조판하거나 원문 쪽 이미지를 잘라 넣는다.
 - `astack pdf pages`는 첫 실행에 swift 컴파일로 10초쯤 걸린다.

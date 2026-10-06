@@ -385,13 +385,15 @@ def _li(items) -> str:
     return "<ul>" + "".join(f"<li>{html_escape(str(i))}</li>" for i in items) + "</ul>" if items else "<p>없음</p>"
 
 
-def render_report(rep: dict, day: datetime.date) -> str:
+def render_report(rep: dict, day: datetime.date, dry_run: bool = False) -> str:
     esc = html_escape
     if changed(rep):
         line = (f"기록 {rep['before']}→{rep['after']}, 합침 {rep['merged']}, 대체 {len(rep['superseded'])}, "
                 f"감쇠 {len(rep['decayed'])}, 지움 {len(rep['dropped'])}, 승격 {len(rep['promoted'])}")
     else:
         line = "바뀐 것 없음"
+    if dry_run:
+        line = "미리보기 (적용 안 됨) · " + line
     patches = "".join(
         f"<li><b>{esc(p['key'])}</b> (교정 {p['count']}번): " + " / ".join(esc(i) for i in p["insights"]) + "</li>"
         for p in rep["patch_suggestions"])
