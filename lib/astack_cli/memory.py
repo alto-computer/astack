@@ -64,7 +64,7 @@ def search(query: str) -> list[dict]:
     if not f.exists():
         return []
     out = []
-    for line in f.read_text(encoding="utf-8").splitlines():
+    for line in _split(f.read_bytes()):
         try:
             rec = json.loads(line)
         except json.JSONDecodeError:
