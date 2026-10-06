@@ -272,7 +272,12 @@ def _goal_list(args) -> int:
 
 
 def _goal_run(args) -> int:
-    for g in _goal.run(max_goals=args.max, host=args.host):
+    try:
+        until = None if args.until == "none" else datetime.datetime.strptime(args.until, "%H:%M").time()
+    except ValueError:
+        print(f"astack goal: --until은 HH:MM 또는 none: {args.until}", file=sys.stderr)
+        return 2
+    for g in _goal.run(max_goals=args.max, host=args.host, until=until):
         print(f"{g['id']}\t{g['status']}\t{g['reason'] or ''}")
     return 0
 
@@ -283,10 +288,13 @@ def _goal_report(args) -> int:
     except ValueError:
         print(f"astack goal: 날짜는 YYYY-MM-DD, yesterday, today: {args.date}", file=sys.stderr)
         return 2
-    items = _goal.report(day)
+    items = _goal.report(None if args.new else day, new=args.new)
     if not items:
         return 0
     print(_goal.report_text(items) if args.text else json.dumps(items, ensure_ascii=False))
+    if args.new:
+        sys.stdout.flush()
+        _goal.mark_reported(items)
     return 0
 
 
@@ -378,10 +386,12 @@ def build_parser() -> argparse.ArgumentParser:
     gr = gs.add_parser("run", help="이어서 할 것과 큐의 것을 실행")
     gr.add_argument("--max", type=int, default=3)
     gr.add_argument("--host", choices=["claude", "codex"], default="claude")
+    gr.add_argument("--until", default="06:30", help="이 시각 뒤로는 새 goal을 시작하지 않음(HH:MM, none)")
     gr.set_defaults(fn=_goal_run)
     gp = gs.add_parser("report", help="그날 끝난 goal 보고")
     gp.add_argument("--date", default="today", help="YYYY-MM-DD, yesterday, today")
     gp.add_argument("--text", action="store_true", help="Telegram용 짧은 글")
+    gp.add_argument("--new", action="store_true", help="아직 보고하지 않은 끝난 goal 전부, 출력 후 보고됨 표시(--date 무시)")
     gp.set_defaults(fn=_goal_report)
     ga = sub.add_parser("gate", help="무손실 검사")
     gas = ga.add_subparsers(dest="gate_cmd", required=True)

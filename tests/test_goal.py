@@ -229,6 +229,56 @@ class GoalTest(unittest.TestCase):
         self.assertIn("✗ 실패한 질문", out)
         self.assertIn("result.json 없음", out)
 
+    def test_until_stops_new_goals_and_caps_timeout(self):
+        for i in range(3):
+            self._add(f"q{i}", i)
+        clock = iter([datetime.datetime(2026, 10, 6, 5, 0), datetime.datetime(2026, 10, 6, 6, 40)])
+        calls = []
+        out = goal.run(runner=writer(OK, calls=calls), now=T0, until=datetime.time(6, 30),
+                       clock=lambda: next(clock))
+        self.assertEqual(len(out), 1)  # 두 번째 goal은 06:30이 지나 시작하지 않는다
+        self.assertEqual(calls[0][1]["timeout"], 90 * 60)  # min(3시간, 남은 90분)
+        self.assertEqual([g["status"] for g in goal.list_goals()].count("queued"), 2)
+
+    def test_until_wraps_past_midnight(self):
+        self._add("q")
+        calls = []
+        goal.run(runner=writer(OK, calls=calls), now=datetime.datetime(2026, 10, 5, 23, 0),
+                 until=datetime.time(6, 30), clock=lambda: datetime.datetime(2026, 10, 6, 6, 0))
+        self.assertEqual(calls[0][1]["timeout"], 30 * 60)
+
+    def test_until_default_cli_is_0630(self):
+        self._add("q")
+        seen = {}
+        with mock.patch.object(goal, "run", side_effect=lambda **kw: seen.update(kw) or []):
+            self.assertEqual(cli.main(["goal", "run"]), 0)
+        self.assertEqual(seen["until"], datetime.time(6, 30))
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.main(["goal", "run", "--until", "25:99"]), 2)
+
+    def test_report_new_includes_late_finish_once(self):
+        self._add("늦게 끝난 질문")
+        goal.run(runner=writer(OK), now=T0)
+        g = goal.list_goals()[0]
+        g["finished"] = "2026-10-05T09:30:00"  # 어제 07시 보고 뒤에 끝남
+        goal._save(g)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.assertEqual(cli.main(["goal", "report", "--new", "--text"]), 0)
+        self.assertIn("✓ 늦게 끝난 질문", buf.getvalue())
+        self.assertTrue(goal.list_goals()[0].get("reported"))
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.assertEqual(cli.main(["goal", "report", "--new", "--text"]), 0)
+        self.assertEqual(buf.getvalue(), "")
+
+    def test_report_by_date_does_not_stamp(self):
+        self._add("q")
+        goal.run(runner=writer(OK), now=T0)
+        with contextlib.redirect_stdout(io.StringIO()):
+            cli.main(["goal", "report", "--text", "--date", "today"])
+        self.assertFalse(goal.list_goals()[0].get("reported"))
+
     def test_report_bad_date(self):
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(cli.main(["goal", "report", "--date", "nope"]), 2)

@@ -136,8 +136,16 @@ def _fresh(g: dict) -> dict | None:
     return cur
 
 
+def _deadline(start: datetime.datetime, until: datetime.time) -> datetime.datetime:
+    """start 뒤 처음 오는 until 시각(자정을 넘길 수 있다)."""
+    d = datetime.datetime.combine(start.date(), until)
+    return d if d > start else d + datetime.timedelta(days=1)
+
+
 def run(max_goals: int = 3, host: str = "claude", runner=subprocess.run, now=None,
-        timeout: int = 3 * 3600) -> list[dict]:
+        timeout: int = 3 * 3600, until: datetime.time | None = None,
+        clock=datetime.datetime.now) -> list[dict]:
+    """until이 있으면 그 시각 뒤로는 새 goal을 시작하지 않고, goal마다 남은 시간까지만 준다."""
     paths.goals_dir().mkdir(parents=True, exist_ok=True)
     with open(paths.goals_dir() / ".run.lock", "a") as lk:
         try:
@@ -149,12 +157,19 @@ def run(max_goals: int = 3, host: str = "claude", runner=subprocess.run, now=Non
         resume = [g for g in goals if g.get("status") == "running" and not _alive(g.get("pid"))]
         queued = [g for g in goals if g.get("status") == "queued"]
         out = []
+        deadline = _deadline(now or clock(), until) if until else None
         for g in (resume + queued)[:max(0, max_goals - live)]:
+            limit = timeout
+            if deadline:
+                left = int((deadline - clock()).total_seconds())
+                if left <= 0:
+                    break
+                limit = min(timeout, left)
             cur = _fresh(g)
             if cur is None:
                 continue
             try:
-                out.append(_run_one(cur, host, runner, now or datetime.datetime.now(), timeout))
+                out.append(_run_one(cur, host, runner, now or datetime.datetime.now(), limit))
             except Exception as e:  # 한 goal의 오류가 나머지를 막지 않게
                 cur.update(status="failed", pid=None, reason=f"오류: {type(e).__name__}: {e}",
                            finished=datetime.datetime.now().isoformat(timespec="seconds"))
@@ -166,10 +181,15 @@ def run(max_goals: int = 3, host: str = "claude", runner=subprocess.run, now=Non
         return out
 
 
-def report(day: datetime.date) -> list[dict]:
+def report(day: datetime.date | None = None, new: bool = False) -> list[dict]:
+    """day: 그날 끝난 것. new: 아직 보고하지 않은 끝난 것 전부(07시 뒤에 끝난 goal도 다음 보고에 나온다)."""
     out = []
     for g in list_goals():
-        if g.get("status") not in ("done", "failed") or not (g.get("finished") or "").startswith(day.isoformat()):
+        if g.get("status") not in ("done", "failed"):
+            continue
+        if new and g.get("reported"):
+            continue
+        if not new and not (g.get("finished") or "").startswith(day.isoformat()):
             continue
         r = {}
         try:
@@ -180,9 +200,20 @@ def report(day: datetime.date) -> list[dict]:
             r = {}
         sm = r.get("summary") or []
         sm = sm if isinstance(sm, list) else [str(sm)]
-        out.append({"question": g.get("question", ""), "status": g["status"], "summary": [str(x) for x in sm][:3],
+        out.append({"id": g["id"], "question": g.get("question", ""), "status": g["status"], "summary": [str(x) for x in sm][:3],
                     "map": r.get("map"), "reason": g.get("reason")})
     return out
+
+
+def mark_reported(items: list[dict], when: datetime.datetime | None = None) -> None:
+    stamp = (when or datetime.datetime.now()).isoformat(timespec="seconds")
+    for i in items:
+        try:
+            g = json.loads((paths.goals_dir() / i["id"] / "goal.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        g["reported"] = stamp
+        _save(g)
 
 
 def report_text(items: list[dict]) -> str:

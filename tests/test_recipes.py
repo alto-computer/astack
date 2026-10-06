@@ -134,6 +134,13 @@ class TestRecipes(unittest.TestCase):
             "Missing schedule '0 1 * * *' for astack-night",
         )
 
+    def test_cron_night_has_deadline_and_morning_reports_unreported(self):
+        with open(os.path.join(self.recipe_dir, "hermes", "cron.yaml"), encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("astack goal run --max 3 --host claude --until 06:30", content)
+        self.assertIn("astack goal report --new --text", content)
+        self.assertNotIn("--date today", content)
+
     def test_hermes_files_start_with_validation_note(self):
         """Test that Hermes files start with 검증 전 comment"""
         hermes_files = [
