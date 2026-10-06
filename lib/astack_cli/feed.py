@@ -3,6 +3,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from . import memory, paths
@@ -74,23 +75,84 @@ def latest(url: str, limit: int = 5, cookies: str | None = None, runner=subproce
     for e in entries:
         if e.get("id"):
             out.append({"id": e["id"], "title": e.get("title", ""), "url": f"https://www.youtube.com/watch?v={e['id']}",
-                        "duration": e.get("duration") or 0, "upload_date": e.get("upload_date") or ""})
+                        "duration": e.get("duration") or 0, "upload_date": _entry_date(e)})
     return out
+
+
+def _entry_date(e: dict) -> str:
+    """upload_date 우선, 없으면 timestamp(UTC)를 YYYYMMDD로. 둘 다 없으면 ""(날짜 없음)."""
+    if e.get("upload_date"):
+        return str(e["upload_date"])
+    ts = e.get("timestamp")
+    if isinstance(ts, (int, float)) and not isinstance(ts, bool) and ts > 0:
+        try:
+            return datetime.fromtimestamp(ts, timezone.utc).strftime("%Y%m%d")
+        except (OverflowError, OSError, ValueError):
+            return ""
+    return ""
+
+
+def fill_dates(vids: list[dict], cookies: str | None = None, runner=subprocess.run) -> int:
+    """날짜 없는 항목의 upload_date를 yt-dlp 한 번으로 채운다(제자리 수정). 채운 개수를 돌려준다.
+
+    비공개·멤버십 영상이 섞이면 yt-dlp는 나머지를 찍고 exit 1이라, 실패해도 stdout은 읽는다.
+    하나도 못 읽었을 때만 MediaError(원인은 _yt가 붙인 메시지)."""
+    if not vids:
+        return 0
+    cmd = ["yt-dlp", "--skip-download", "--no-warnings", "--ignore-errors", "--print", "%(id)s %(upload_date)s"] \
+        + [v["url"] for v in vids]
+    last = []
+
+    def capture(*a, **kw):
+        last.append(runner(*a, **kw))
+        return last[-1]
+
+    err = None
+    try:
+        r = _yt(cmd, cookies, capture)
+    except MediaError as e:
+        if not last:
+            raise
+        r, err = last[-1], e
+    dates = {}
+    for line in (r.stdout or "").splitlines():
+        parts = line.split()
+        if len(parts) == 2 and re.fullmatch(r"\d{8}", parts[1]):
+            dates[parts[0]] = parts[1]
+    if not dates and err:
+        raise err
+    n = 0
+    for v in vids:
+        if v["id"] in dates:
+            v["upload_date"] = dates[v["id"]]
+            n += 1
+    return n
 
 
 def candidates(since: str | None = None, per_channel: int = 5, cookies: str | None = None, runner=subprocess.run) -> list[dict]:
     seen = seen_ids()
     cut = (since or "").replace("-", "")
     out = []
+    taken = set(seen)
     for ch in whitelist():
         try:
             vids = latest(ch["url"], per_channel, cookies=cookies, runner=runner)
         except MediaError as e:
             print(f"astack feed: 건너뜀 {ch['name']}: {e}", file=sys.stderr)
             continue
+        todo = [v for v in vids if not v["upload_date"] and v["id"] not in seen]
+        if todo and cut:
+            try:
+                fill_dates(todo, cookies=cookies, runner=runner)
+            except MediaError as e:
+                print(f"astack feed: 날짜를 못 읽음 {ch['name']}: {e}", file=sys.stderr)
         for v in vids:
-            if v["id"] in seen or (cut and v["upload_date"] and v["upload_date"] < cut):
+            if v["id"] in taken or (cut and v["upload_date"] and v["upload_date"] < cut):
                 continue
+            taken.add(v["id"])
             out.append({**v, "channel": ch["name"]})
-    out.sort(key=lambda v: v["upload_date"], reverse=True)
-    return out
+    undated = [v for v in out if not v["upload_date"]]
+    if undated and cut:
+        print(f"astack feed: 날짜 없는 후보 {len(undated)}개 — since로 거르지 못함", file=sys.stderr)
+    dated = sorted((v for v in out if v["upload_date"]), key=lambda v: v["upload_date"], reverse=True)
+    return dated + undated
