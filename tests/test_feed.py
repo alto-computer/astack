@@ -159,6 +159,54 @@ class FeedTest(unittest.TestCase):
             got = feed.candidates(runner=runner)
         self.assertEqual([c["id"] for c in got], ["DATEDDATEDD", "UNDATEDUNDA"])
 
+    def test_partial_print_output_is_used_despite_exit_1(self):
+        feed.seed("C", "https://www.youtube.com/@c")
+
+        def runner(cmd, **kw):
+            if "--print" in cmd:
+                self.assertIn("--ignore-errors", cmd)
+                return R("NEWNEWNEWNE 20261004\nNA\nPRIVATEPRIV NA\nbad line extra 20261004\n", 1)
+            return R(self._flat([("NEWNEWNEWNE", None), ("PRIVATEPRIV", None)]))
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            got = feed.candidates(since="2026-10-01", runner=runner)
+        self.assertEqual([(c["id"], c["upload_date"]) for c in got], [("NEWNEWNEWNE", "20261004"), ("PRIVATEPRIV", "")])
+        self.assertNotIn("못 읽음", stderr.getvalue())
+        self.assertIn("날짜 없는 후보 1개", stderr.getvalue())
+
+    def test_no_since_makes_no_fallback_call_and_no_warning(self):
+        feed.seed("C", "https://www.youtube.com/@c")
+        calls = []
+
+        def runner(cmd, **kw):
+            calls.append(cmd)
+            return R(self._flat([("AAAAAAAAAAA", None)]))
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            got = feed.candidates(runner=runner)
+        self.assertEqual([c["id"] for c in got], ["AAAAAAAAAAA"])
+        self.assertFalse(any("--print" in c for c in calls))
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_nonpositive_timestamp_is_undated(self):
+        self.assertEqual(feed._entry_date({"timestamp": 0}), "")
+        self.assertEqual(feed._entry_date({"timestamp": -5}), "")
+
+    def test_same_video_in_two_channels_appears_once(self):
+        feed.seed("A", "https://www.youtube.com/@a")
+        feed.seed("B", "https://www.youtube.com/@b")
+        runner = lambda cmd, **kw: R(json.dumps({"entries": [{"id": "AAAAAAAAAAA", "upload_date": "20261004"}]}))
+        got = feed.candidates(runner=runner)
+        self.assertEqual([(c["id"], c["channel"]) for c in got], [("AAAAAAAAAAA", "A")])
+
+    def test_dated_entries_sort_newest_first(self):
+        feed.seed("C", "https://www.youtube.com/@c")
+        runner = lambda cmd, **kw: R(json.dumps({"entries": [
+            {"id": "OLDOLDOLDOL", "upload_date": "20261001"}, {"id": "NEWNEWNEWNE", "upload_date": "20261005"}]}))
+        self.assertEqual([c["id"] for c in feed.candidates(runner=runner)], ["NEWNEWNEWNE", "OLDOLDOLDOL"])
+
     def test_channel_failure_skips_that_channel(self):
         feed.seed("Bad", "https://www.youtube.com/@bad")
         self.assertEqual(feed.candidates(runner=lambda cmd, **kw: R("", 1)), [])
