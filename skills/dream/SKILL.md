@@ -11,6 +11,7 @@ description: Use when 하루를 마무리하며 오늘 생긴 이해물을 엮�
 
 ## 워크플로
 1. `astack dream collect` → `today`, `spaced`, `weekly`, `week`.
+   `collect`는 `astack done` 기록에 더해 Rooms 방에 오늘 들어온 문서도 읽는다(`source: rooms`). Rooms가 없으면 기록만.
 2. 오늘 이해물이 0개면 Journal을 만들지 않고 "오늘 쌓인 이해물이 없습니다" 한 줄로 끝낸다.
 3. 오늘 이해물을 읽는다(각 파일의 30초·3분 층과 "그래서 나한테는?").
 4. `assets/template.html`을 채운다:
