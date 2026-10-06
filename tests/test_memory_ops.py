@@ -506,6 +506,8 @@ class ReportTest(MemoryOpsBase):
         self.assertIn("기록 5→3, 합침 1, 대체 1, 감쇠 1, 지움 1, 승격 1", html)
         self.assertIn("제안", html)
         self.assertIn("자동 적용", html)
+        self.assertIn("astack memory consolidate가 썼습니다", html)  # cron 스크립트가 쓰지 Claude가 쓰지 않는다
+        self.assertNotIn("Claude Code가 썼습니다", html)
 
     def test_report_unchanged(self):
         rep = self._rep(before=2, after=2, merged=0, superseded=[], decayed=[], dropped=[], promoted=[], patch_suggestions=[])

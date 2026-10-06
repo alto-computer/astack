@@ -58,5 +58,19 @@ class MultiFileTest(unittest.TestCase):
         self.assertIn("a.html", err)
 
 
+    def test_done_empty_folder_is_error(self):
+        empty = self.dir / "empty"
+        empty.mkdir()
+        code, out, err = self.run_cli("done", str(empty), "--skill", "spec")
+        self.assertEqual(code, 1)
+        self.assertEqual(out, [])
+        self.assertIn(f"astack done: {empty}: html 없음", err)
+
+    def test_done_missing_file_named_once(self):
+        missing = self.dir / "nope.html"
+        code, _, err = self.run_cli("done", str(missing), "--skill", "spec")
+        self.assertEqual(code, 1)
+        self.assertEqual(err.count("nope.html"), 1, err)
+
 if __name__ == "__main__":
     unittest.main()

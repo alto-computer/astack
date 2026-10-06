@@ -50,6 +50,8 @@ class RouteTest(unittest.TestCase):
 
     def test_recall_does_not_swallow_questions(self):
         self.assertEqual(route.route("최근 나온 모델 중 뭐가 제일 빠른지 알아봐").skill, "quest")
+        self.assertEqual(route.route("최근에 나온 것 중 제일 빠른 걸 찾아봐").skill, "quest")
+        self.assertEqual(route.route("최근에 나온 것 보여줘").skill, "recall")
 
     def test_today_learned_is_quest_not_dream(self):
         r = route.route("오늘 배운 거 정리")

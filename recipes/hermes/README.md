@@ -32,5 +32,5 @@
 1. Telegram 설정 제거
 2. Cron 작업 비활성화
 3. Superpowers 플러그인 제거 (`hermes plugins uninstall obra/superpowers`)
-4. 기본 설정 초기화 (`./setup --reset`)
+4. astack 설치 되돌리기 (`./setup --uninstall --host cli claude`)
 5. 저장소 제거

@@ -429,7 +429,7 @@ def render_report(rep: dict, day: datetime.date, dry_run: bool = False) -> str:
   <h2>지운 기록</h2>
   {_li(rep['dropped'])}
 </section>
-<footer data-astack="source">출처: memory.jsonl · 정리일 {day.isoformat()} · Claude Code가 썼습니다</footer>
+<footer data-astack="source">출처: memory.jsonl · 정리일 {day.isoformat()} · astack memory consolidate가 썼습니다</footer>
 </div>
 </body></html>
 """

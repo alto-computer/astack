@@ -154,6 +154,21 @@ class TestRecipes(unittest.TestCase):
         self.assertIn("astack goal report --new --text", content)
         self.assertNotIn("--date today", content)
 
+    def test_hermes_undo_uses_real_setup_flags(self):
+        with open(os.path.join(self.recipe_dir, "hermes", "README.md"), encoding="utf-8") as f:
+            content = f.read()
+        self.assertNotIn("--reset", content)
+        self.assertIn("./setup --uninstall --host cli claude", content)
+
+    def test_spec_reference_reachable_from_copies(self):
+        """Aside 복사본에서는 ../../ 상대 경로가 깨진다. 설치된 astack 링크로 레포를 찾는 길을 함께 적는다."""
+        root = os.path.join(self.recipe_dir, "..")
+        with open(os.path.join(root, "skills", "spec", "SKILL.md"), encoding="utf-8") as f:
+            content = f.read()
+        ref = "docs/superpowers/specs/references/spec-reference-rooms-v1.html"
+        self.assertIn(f'"$(dirname "$(readlink ~/.local/bin/astack)")/../{ref}"', content)
+        self.assertTrue(os.path.isfile(os.path.join(root, "bin", "..", ref)))
+
     def test_hermes_files_start_with_validation_note(self):
         """Test that Hermes files start with 검증 전 comment"""
         hermes_files = [

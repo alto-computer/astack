@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 DREAM = re.compile(r"^(오늘|하루)\s*정리")
-RECALL = re.compile(r"(지난\s?주|어제|이번\s?주|최근).{0,6}(거|것)|관련.{0,6}(뭐|무엇).{0,6}쌓|쌓인\s?(거|것)|^recall\b")
+RECALL = re.compile(r"(지난\s?주|어제|이번\s?주|최근).{0,6}(거|것)(?!\s*중)|관련.{0,6}(뭐|무엇).{0,6}쌓|쌓인\s?(거|것)|^recall\b")
 
 
 @dataclass

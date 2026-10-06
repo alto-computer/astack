@@ -130,10 +130,15 @@ def _cmd_inline(args) -> int:
 
 def _cmd_done(args) -> int:
     worst = 0
+    for it in args.files:
+        if Path(it).is_dir() and not any(Path(it).glob("*.html")):
+            print(f"astack done: {it}: html 없음", file=sys.stderr)
+            worst = 1
     for f in _expand(args.files):
         code, notes = _done.done(f, args.skill, room=args.room, force=args.force)
         for n in notes:
-            print(f"{f}: {n}" if code else n, file=sys.stderr)
+            named = str(f) in n or str(Path(f).resolve()) in n
+            print(f"{f}: {n}" if code and not named else n, file=sys.stderr)
         if code == 0:
             print(Path(f).resolve())
         worst = max(worst, code)
