@@ -9,6 +9,7 @@ from . import course as _course
 from . import done as _done
 from . import dream as _dream
 from . import feed as _feed
+from . import gate as _gate
 from . import goal as _goal
 from . import inline as _inline
 from . import media as _media
@@ -69,6 +70,18 @@ def _consolidate(args) -> int:
     _inline.inline_file(out)
     print(out)
     return 0
+
+
+def _cmd_gate(args) -> int:
+    nums = []
+    if args.numbers:
+        nums = [l.strip() for l in Path(args.numbers).read_text(encoding="utf-8").splitlines() if l.strip()]
+    miss = _gate.paper(Path(args.out).read_text(encoding="utf-8"), _gate.source_text(args.source), nums)
+    for m in miss:
+        print(f"빠짐: {m}")
+    if not miss:
+        print("gate: 통과")
+    return 1 if miss else 0
 
 
 def _cmd_check(args) -> int:
@@ -349,6 +362,13 @@ def build_parser() -> argparse.ArgumentParser:
     gp.add_argument("--date", default="yesterday", help="YYYY-MM-DD, yesterday, today")
     gp.add_argument("--text", action="store_true", help="Telegram용 짧은 글")
     gp.set_defaults(fn=_goal_report)
+    ga = sub.add_parser("gate", help="무손실 검사")
+    gas = ga.add_subparsers(dest="gate_cmd", required=True)
+    gp2 = gas.add_parser("paper", help="논문 리더가 원문의 figure·table·수치를 다 담았는지")
+    gp2.add_argument("out")
+    gp2.add_argument("--source", required=True)
+    gp2.add_argument("--numbers", help="한 줄에 수치 하나인 파일")
+    gp2.set_defaults(fn=_cmd_gate)
     se = sub.add_parser("setup", help="호스트별 설치 (./setup과 같다)")
     se.add_argument("rest", nargs=argparse.REMAINDER)
     se.set_defaults(fn=_cmd_setup)

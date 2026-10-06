@@ -26,7 +26,7 @@ description: Use when 사용자가 논문 PDF나 arXiv 링크를 읽기 쉬운 �
 3. figure 전량: 쪽 이미지를 보고 상자를 정해 `astack pdf crop <page.png> x y w h docs/astack/paper/<날짜>-<slug>-figs/fig-N.png`(표는 `tab-N.png`). 좌표는 쪽 PNG의 실제 픽셀(긴 변 2200, `pdf pages`가 stderr에 쪽 크기를 알린다). Read 도구가 줄여 보여 주면 비율을 곱한다. 애매하면 캡션 위 블록까지 넓게 자른다(누락보다 낫다). 개수를 본문의 "Figure N/Table N" 개수와 맞춘다.
 4. 매핑: 어떤 figure·수치가 어떤 주장을 받치는지 표로 적고, 원문 수치 목록을 만든다(6번 검증에 쓴다).
 5. `assets/template.html`을 복사해 섹션마다 `.secHead`, 하위 섹션마다 장면(`data-i`)과 그림 칸(`data-v`)을 늘린다. figure는 `<img src="<날짜>-<slug>-figs/fig-N.png">`. `{{…}}` 자리표시를 모두 채운다. 남으면 check가 막는다.
-6. 무손실 검증(게이트): figure·table 개수와 수치 목록을 결과물과 대조한다. 하나라도 빠지면 채우고 다시.
+6. 무손실 검증(게이트): 4번의 수치 목록을 한 줄에 하나씩 파일로 저장하고 `astack gate paper <결과물.html> --source <원문.html|.txt> --numbers <수치파일>`을 돌린다(`inline` 전이든 후든 된다). `빠짐:` 줄이 나오면 채우고 다시. "gate: 통과"가 나와야 다음으로 간다.
 7. 메타 → `astack inline` → `astack check` → `astack done <f> --skill paper`.
 
 ## 문체
