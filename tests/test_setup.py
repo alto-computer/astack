@@ -47,6 +47,35 @@ class SetupTest(unittest.TestCase):
         self.assertEqual(text.count(BEGIN), 1)
         self.assertTrue(any("/plugin install astack@astack-dev" in l for l in out + out2))
 
+    def test_default_env_roots_follow_astack_home(self):
+        from unittest import mock
+        ah = self.home / "ah"
+        with mock.patch.dict(os.environ, {"ASTACK_HOME": str(ah)}):
+            os.environ.pop("ASTACK_SETUP_HOME", None)
+            self.assertEqual(setup.default_env().roots, ah / "roots")
+        with mock.patch.dict(os.environ, {"ASTACK_HOME": str(ah), "ASTACK_SETUP_HOME": str(self.home)}):
+            self.assertEqual(setup.default_env().roots, self.home / ".astack/roots")
+        setup.install(["cli"], setup.Env(home=self.home, repo=ROOT, roots=ah / "roots"))
+        self.assertEqual((ah / "roots").read_text().strip(), str(self.home / "personal"))
+        self.assertFalse((self.home / ".astack/roots").exists())
+
+    def test_link_into_other_checkout_is_named(self):
+        other = self.home / "old-astack"
+        (other / "skills/spec").mkdir(parents=True)
+        link = self.home / ".codex/skills/astack-spec"
+        link.symlink_to(other / "skills/spec")
+        out = setup.install(["codex"], self.env)
+        self.assertIn(f"건너뜀: {link} (다른 astack 체크아웃을 가리킴: {other / 'skills/spec'})", out)
+        self.assertEqual(link.resolve(), (other / "skills/spec").resolve())
+
+    def test_worktree_repo_warns(self):
+        wt = self.home / "wt"
+        wt.mkdir()
+        (wt / ".git").write_text("gitdir: /elsewhere\n")
+        out = setup.install(["hermes"], setup.Env(home=self.home, repo=wt))
+        self.assertTrue(out[0].startswith("주의:") and "worktree" in out[0], out)
+        self.assertFalse(any(l.startswith("주의:") for l in setup.install(["hermes"], self.env)))
+
     def test_codex_links_every_skill(self):
         setup.install(["codex"], self.env)
         for name in self.skills():

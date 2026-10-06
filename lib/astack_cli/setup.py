@@ -5,6 +5,8 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import paths
+
 BEGIN, END = "<!-- astack:begin -->", "<!-- astack:end -->"
 MARK = ".astack-managed"
 HOSTS = ["cli", "claude", "codex", "aside", "hermes"]
@@ -14,11 +16,15 @@ HOSTS = ["cli", "claude", "codex", "aside", "hermes"]
 class Env:
     home: Path
     repo: Path
+    roots: Path | None = None  # None이면 <home>/.astack/roots
 
 
 def default_env() -> Env:
-    home = Path(os.environ.get("ASTACK_SETUP_HOME") or Path.home())
-    return Env(home=home, repo=Path(__file__).resolve().parents[2])
+    setup_home = os.environ.get("ASTACK_SETUP_HOME")
+    home = Path(setup_home or Path.home())
+    # CLI가 읽는 곳($ASTACK_HOME/roots)에 쓴다. 시험용 ASTACK_SETUP_HOME이면 그 아래.
+    roots = home / ".astack/roots" if setup_home else paths.roots_file()
+    return Env(home=home, repo=Path(__file__).resolve().parents[2], roots=roots)
 
 
 def detect(env: Env) -> list[str]:
@@ -39,6 +45,9 @@ def _skills(env: Env) -> list[Path]:
 def _link(target: Path, link: Path, dry: bool, out: list[str]) -> None:
     if link.is_symlink() and link.resolve() == target.resolve():
         out.append(f"그대로: {link}")
+        return
+    if link.is_symlink() and Path(os.readlink(link)).parts[-2:] == target.parts[-2:]:
+        out.append(f"건너뜀: {link} (다른 astack 체크아웃을 가리킴: {os.readlink(link)})")
         return
     if link.exists() or link.is_symlink():
         out.append(f"건너뜀: {link} (사용자 것)")
@@ -177,10 +186,13 @@ def _resolve_hosts(hosts: list[str], env: Env) -> list[str]:
 
 def install(hosts: list[str], env: Env, dry_run: bool = False) -> list[str]:
     out: list[str] = []
-    for h in _resolve_hosts(hosts, env):
+    resolved = _resolve_hosts(hosts, env)
+    if (env.repo / ".git").is_file():
+        out.append(f"주의: {env.repo}는 git worktree다. 링크가 이 worktree를 가리키게 된다(지우면 깨짐). 본 체크아웃에서 실행하길 권함")
+    for h in resolved:
         if h == "cli":
             _link(env.repo / "bin/astack", env.home / ".local/bin/astack", dry_run, out)
-            roots = env.home / ".astack/roots"
+            roots = env.roots or env.home / ".astack/roots"
             if not roots.exists():
                 out.append(f"roots: {roots}")
                 if not dry_run:
