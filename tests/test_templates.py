@@ -70,6 +70,21 @@ class TemplateTest(unittest.TestCase):
             slots = set(re.findall(r'class="vis" data-v="(\d+)"', html))
             self.assertEqual(scenes, slots, t.name)
 
+    def test_spec_change_key_flows_have_real_diagrams_and_mobile_copies(self):
+        for name, required in {"spec": ["concerns", "us1", "us1-1", "e1"],
+                               "change": ["ux", "flow", "why"]}.items():
+            html = (ROOT / f"skills/{name}/assets/template.html").read_text()
+            for scene_id in required:
+                with self.subTest(skill=name, scene=scene_id):
+                    scene = re.search(rf'<section[^>]*id="{scene_id}".*?</section>', html, re.S).group()
+                    self.assertIn('class="inl vis-inl"', scene)
+                    self.assertIn('<svg', scene)
+                    index = re.search(r'data-i="(\d+)"', scene).group(1)
+                    slot = re.search(rf'<div class="vis" data-v="{index}">(.*?)</div>', html, re.S).group(1)
+                    self.assertIn('<svg', slot)
+                    self.assertIn('role="img"', slot)
+                    self.assertRegex(slot, r'<title(?:\s[^>]*)?>[^<]+</title>')
+
     def test_paper_template_has_postit_and_figure_slots(self):
         html = (ROOT / "skills/paper/assets/template.html").read_text(encoding="utf-8")
         self.assertIn('<details class="postit">', html)
