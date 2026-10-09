@@ -15,6 +15,11 @@ SIGNED = "Claude Code가 썼습니다"
 SIGNERS = re.compile(r"(Claude Code|Codex|Aside|Hermes|astack [a-z ]+)(이|가) 썼습니다")
 SIGNED_SCRIPT = "astack memory consolidate가 썼습니다"  # 에이전트 없이 cron이 만드는 보고
 ABBREV = re.compile(r"\b(vs|e\.g|i\.e|etc|al|cf|Fig|Figs|Eq|No|Dr|Mr|Ms)\.$")
+DEFAULT_WORDS = 1500  # <meta name="astack:words">가 없을 때 본문 어절 상한
+KIT_MARKER = "extracted from spec-reference-rooms-v1.html"  # astack inline이 넣는 alto.css 첫 줄
+# 산문 속 코드 식별자: camelCase, snake_case, 점 들어간 이름(a.b, file.py), 괄호 호출(run())
+TERM = re.compile(r"(?<![\w.])(?:[a-z]+[A-Z]\w*|[A-Za-z]\w*_\w+|[A-Za-z_]\w+(?:\.[A-Za-z_]\w+)+|[A-Za-z_][\w.]*\(\))")
+NOT_PROSE_CLS = re.compile(r"""<(\w+)\b[^>]*class=["'][^"']*\b(src|codehead|apx)\b[^"']*["'][^>]*>.*?</\1>""", re.S | re.I)
 SOURCE_EL = re.compile(r"""<(footer|div|p|section)\b[^>]*data-astack=["']source["'][^>]*>.*?</\1>""", re.S | re.I)
 
 
@@ -159,7 +164,57 @@ def check_html(html: str) -> list[Issue]:
         n = len(s.split())
         if n > MAX_WORDS:
             issues.append(Issue("warn", "long", f"{n}어절 문장: {s[:40]}…"))
+
+    body = re.sub(r"<head\b.*?</head>", " ", html, flags=re.S | re.I)
+    body = NOT_PROSE_CLS.sub(" ", SOURCE_EL.sub(" ", body))
+    prose = prose_text(body)
+    cap = _words_cap(html)
+    words = len(prose.split())
+    if cap is not None and words > cap:
+        issues.append(Issue("warn", "length", f"본문 {words}어절: 상한 {cap}을 넘습니다. 줄이거나 접힌 부록으로"))
+    t = TERM.search(prose)
+    if t:
+        issues.append(Issue("warn", "term", f"산문 속 식별자 \"{t.group(0)}\": 코드 블록이나 .src 줄로 옮기고 본문은 쉬운 말로"))
+    issues += _svg_issues(html)
+    issues += _style_issues(html)
     return issues
+
+
+def _svg_issues(html: str) -> list[Issue]:
+    """SVG 글자 크기 휴리스틱: viewBox 폭이 600을 넘는데 선언된 font-size(속성·style)가 11 미만이면
+    실제 칸(데스크톱 그림 칸 약 600px, 휴대폰 약 400px)에서 12px 아래로 줄어든다. 클래스로만 정한 크기는 보지 않는다."""
+    out: list[Issue] = []
+    for m in re.finditer(r"<svg\b([^>]*)>(.*?)</svg>", html, re.S | re.I):
+        vb = re.search(r"""viewBox=["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)""", m.group(1), re.I)
+        if not vb or "<text" not in m.group(2):
+            continue
+        sizes = [float(x) for x in re.findall(r"""font-size(?:=["']|\s*:\s*)([\d.]+)""", m.group(0), re.I)]
+        if sizes and min(sizes) < 11 and float(vb.group(1)) > 600:
+            out.append(Issue("warn", "svg-text", f"SVG 글자 {min(sizes):g} (viewBox 폭 {float(vb.group(1)):g}): 보이는 크기가 12px 아래입니다. viewBox를 칸 폭 이하로 줄이고 글자를 13 이상으로"))
+            break
+    return out
+
+
+def _style_issues(html: str) -> list[Issue]:
+    """키트(alto.css 표식이 든 <style>) 말고 자기 <style>을 세운다. 키트가 있으면 하나라도, 없으면(자체 스타일을 가진
+    interview·seminar) 두 개부터 경고. 주석과 SVG 안의 <style>은 세지 않는다."""
+    h = re.sub(r"<!--.*?-->|<svg\b.*?</svg>", " ", html, flags=re.S | re.I)
+    blocks = re.findall(r"<style\b[^>]*>(.*?)</style>", h, re.S | re.I)
+    own = [b for b in blocks if KIT_MARKER not in b]
+    limit = 0 if len(own) < len(blocks) else 1
+    if len(own) > limit:
+        return [Issue("warn", "own-style", f"키트 밖 <style> {len(own)}개. 키트 클래스를 쓰고 자체 CSS는 넣지 않는다")]
+    return []
+
+
+def _words_cap(html: str) -> int | None:
+    v = _meta(html, "astack:words")
+    if v is not None and v.strip().lower() == "off":
+        return None
+    try:
+        return int(v) if v else DEFAULT_WORDS
+    except ValueError:
+        return DEFAULT_WORDS
 
 
 def check_file(path) -> list[Issue]:

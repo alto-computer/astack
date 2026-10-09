@@ -241,5 +241,61 @@ class SignerTest(unittest.TestCase):
         self.assertIn("source", codes(GOOD.replace("Claude Code가 썼습니다", "누군가 씀")))
 
 
+    # ── 가독성 경고(2026-10-09) ──
+    def test_length_warns_over_default_cap(self):
+        body = "<p>" + " ".join(["낱말"] * 1600) + "</p>"
+        html = GOOD.replace("</body>", body + "</body>")
+        self.assertIn("length", codes(html, "warn"))
+        self.assertNotIn("length", codes(GOOD, "warn"))
+
+    def test_length_cap_from_meta(self):
+        meta = '<meta name="astack:words" content="20">'
+        body = "<p>" + " ".join(["낱말"] * 30) + "</p>"
+        html = GOOD.replace("<title>", meta + "<title>").replace("</body>", body + "</body>")
+        self.assertIn("length", codes(html, "warn"))
+        html_off = html.replace('content="20"', 'content="off"')
+        self.assertNotIn("length", codes(html_off, "warn"))
+
+    def test_length_skips_collapsed_appendix_and_source(self):
+        meta = '<meta name="astack:words" content="60">'
+        apx = '<details class="apx"><summary>원문</summary><div>' + " ".join(["원문"] * 200) + "</div></details>"
+        html = GOOD.replace("<title>", meta + "<title>").replace("</body>", apx + "</body>")
+        self.assertNotIn("length", codes(html, "warn"))
+
+    def test_term_warns_on_identifier_in_prose(self):
+        for tok in ("readSnapshot", "head_limit", "meta.rs", "write()"):
+            with self.subTest(tok=tok):
+                html = GOOD.replace("</body>", f"<p>여기서 {tok}가 값을 읽는다.</p></body>")
+                ws = [i for i in check.check_html(html) if i.code == "term"]
+                self.assertEqual(len(ws), 1)
+                self.assertIn(tok, ws[0].message)
+                self.assertEqual(ws[0].level, "warn")
+
+    def test_term_ignores_code_src_and_plain_words(self):
+        html = GOOD.replace("</body>", '<p>값은 <code>readSnapshot</code>이 읽는다. Rooms와 AI, 3.2초, e.g. 예시.</p>'
+                            '<p class="src">lib/meta.rs:12 · read_head()</p></body>')
+        self.assertNotIn("term", codes(html, "warn"))
+
+    def test_svg_text_warns_small_text_in_wide_viewbox(self):
+        bad = '<svg viewBox="0 0 960 400"><g font-size="10"><text x="1" y="1">레인</text></g></svg>'
+        ok = '<svg viewBox="0 0 480 380"><g font-size="20"><text x="1" y="1">레인</text></g></svg>'
+        self.assertIn("svg-text", codes(GOOD.replace("</body>", bad + "</body>"), "warn"))
+        self.assertNotIn("svg-text", codes(GOOD.replace("</body>", ok + "</body>"), "warn"))
+        styled = '<svg viewBox="0 0 900 300"><text style="font-size:9px">x</text></svg>'
+        self.assertIn("svg-text", codes(GOOD.replace("</body>", styled + "</body>"), "warn"))
+
+    def test_own_style_beyond_kit_warns(self):
+        kit = "<style>/* extracted from spec-reference-rooms-v1.html by tools/extract_kit.py */ body{}</style>"
+        base = GOOD.replace("<style>body{margin:0}</style>", kit)
+        self.assertNotIn("own-style", codes(base, "warn"))
+        self.assertIn("own-style", codes(base.replace("</head>", "<style>.mine{}</style></head>"), "warn"))
+        # 키트 없이 자기 스타일 하나(interview·seminar)는 괜찮고, 둘이면 경고
+        self.assertNotIn("own-style", codes(GOOD, "warn"))
+        self.assertIn("own-style", codes(GOOD.replace("</head>", "<style>.x{}</style></head>"), "warn"))
+
+    def test_new_warnings_are_never_errors(self):
+        html = GOOD.replace("</body>", "<p>readSnapshot " + " ".join(["낱말"] * 1600) + "</p><style>.x{}</style></body>")
+        self.assertEqual(codes(html), [])
+
 if __name__ == "__main__":
     unittest.main()
