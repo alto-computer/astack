@@ -257,5 +257,25 @@ class TemplateTest(unittest.TestCase):
             self.assertIn(s, html)
 
 
+    def test_skills_carry_length_budget_and_guards(self):
+        design = (ROOT / "skills/design/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("## 길이 예산", design)
+        self.assertIn("| convert-not-summarize | interview, seminar, paper만 |", design)
+        caps = {"dream": ["600"], "quest": ["900", "500"], "spec": ["1,500"], "change": ["600", "1,200"]}
+        for name, nums in caps.items():
+            skill = (ROOT / f"skills/{name}/SKILL.md").read_text(encoding="utf-8")
+            with self.subTest(name=name):
+                for n in nums:
+                    self.assertIn(n, skill)
+                self.assertIn("own-style", skill)
+        for f in ("skills/change/SKILL.md", "skills/design/references/spec-change-visuals.md"):
+            text = (ROOT / f).read_text(encoding="utf-8")
+            with self.subTest(f=f):
+                self.assertNotIn("생략하지 않는다", text)
+                self.assertNotIn("축소하지 않는다", text)
+                self.assertIn("핵심 흐름은 그림 하나와 3줄 이내", text)
+        handoff = (ROOT / "docs/superpowers/specs/2026-10-05-astack-v1-handoff.md").read_text(encoding="utf-8")
+        self.assertIn("2026-10-09 사용자 요청으로 변경", handoff)
+
 if __name__ == "__main__":
     unittest.main()

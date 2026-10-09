@@ -37,6 +37,8 @@ description: Use when 사용자가 슬라이드 발표, 세미나, 강연, 컨�
 - [ ] 제목만 읽어도 논증이 이어지는가
 - [ ] 화자 원문 인용에 타임스탬프가 있는가
 - [ ] 출처 줄에 원본 링크, 요청 원문, "Claude Code가 썼습니다"
+- [ ] 템플릿 밖 `<style>`을 더하지 않았다(check `own-style`). 레이아웃·JS는 템플릿 그대로
+- [ ] 변환이라 단어 상한 없음: `<head>`에 `<meta name="astack:words" content="off">`
 - [ ] `astack check` 에러 0, `{{` 없음
 
 ## Gotchas

@@ -32,6 +32,8 @@ description: Use when 사용자가 팟캐스트, 인터뷰, 대담 영상이나 
 - [ ] 30초(`cover`)와 3분(`standfirst`)만 읽고 무엇을 얻을지 알 수 있는가
 - [ ] 그림 자리가 비었으면 빈 채로, 넣었으면 내장되었는가
 - [ ] 출처 줄(`foot`)에 원본 링크, 요청 원문, "Claude Code가 썼습니다"
+- [ ] 템플릿 밖 `<style>`을 더하지 않았다(check `own-style`). 레이아웃·JS는 템플릿 그대로
+- [ ] 변환이라 단어 상한 없음: `<head>`에 `<meta name="astack:words" content="off">`
 - [ ] `astack check` 에러 0
 - [ ] 사용자가 선호·제외·교정을 말했으면 `astack memory add`
 
