@@ -31,6 +31,7 @@ description: Use when 사용자가 집중 공부 시간에 이미 있는 이해�
 ## 완료 전 체크
 - [ ] 원래 내용을 지우거나 바꾸지 않았다(덧붙이기만)
 - [ ] 답마다 근거 등급과 원문 위치
+- [ ] 덧붙인 부분에 자기 `<style>`을 넣지 않았다(check `own-style`)
 - [ ] `astack check` 에러 0
 
 ## Gotchas

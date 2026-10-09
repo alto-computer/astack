@@ -38,9 +38,13 @@ description: Use when 사용자가 무언가를 공부하거나 알아봐 달라
 ## 장 규칙
 - 30초(`cover`) · 3분(`overview`) · 본문 · "그래서 나한테는?" · 점검 퀴즈(`details.quiz`, 이해형: 왜, 만약, 비교, 적용. 암기 금지. 오답 해설 = 흔한 오해).
 - 개념은 definition-then-case. 부품 3개 이상은 build-up-diagrams. 사실 주장은 evidence-tiers. 모든 주장에 원문 위치.
+- 장마다 용어를 다시 푼다. 독자는 이전 장을 안 읽었을 수 있다. 3분 층의 "이 장에서 쓰는 말"에 지도 `#terms`의 뜻을 한 줄씩 옮긴다.
+- 길이: 장 900어절, 지도 500어절 이내(`astack:words`). bullet 60자·2문장, 섹션당 bullet 5개. 근거는 블록 끝 `.src` 한 줄, `p.why`는 장의 핵심 흐름 1~3개에만.
+- 산문에 코드 식별자를 쓰지 않는다. 이름은 코드 블록이나 `.src`에.
 - 장 제목이 질문 하나로 말해져야 한다. 15분을 넘으면 쪼개고, 너무 짧으면 합친다.
 - 첫 장은 "← 이전"을, 마지막 장은 "다음 →"을 지운다(남기면 course check가 깨진 링크로 잡는다).
-- 지도의 장 목록 표는 장마다 한 줄. 빠지면 course check가 unlinked로 잡는다.
+- 지도는 한 단(`wrap col`)이다. 3분 층은 그림 대신 요약 bullet, 장 목록은 `ol.chlist`(장마다 한 항목), 용어는 접힌 `details.terms`.
+- 지도의 장 목록은 장마다 한 항목. 빠지면 course check가 unlinked로 잡는다.
 
 ## 실험 유형
 1. 가설과 지표(페이지 로드, 스냅샷 시간, 액션 지연, 메모리 등).
@@ -62,6 +66,9 @@ description: Use when 사용자가 무언가를 공부하거나 알아봐 달라
 - [ ] 장마다 퀴즈와 "그래서 나한테는?"
 - [ ] Standard면 why 장과 실험 또는 실습 장이 있다
 - [ ] 같은 개념이 장마다 같은 이름
+- [ ] 장 900어절 · 지도 500어절 이내(check `length` 경고 없음)
+- [ ] 장마다 용어를 다시 풀었다
+- [ ] 키트 밖 `<style>` 블록이 없다(check `own-style`), reader 밖 섹션은 `.prose`
 - [ ] 사용자가 선호·제외·교정을 말했으면 `astack memory add`
 
 ## Gotchas

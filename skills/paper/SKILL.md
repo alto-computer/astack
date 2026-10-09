@@ -39,6 +39,8 @@ description: Use when 사용자가 논문 PDF나 arXiv 링크를 읽기 쉬운 �
 - [ ] 수치 목록이 모두 결과물에 있다
 - [ ] 섹션 제목·순서가 원문과 같다
 - [ ] 포스트잇은 접혀 있고, 원문 내용은 하나도 접혀 있지 않다
+- [ ] 키트 밖 `<style>` 블록이 없다(check `own-style`), reader 밖 섹션은 `.prose`
+- [ ] 변환이라 단어 상한 없음: `<meta name="astack:words" content="off">`(템플릿에 있다)
 - [ ] `astack check` 에러 0
 
 ## Gotchas

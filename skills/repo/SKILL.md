@@ -28,6 +28,8 @@ description: Use when 사용자가 외부 GitHub 레포를 학습 자료로 읽�
 - [ ] 코드 발췌의 줄 번호가 실제 파일과 맞다(두 군데 연다)
 - [ ] 모든 "왜"에 등급이 있다. 근거 없는 의도를 단정하지 않았다
 - [ ] 약점에 근거 링크가 있다
+- [ ] 키트 밖 `<style>` 블록이 없다(check `own-style`), reader 밖 섹션은 `.prose`
+- [ ] 본문 어절이 상한 안(`astack:words`, 없으면 1,500. check `length`)
 - [ ] `astack check` 에러 0
 
 ## Gotchas

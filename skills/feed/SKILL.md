@@ -28,6 +28,8 @@ description: Use when 아침 스케줄(05:00)에 "오늘 30분"을 만들 때, �
 - [ ] 전체 읽는 시간 30분 이내
 - [ ] 편마다 원본 URL이 본문에 있다
 - [ ] 제외 채널이 없다
+- [ ] 키트 밖 `<style>` 블록이 없다(check `own-style`), reader 밖 섹션은 `.prose`
+- [ ] 본문 어절이 상한 안(`astack:words`, 없으면 1,500. check `length`)
 - [ ] `astack check` 에러 0
 
 ## Gotchas

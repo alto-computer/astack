@@ -31,6 +31,8 @@ description: Use when 한 주제(방)에 이해물이 여러 개 쌓였고 사�
 - [ ] 모든 줄에 출처 링크
 - [ ] 부딪히는 주장마다 "왜 다른가"
 - [ ] 읽는 시간 10분 이내
+- [ ] 키트 밖 `<style>` 블록이 없다(check `own-style`), reader 밖 섹션은 `.prose`
+- [ ] 본문 어절이 상한 안(`astack:words`, 없으면 1,500. check `length`)
 
 ## Gotchas
 - 지도에 요약을 쌓으면 금방 두꺼워진다. 줄을 더하기 전에 합칠 줄을 먼저 찾는다.

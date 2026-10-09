@@ -3,6 +3,7 @@
 <meta name="rooms:created" content="[RFC3339 지금 시각]">
 <meta name="rooms:machine" content="[머신 이름]">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="astack:words" content="900">
 <title>{{NN}} {{장 질문}}</title>
 <!--astack:css-->
 </head><body data-depth="all">
@@ -15,14 +16,18 @@
   <p class="l30">{{왜 이 답인가 두 줄}}</p>
 </header>
 <section class="overview" data-astack="3m">
-  <div><div class="kick">3분 · 핵심 구조</div><p>{{일반 정의(통용 이름) → 이 사례 → 깊이 순서 요약}}</p></div>
+  <div><div class="kick">3분 · 핵심 구조</div><p>{{일반 정의(통용 이름) → 이 사례 → 깊이 순서 요약}}</p>
+    <p><b>이 장에서 쓰는 말.</b> {{말}}: {{뜻 한 줄}}. {{말}}: {{뜻 한 줄}}.</p></div>
   <div>{{핵심 그림 SVG}}</div>
 </section>
 <div class="reader"><div class="scenes">
   <section class="scene lvl2" id="s1" data-i="1">
     <h3 class="st"><span class="no">{{NN}}.1</span><span>{{소제목}}</span></h3>
     <div class="lead"><p>{{결론 먼저}}</p></div>
-    <div class="d2"><p>{{설명. 원문 위치 링크}}</p><p class="why"><b>왜 이렇게 만들었나.</b> {{이유}} <span class="ev ev-ok">확인</span> {{근거}}</p></div>
+    <div class="d2"><ul><li>{{설명 한 줄}}</li><li>{{설명 한 줄}}</li></ul>
+      <!-- p.why는 이 장의 핵심 흐름 1~3개에만 둔다. 나머지 장면은 지운다 -->
+      <p class="why"><b>왜 이렇게 만들었나.</b> {{이유 한두 문장}}</p>
+      <p class="src">{{원문 위치: URL · 타임스탬프 · 파일:줄}} · {{확인 / 추론}}</p></div>
     <div class="inl vis-inl">{{같은 그림 사본. SVG 안의 id와 url(#…)·href="#…"에 m- 접두사}}</div>
   </section>
 </div><aside class="stage">
