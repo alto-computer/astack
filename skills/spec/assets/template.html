@@ -3,6 +3,7 @@
 <meta name="rooms:created" content="[RFC3339 지금 시각]">
 <meta name="rooms:machine" content="[머신 이름]">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="astack:words" content="1500">
 <title>[스펙 이름] 스펙</title>
 <!--astack:css-->
 <!-- 그림의 주체·연결·데이터·실패 분기를 실제 근거로 다시 그린다. ../design/references/spec-change-visuals.md 참조. -->
@@ -53,14 +54,18 @@
   <section class="scene lvl2" id="us1" data-i="2" data-sec="a2">
     <h3 class="st"><span class="no">2.1</span><span>[유저가 겪는 것]</span></h3>
     <div class="lead"><p>유저가 겪는 일: [화면에서 보이는 것]</p></div>
-    <div class="d2"><p>[아래 단계 안내]</p><p class="why"><b>왜 이렇게 설계했나.</b> [이유] <span class="ev ev-ok">확인</span> [근거 위치]</p></div>
+    <div class="d2"><ul><li>[아래 단계 안내 한 줄]</li><li>[보장되는 것 한 줄]</li></ul>
+      <!-- p.why는 핵심 흐름 1~3개에만. 이 스토리가 핵심이 아니면 지운다 -->
+      <p class="why"><b>왜 이렇게 설계했나.</b> [이유 한두 문장]</p>
+      <p class="src">[근거 위치: 스펙 절 · 파일:줄] · [확인 / 추론]</p></div>
 
     <figure class="inl vis-inl"><svg viewBox="0 0 480 380" role="img" aria-labelledby="spec-mobile-2-title" xmlns="http://www.w3.org/2000/svg"><title id="spec-mobile-2-title">요청·저장·응답 시점 — 실제 근거로 채울 배치 예시</title><defs><marker id="spec-mobile-2-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#626b73"/></marker></defs><g font-family="sans-serif" font-size="20" fill="#242a30"><rect x="15" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="80.0" y="46" text-anchor="middle">[화면]</text><rect x="175" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="240.0" y="46" text-anchor="middle">[처리]</text><rect x="335" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="400.0" y="46" text-anchor="middle">[저장소]</text><path d="M80 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M240 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M400 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M80 125L240 125" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-2-arrow)"/><text x="160.0" y="115.0" text-anchor="middle">① [입력]</text><path d="M240 193L400 193" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-2-arrow)"/><text x="320.0" y="183.0" text-anchor="middle">② [쓰기]</text><path d="M400 265L240 265" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-2-arrow)"/><text x="320.0" y="255.0" text-anchor="middle">③ [버전]</text><path d="M240 335L80 335" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-2-arrow)"/><text x="160.0" y="325.0" text-anchor="middle">④ [표시]</text></g></svg><figcaption>[이 그림에서 독자가 확인할 사실 · 근거]</figcaption></figure>
   </section>
   <section class="scene lvl3" id="us1-1" data-i="3" data-sec="a2">
     <h4 class="st"><span class="no">2.1.1</span><span>[기술 단계]</span></h4>
     <div class="lead"><p>[누가, 언제, 무엇을 넘기나]</p></div>
-    <div class="d2"><p class="why"><b>왜 이렇게 설계했나.</b> [이유 · 대안과 기각 이유] [근거 위치]</p></div>
+    <div class="d2"><p class="why"><b>왜 이렇게 설계했나.</b> [이유 · 대안과 기각 이유 두 문장 안]</p>
+      <p class="src">[근거 위치: 스펙 절 · 커밋 · 파일:줄]</p></div>
     <div class="codes"><pre data-lang="rust" data-start="1" data-path="[파일]" data-who="[관심사]"><code>[실제 코드]</code></pre></div>
 
     <figure class="inl vis-inl"><svg viewBox="0 0 480 380" role="img" aria-labelledby="spec-mobile-3-title" xmlns="http://www.w3.org/2000/svg"><title id="spec-mobile-3-title">요청·저장·응답 시점 — 실제 근거로 채울 배치 예시</title><defs><marker id="spec-mobile-3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#626b73"/></marker></defs><g font-family="sans-serif" font-size="20" fill="#242a30"><rect x="15" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="80.0" y="46" text-anchor="middle">[화면]</text><rect x="175" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="240.0" y="46" text-anchor="middle">[처리]</text><rect x="335" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="400.0" y="46" text-anchor="middle">[저장소]</text><path d="M80 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M240 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M400 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M80 125L240 125" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-3-arrow)"/><text x="160.0" y="115.0" text-anchor="middle">① [입력]</text><path d="M240 193L400 193" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-3-arrow)"/><text x="320.0" y="183.0" text-anchor="middle">② [쓰기]</text><path d="M400 265L240 265" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-3-arrow)"/><text x="320.0" y="255.0" text-anchor="middle">③ [버전]</text><path d="M240 335L80 335" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-3-arrow)"/><text x="160.0" y="325.0" text-anchor="middle">④ [표시]</text></g></svg><figcaption>[이 그림에서 독자가 확인할 사실 · 근거]</figcaption></figure>
@@ -72,7 +77,8 @@
   <section class="scene lvl2" id="e1" data-i="4" data-sec="a3">
     <h3 class="st"><span class="no">3.1</span><span>[에러: 결과]</span></h3>
     <div class="lead"><p>[어떻게 처리하나]</p></div>
-    <div class="d2"><p class="why"><b>왜 이렇게 설계했나.</b> [이유] [근거 위치]</p></div>
+    <div class="d2"><ul><li>[무엇이 남고 무엇을 다시 하나 한 줄]</li></ul>
+      <p class="src">[근거 위치: 스펙 절 · 파일:줄]</p></div>
 
     <figure class="inl vis-inl"><svg viewBox="0 0 480 380" role="img" aria-labelledby="spec-mobile-4-title" xmlns="http://www.w3.org/2000/svg"><title id="spec-mobile-4-title">실패한 단계와 남아 있는 상태 — 실제 근거로 채울 배치 예시</title><defs><marker id="spec-mobile-4-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#626b73"/></marker></defs><g font-family="sans-serif" font-size="20" fill="#242a30"><rect x="15" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="80.0" y="46" text-anchor="middle">[화면]</text><rect x="175" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="240.0" y="46" text-anchor="middle">[처리]</text><rect x="335" y="12" width="130" height="54" rx="9" fill="#e6edf1" stroke="#626b73"/><text x="400.0" y="46" text-anchor="middle">[저장소]</text><path d="M80 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M240 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M400 76V356" stroke="#c7cdd1" stroke-dasharray="5 5"/><path d="M80 125L240 125" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-4-arrow)"/><text x="160.0" y="115.0" text-anchor="middle">① [입력]</text><path d="M240 193L400 193" stroke="#626b73" stroke-width="2" fill="none" marker-end="url(#spec-mobile-4-arrow)"/><text x="320.0" y="183.0" text-anchor="middle">② [쓰기]</text><text x="315" y="252" text-anchor="middle">× [실패 조건]</text><path d="M400 275L240 275" stroke="#b94739" stroke-width="2" fill="none" marker-end="url(#spec-mobile-4-arrow)"/><text x="320.0" y="265.0" text-anchor="middle">[결과 불명]</text><text x="242" y="319" text-anchor="middle">[남은 상태 · 재시도 범위]</text><path d="M240 354L80 354" stroke="#b94739" stroke-width="2" fill="none" marker-end="url(#spec-mobile-4-arrow)"/><text x="160.0" y="344.0" text-anchor="middle">[사용자 안내]</text></g></svg><figcaption>[이 그림에서 독자가 확인할 사실 · 근거]</figcaption></figure>
   </section>
@@ -90,13 +96,11 @@
     <tr class="rv-bad"><td><span class="tag">가정</span></td><td><b>[무엇을]</b><div class="who2">에이전트가 정함</div></td><td><span class="ev ev-bad">근거 없음</span><div class="sm">[근거]</div></td><td class="sm">[깨지는 것]</td><td class="sm mono">[확인한 곳]</td><td><a href="#us1-1" class="jump">흐름 보기</a></td></tr>
   </tbody></table></div></section>
 
-<div class="reader"><div class="scenes">
-  <div class="secHead" id="a5"><div class="n">§5</div><h2>알아야 할 비즈니스 로직과 동작 방식</h2></div>
-  <section class="scene lvl2" id="rule1" data-i="5" data-sec="a5">
-    <h3 class="st"><span class="no">5.1</span><span>[규칙]</span></h3>
-    <div class="lead"><p>[한 줄]</p></div>
-  </section>
-</div><aside class="stage"><div class="vis" data-v="5"></div></aside></div>
+<section class="prose" id="a5"><div class="secHead"><div class="n">§5</div><h2>알아야 할 비즈니스 로직과 동작 방식</h2></div>
+  <article class="point"><h3>[규칙 한 문장]</h3>
+    <ul><li>[언제 적용되나 한 줄]</li><li>[어기면 무엇이 깨지나 한 줄]</li></ul>
+    <p class="src">[근거 위치: 스펙 절 · 파일:줄]</p></article>
+</section>
 
 <section class="appendix" id="a6"><div class="secHead"><div class="n">부록</div><h2>Seam · Contract 전문</h2></div>
   <details class="apx"><summary>[원문 절 이름]</summary><div>[원문 그대로]</div></details>

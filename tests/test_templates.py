@@ -56,12 +56,79 @@ class TemplateTest(unittest.TestCase):
         self.assertIn("s.querySelector('.scene-fig img').src", html)
         self.assertNotIn("data-img", html)
 
-    def test_flow_scenes_have_design_reason(self):
-        t = ROOT / "skills/spec/assets/template.html"
-        html = t.read_text(encoding="utf-8")
-        for sec in ("a2", "a3"):
-            for scene in re.findall(rf'<section class="scene[^"]*"[^>]*data-sec="{sec}".*?</section>', html, re.S):
-                self.assertIn('class="why"', scene, scene[:80])
+    def test_design_reason_only_on_key_flows(self):
+        # §20.2(2026-10-09): p.why는 핵심 흐름 1~3개에만
+        for name in ("spec", "change"):
+            html = (ROOT / f"skills/{name}/assets/template.html").read_text(encoding="utf-8")
+            with self.subTest(name=name):
+                self.assertTrue(1 <= html.count('class="why"') <= 3, html.count('class="why"'))
+        html = (ROOT / "skills/spec/assets/template.html").read_text(encoding="utf-8")
+        us1 = re.search(r'<section class="scene[^"]*" id="us1".*?</section>', html, re.S).group()
+        self.assertIn('class="why"', us1)
+
+    def test_word_caps_in_templates(self):
+        caps = {"dream/assets/template.html": "600", "quest/assets/chapter-template.html": "900",
+                "quest/assets/map-template.html": "500", "spec/assets/template.html": "1500",
+                "change/assets/template.html": "600"}
+        for name, cap in caps.items():
+            html = (ROOT / f"skills/{name}").read_text(encoding="utf-8")
+            with self.subTest(name=name):
+                self.assertIn(f'<meta name="astack:words" content="{cap}">', html)
+
+    def test_evidence_goes_to_src_line(self):
+        for name in ("dream/assets/template.html", "quest/assets/chapter-template.html",
+                     "spec/assets/template.html", "change/assets/template.html"):
+            html = (ROOT / f"skills/{name}").read_text(encoding="utf-8")
+            with self.subTest(name=name):
+                self.assertIn('class="src"', html)
+                self.assertNotIn('ev ev-ok', html)
+
+    def test_one_column_dream_and_quest_map(self):
+        for name in ("dream/assets/template.html", "quest/assets/map-template.html"):
+            html = (ROOT / f"skills/{name}").read_text(encoding="utf-8")
+            with self.subTest(name=name):
+                self.assertIn('<div class="wrap col">', html)
+                ov = re.search(r'<section class="overview[^"]*".*?</section>', html, re.S).group()
+                self.assertIn('class="overview one"', ov)
+                self.assertNotIn("SVG", ov)
+                self.assertIn("<ul>", ov)
+
+    def test_dream_points_have_title_bullets_and_src(self):
+        html = (ROOT / "skills/dream/assets/template.html").read_text(encoding="utf-8")
+        points = re.findall(r'<article class="point">.*?</article>', html, re.S)
+        self.assertGreaterEqual(len(points), 2)
+        for pt in points:
+            self.assertIn("<h3>", pt)
+            self.assertGreaterEqual(pt.count("<li>"), 2)
+            self.assertIn('class="src"', pt)
+
+    def test_quest_map_chapters_are_a_list_and_terms_fold(self):
+        html = (ROOT / "skills/quest/assets/map-template.html").read_text(encoding="utf-8")
+        self.assertNotIn("<table", html)
+        self.assertIn('<ol class="chlist">', html)
+        self.assertIn('<details class="terms">', html)
+
+    def test_spec_section5_is_one_column(self):
+        html = (ROOT / "skills/spec/assets/template.html").read_text(encoding="utf-8")
+        self.assertEqual(html.count('<div class="reader">'), 1)
+        self.assertIn('<section class="prose" id="a5">', html)
+        self.assertNotIn('<div class="vis" data-v="5"></div>', html)
+
+    def test_change_has_prose_slot_outside_reader(self):
+        html = (ROOT / "skills/change/assets/template.html").read_text(encoding="utf-8")
+        self.assertLess(html.index("</aside></div>"), html.index('<section class="prose"'))
+
+    def test_quest_chapter_reexplains_terms(self):
+        html = (ROOT / "skills/quest/assets/chapter-template.html").read_text(encoding="utf-8")
+        self.assertIn("이 장에서 쓰는 말.", html)
+
+    def test_kit_templates_carry_no_own_style(self):
+        for t in TEMPLATES:
+            if t.parent.parent.name in ("interview", "seminar"):
+                continue
+            with self.subTest(t=t.relative_to(ROOT)):
+                html = inline.inline_html(t.read_text(encoding="utf-8"), t.parent)
+                self.assertNotIn("own-style", [i.code for i in check.check_html(html)])
 
     def test_every_scene_has_a_visual_slot(self):
         for t in TEMPLATES:

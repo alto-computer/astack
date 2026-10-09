@@ -52,6 +52,38 @@ class KitTest(unittest.TestCase):
         css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
         self.assertIn("details.quiz", css)
 
+    def test_readability_values(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        for s in ("--measure:680px", "body{font-size:16px;",
+                  ".cover h1{font-size:clamp(28px,3.2vw,40px);font-weight:600",
+                  '--jost:"Pretendard","Apple SD Gothic Neo",system-ui',
+                  ".overview p,.overview li{color:var(--ink)}", ".overview.one{display:block",
+                  "pre code{font-size:inherit}", "pre,.wrong pre,.apx pre{font-size:13px}",
+                  "table.ustab,table.cmp,table.rv,.apx table{font-size:15px}",
+                  ".reader{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)!important}",
+                  ".stage,.codepane{justify-content:flex-start}",
+                  ".src{display:block;font-size:13px", ".prose", ".point h3"):
+            self.assertIn(s, css, s)
+        rule = css.split(".wrap>section:not(.overview)", 1)[1].split("}", 1)[0]
+        for s in (".wrap>footer", ".prose", "max-width:var(--measure)"):
+            self.assertIn(s, rule)
+
+    def test_ev_pills_are_grey_text_except_bad(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        rule = css.split(".ev:not(.ev-bad){", 1)[1].split("}", 1)[0]
+        self.assertIn("background:none", rule)
+        self.assertIn("color:var(--ink-2)", rule)
+        self.assertNotIn(".ev-bad{", css)
+
+    def test_reader_ratio_precedes_narrow_override(self):
+        css = (KIT / "alto-ext.css").read_text(encoding="utf-8")
+        self.assertLess(css.index("minmax(0,1.15fr) minmax(0,1fr)"), css.index("@media (max-width:900px)"))
+
+    def test_alto_css_is_untouched_reference_extract(self):
+        css = (KIT / "alto.css").read_text(encoding="utf-8")
+        self.assertTrue(css.startswith("/* extracted from spec-reference-rooms-v1.html"))
+        self.assertIn(".cover h1{margin:0;font-size:clamp(34px,4.6vw,54px)", css)
+
 
 if __name__ == "__main__":
     unittest.main()
